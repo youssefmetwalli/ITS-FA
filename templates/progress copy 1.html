@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Progress</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <h1>Student Progress</h1>
+    <h2>Completed Lessons</h2>
+    {% if progress.completed_lessons %}
+        <ul>
+            {% for lesson in progress.completed_lessons %}
+                {% if lesson %}
+                    <li>{{ lesson }}</li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No completed lessons yet.</p>
+    {% endif %}
+    <h2>Completed Quizzes</h2>
+    {% if progress.completed_quizzes %}
+        <ul>
+            {% for quiz in progress.completed_quizzes %}
+                {% if quiz %}
+                    <li>{{ quiz }}</li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No completed quizzes yet.</p>
+    {% endif %}
+    <button onclick="history.back()">Back</button>
+    <button onclick="location.href='/'">Home</button>
+</body>
+</html>

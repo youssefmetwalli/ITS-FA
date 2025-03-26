@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Display Lesson</title>
+</head>
+<body>
+    <h1>Lesson Content</h1>
+    <ol>
+        {% for line in lesson_lines %}
+        <li>{{ line }}</li>
+        {% endfor %}
+    </ol>
+    
+    <h2>Related Videos</h2>
+    <ul>
+        {% for video in related_videos %}
+        <li>
+            <button onclick="window.location.href='{{ url_for('watch_video', video_url=video['url']) }}'">
+                Watch Video
+            </button>
+            <span>{{ video['title'] }}</span>
+        </li>
+        {% endfor %}
+    </ul>
+    <br>
+    <a class="button" href="{{ url_for('index') }}">Home</a>
+    <a class="button" href="javascript:history.back()">Back</a>
+</body>
+</html>

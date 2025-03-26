@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ module.title }}</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <style>
+        .subchapter-item {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: box-shadow 0.3s ease;
+        }
+
+        .subchapter-item:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .subchapter-summary {
+            margin-bottom: 15px;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .figure-container {
+            display: flex;
+            flex-wrap: wrap;  /* Allow images to wrap */
+            justify-content: center; /* Center the images */
+            margin-top: 20px;
+        }
+
+        .figure-container img {
+            max-width: 400px;    /* Larger image width */
+            max-height: 400px;    /* Larger image height */
+            height: auto;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin: 10px;         /* Add space around images */
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .figure-container img:hover {
+            transform: scale(1.1);  /* Zoom on hover */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* More prominent box shadow on hover */
+        }
+        h3 {
+            font-weight: bold;
+            /* Make the text bold */
+            margin-top: 1.5em;
+            /* Spacing above the heading */
+            border-bottom: 2px solid #ccc;
+            /* Subtle border below the heading */
+            padding-bottom: 0.3em;
+            /* Space between the heading text and the border */
+        }
+    </style>
+</head>
+
+<body>
+    <div class="circles">
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+    </div>
+    <div class="header-container">
+        <h1>{{ module.title }}</h1>
+        <a class="button" href="{{ url_for('course_page') }}">Back to Course</a>
+    </div>
+    <div class="module-container">
+        <h2>Subchapters</h2>
+        {% if subchapters %}
+        <ul class="subchapter-list">
+            {% for subchapter in subchapters %}
+            <li class="subchapter-item">
+                <h2>{{ subchapter.title }}</h2>
+                <div class="subchapter-summary">
+                    {{ subchapter.summary.html | safe }}
+                </div>
+                {% if subchapter.summary.figures %}
+                <div class="figure-container">
+                    {% for figure in subchapter.summary.figures %}
+                    <img src="{{ figure.data }}" alt="Figure on page {{ figure.page }}">
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p>No subchapters available for this module.</p>
+        {% endif %}
+    </div>
+
+    <script>
+        // We'll track if we've already sent the increment request
+        let hasIncremented = false;
+  
+        // Listen for scroll
+        window.addEventListener('scroll', () => {
+          // Condition: user scrolled to bottom
+          if (!hasIncremented &&
+              window.innerHeight + window.scrollY >= document.body.offsetHeight) {
+  
+            hasIncremented = true; // So we don't spam the server
+  
+            // Example: chapter_id is passed from the template
+            const chapterId = {{ module.id }};  // if 'module' has an .id
+            
+            fetch(`/increment_chapter_read/${chapterId}`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            })
+            .then(response => {
+              if (response.ok) {
+                console.log("Chapter read count incremented");
+              } else {
+                console.log("Failed to increment read count");
+              }
+            })
+            .catch(error => {
+              console.error('Error:', error);
+            });
+          }
+        });
+      </script>
+      
+</body>
+
+</html>

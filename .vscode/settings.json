@@ -1,0 +1,40 @@
+{
+    "[dart]": {
+        "editor.formatOnSave": true,
+        "editor.formatOnType": true,
+        "editor.rulers": [80],
+        "editor.selectionHighlight": false,
+        "editor.suggest.snippetsPreventQuickSuggestions": false,
+        "editor.suggestSelection": "first",
+        "editor.tabCompletion": "onlySnippets",
+        "editor.wordBasedSuggestions": "off"
+    },
+    "terminal.integrated.enableMultiLinePasteWarning": false,
+    "git.autofetch": true,
+
+    // Enable Python IntelliSense
+    "editor.quickSuggestions": {
+        "other": true,
+        "comments": false,
+        "strings": true
+    },
+    "editor.wordBasedSuggestions": "matchingDocuments",
+    "editor.parameterHints.enabled": true,
+    "editor.suggest.showWords": true,
+
+    // Format on save for Python
+    "[python]": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "ms-python.python",
+        "editor.quickSuggestions": {
+            "other": true,
+            "comments": false,
+            "strings": true
+        },
+        "editor.parameterHints.enabled": true,
+        "editor.suggest.showWords": true
+    },
+
+    // Specify Python interpreter (adjust the path to your Python installation if needed)
+    "python.defaultInterpreterPath": "/usr/bin/python3"
+}

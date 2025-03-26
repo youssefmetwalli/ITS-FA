@@ -1,0 +1,10 @@
+Flask
+Flask-SQLAlchemy
+python-dotenv
+beautifulsoup4
+PyPDF2
+openai
+transformers
+torch
+pdfplumber
+

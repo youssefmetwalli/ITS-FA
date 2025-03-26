@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat with ChatGPT</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+    <h1>Chat with ChatGPT</h1>
+    <div id="chatbox">
+        <div id="messages"></div>
+        <textarea id="userInput" placeholder="Type a message..."></textarea>
+        <button id="sendButton">Send</button>
+        <button id="saveButton">Save</button>
+        <button id="loadButton">Load</button>
+    </div>
+    <a class="button" href="{{ url_for('index') }}">Home</a>
+    <a class="button" href="javascript:history.back()">Back</a>
+    
+    <script>
+        $(document).ready(function() {
+            $('#sendButton').click(function() {
+                var userInput = $('#userInput').val();
+                if (userInput) {
+                    $('#messages').append('<div class="message user">' + userInput + '</div>');
+                    $('#userInput').val('');
+                    $.ajax({
+                        url: '/chat_api',
+                        method: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ message: userInput }),
+                        success: function(response) {
+                            if (response.error) {
+                                alert(response.error);
+                            } else {
+                                $('#messages').append('<div class="message bot">' + response.message + '</div>');
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            alert('Error: ' + error);
+                        }
+                    });
+                }
+            });
+
+            $('#saveButton').click(function() {
+                var chatHistory = $('#messages').html();
+                $.ajax({
+                    url: '/save_chat',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ chat_history: chatHistory }),
+                    success: function(response) {
+                        if (response.error) {
+                            alert(response.error);
+                        } else {
+                            alert(response.status);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        alert('Error: ' + error);
+                    }
+                });
+            });
+
+            $('#loadButton').click(function() {
+                $.ajax({
+                    url: '/load_chat',
+                    method: 'GET',
+                    success: function(response) {
+                        if (response.error) {
+                            alert(response.error);
+                        } else {
+                            $('#messages').html(response.chat_history);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        alert('Error: ' + error);
+                    }
+                });
+            });
+        });
+    </script>
+    <style>
+        #chatbox {
+            max-width: 600px;
+            margin: auto;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        #messages {
+            height: 300px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        #userInput {
+            width: calc(100% - 22px); /* Adjusted for padding and border */
+            height: 60px;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+            resize: none;
+        }
+        .message {
+            margin: 10px 0;
+        }
+        .user {
+            text-align: left; /* Align user messages to the left */
+            color: blue;
+        }
+        .bot {
+            text-align: left;
+            color: green;
+        }
+        #sendButton, #saveButton, #loadButton {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 10px 5px;
+            text-decoration: none;
+            color: white; /* Text color */
+            background-color: blue; /* Button background color */
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        #sendButton:hover, #saveButton:hover, #loadButton:hover {
+            background-color: darkblue; /* Hover color */
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 10px 5px;
+            text-decoration: none;
+            color: black; /* Text color */
+            background-color: orange;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .button:hover {
+            background-color: darkorange;
+        }
+    </style>
+</body>
+</html>

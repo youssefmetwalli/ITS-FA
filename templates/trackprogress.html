@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Track Your Progress</title>
+
+    <!-- Animated background & circle styles -->
+    <link rel="stylesheet" href="/static/css/styles.css">
+
+    <!-- Font Awesome for icons (optional) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+        integrity="sha512-..." crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <style>
+        /* Dark box for basic stats */
+        .progress-container {
+            background-color: #1c1c1c;
+            color: #ccc;
+            max-width: 400px;
+            margin: 20px auto;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: Arial, sans-serif;
+        }
+
+        .progress-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .progress-icon {
+            color: #90ee90;
+            font-size: 1.5rem;
+            margin-right: 8px;
+        }
+
+        .progress-label {
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        .progress-value {
+            margin-left: auto;
+        }
+
+        /* Container for both ring progress bars (stacked) */
+        .ring-progress-wrapper {
+            display: flex;
+            flex-direction: column;
+            /* stack vertically */
+            align-items: center;
+            margin: 30px auto;
+            max-width: 400px;
+        }
+
+        /* Each ring card or box */
+        .ring-box {
+            background-color: #1c1c1c;
+            color: #ccc;
+            width: 100%;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            font-family: Arial, sans-serif;
+        }
+
+        .ring-box h2 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #90ee90;
+            /* optional green heading text */
+        }
+
+        /* The SVG ring itself */
+        .progress-ring {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto;
+            /* center horizontally */
+            display: block;
+            position: relative;
+        }
+
+        /* Gray background circle */
+        .progress-ring__bg {
+            stroke: #ddd;
+            stroke-width: 10;
+            fill: transparent;
+        }
+
+        /* Color circle stroke which we'll animate */
+        .progress-ring__fg {
+            stroke: url(#ringGradient);
+            stroke-width: 10;
+            fill: transparent;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+            transition: stroke-dashoffset 0.5s;
+        }
+
+        /* The text in the center of the ring */
+        .ring-text {
+            fill: #fff;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-anchor: middle;
+            dominant-baseline: middle;
+        }
+
+        .contrib-container {
+            display: flex;
+            /* We'll create one column per week */
+        }
+
+        .contrib-week {
+            display: flex;
+            flex-direction: column;
+            margin-right: 3px;
+            /* spacing between columns */
+        }
+
+        .day-square {
+            width: 14px;
+            height: 14px;
+            margin-bottom: 3px;
+            /* spacing between days */
+            border-radius: 2px;
+            background-color: #eee;
+            /* default gray (count=0) */
+            transition: background-color 0.3s;
+        }
+
+        /* Examples of shades of green for higher counts */
+        .count-1 {
+            background-color: #9be9a8;
+        }
+
+        .count-2 {
+            background-color: #40c463;
+        }
+
+        .count-3 {
+            background-color: #30a14e;
+        }
+
+        .count-4 {
+            background-color: #216e39;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Falling circles from styles.css -->
+    <ul class="circles">
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+    </ul>
+
+    <!-- Header -->
+    <div class="header-container">
+        <h1>Track Progress</h1>
+        <a class="button" href="{{ url_for('index') }}">Home</a>
+        <a class="button" href="javascript:history.back()">Back</a>
+    </div>
+
+    <!-- Dark box with numeric stats -->
+    <div class="progress-container">
+        <!-- Chapters Read -->
+        <div class="progress-item">
+            <i class="progress-icon fas fa-book-open"></i>
+            <span class="progress-label">Chapters Read:</span>
+            <span class="progress-value">{{ chapters_read }}</span>
+        </div>
+        <!-- Quizzes Attempted -->
+        <div class="progress-item">
+            <i class="progress-icon fas fa-question-circle"></i>
+            <span class="progress-label">Quizzes Attempted:</span>
+            <span class="progress-value">{{ quizzes_attempted }}</span>
+        </div>
+        <!-- Quizzes Completed -->
+        <div class="progress-item">
+            <i class="progress-icon fas fa-check-circle"></i>
+            <span class="progress-label">Quizzes Completed:</span>
+            <span class="progress-value">{{ quizzes_completed }}</span>
+        </div>
+    </div>
+
+    <!-- Two ring progress bars stacked vertically -->
+    <div class="ring-progress-wrapper">
+        <!-- 1) Chapters ring -->
+        <div class="ring-box">
+            <h2>Chapters Progress</h2>
+            <svg class="progress-ring" viewBox="0 0 120 120">
+                <defs>
+                    <!-- Define gradient for the foreground stroke -->
+                    <linearGradient id="ringGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#90ee90" />
+                        <stop offset="100%" stop-color="#32CD32" />
+                    </linearGradient>
+                </defs>
+
+                <!-- Gray background circle -->
+                <circle class="progress-ring__bg" cx="60" cy="60" r="54" />
+
+                <!-- Foreground circle to animate -->
+                <circle id="chaptersFg" class="progress-ring__fg" cx="60" cy="60" r="54" stroke-dasharray="339.292"
+                    stroke-dashoffset="339.292" />
+
+                <!-- Percentage text in center -->
+                <text id="chaptersText" class="ring-text" x="50%" y="50%">0%</text>
+            </svg>
+        </div>
+
+        <!-- 2) Quizzes ring -->
+        <div class="ring-box">
+            <h2>Quizzes Progress</h2>
+            <svg class="progress-ring" viewBox="0 0 120 120">
+                <defs>
+                    <!-- Use same or a new gradient if you'd like a different color -->
+                    <linearGradient id="ringGradient2" x1="0%" y1="100%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#90ee90" />
+                        <stop offset="100%" stop-color="#32CD32" />
+                    </linearGradient>
+                </defs>
+
+                <circle class="progress-ring__bg" cx="60" cy="60" r="54" />
+
+                <circle id="quizzesFg" class="progress-ring__fg" cx="60" cy="60" r="54" stroke-dasharray="339.292"
+                    stroke-dashoffset="339.292" stroke="url(#ringGradient2)" />
+
+                <text id="quizzesText" class="ring-text" x="50%" y="50%">0%</text>
+            </svg>
+        </div>
+    </div>
+
+    <div class="contrib-container">
+        <!-- We'll dynamically build columns: each column has up to 7 days (Mon-Sun) -->
+        {% set index = 0 %}
+        {% for i in range(0, squares|length, 7) %}
+        <div class="contrib-week">
+            {% for day_offset in range(7) %}
+            {% set day_index = i + day_offset %}
+            {% if day_index < squares|length %} {% set day_obj=squares[day_index] %} {% set day_count=day_obj.count %}
+                {% if day_count==0 %} <div class="day-square">
+        </div>
+        {% elif day_count == 1 %}
+        <div class="day-square count-1"></div>
+        {% elif day_count == 2 %}
+        <div class="day-square count-2"></div>
+        {% elif day_count == 3 %}
+        <div class="day-square count-3"></div>
+        {% else %}
+        <div class="day-square count-4"></div>
+        {% endif %}
+        {% else %}
+        <div class="day-square"></div>
+        {% endif %}
+        {% endfor %}
+    </div>
+    {% endfor %}
+    </div>
+
+    <!-- Script to calculate ring fill for chapters/quizzes out of 42 total -->
+    <script>
+        // Replace these with actual template variables or pass them in from Flask
+        const chaptersRead = {{ chapters_read }};
+        const quizzesCompleted = {{ quizzes_completed }};
+        const TOTAL = 42; // or however many chapters/quizzes you have
+
+        // Compute the percentages
+        const chaptersPercent = Math.round((chaptersRead / TOTAL) * 100);
+        const quizzesPercent = Math.round((quizzesCompleted / TOTAL) * 100);
+
+        // Circumference for a circle of radius 54
+        const circumference = 2 * Math.PI * 54; // ~339.292
+
+        // CHAPTERS ring
+        const chaptersFg = document.getElementById("chaptersFg");
+        const chaptersText = document.getElementById("chaptersText");
+        // Calculate offset
+        const chaptersOffset = circumference - (chaptersPercent / 100 * circumference);
+        chaptersFg.style.strokeDashoffset = chaptersOffset;
+        chaptersText.textContent = chaptersPercent + "%";
+
+        // QUIZZES ring
+        const quizzesFg = document.getElementById("quizzesFg");
+        const quizzesText = document.getElementById("quizzesText");
+        const quizzesOffset = circumference - (quizzesPercent / 100 * circumference);
+        quizzesFg.style.strokeDashoffset = quizzesOffset;
+        quizzesText.textContent = quizzesPercent + "%";
+    </script>
+</body>
+
+</html>

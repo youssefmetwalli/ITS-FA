@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automata Theory - Landing Page</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+        }
+
+        .landing-container {
+            text-align: center;
+        }
+
+        .landing-container h1 {
+            margin-bottom: 20px;
+        }
+
+        .landing-container a.button {
+            display: block;
+            margin: 10px auto;
+            padding: 15px 10px;
+            width: 300px;
+            text-decoration: none;
+            background-color: #4CAF50;
+            color: rgb(67, 67, 67);
+            border-radius: 10px;
+            font-size: 18px;
+            transition: background-color 0.3s;
+        }
+
+        /* Styles for the Popup */
+        .popup-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .popup-content {
+            background-color: #fff;
+            padding: 20px;
+            position: relative;
+            border-radius: 10px;
+            text-align: left;
+            max-width: 600px;
+            width: 80%;
+            height: 40%;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            transform: translateY(20px);
+            animation: slideIn 1s ease forwards;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 0.8;
+                transform: translateY(0);
+            }
+        }
+
+        .popup-content h1 {
+            text-align: center;
+            margin-bottom: 0px;
+        }
+
+        .popup-content h2 {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .popup-content ul {
+            list-style-type: none;
+            padding-left: 0;
+            margin: 0;
+            position: relative;
+        }
+
+        .popup-question {
+            margin-top: 40px;
+            margin-bottom: 20px;
+            opacity: 0;
+            transition: opacity 0.7s ease, transform 0.7s ease;
+            position: absolute;
+            text-align: center;
+            justify-content: center;
+            left: 10%;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 80%;
+        }
+
+        /* Only active questions can receive pointer events */
+        .popup-question:not(.active) {
+            pointer-events: none;
+        }
+
+        .popup-question.active {
+            opacity: 1;
+            transform: translateX(0) translateY(-50%);
+        }
+
+        .popup-question.slide-out {
+            opacity: 0;
+            transform: translateX(-100%) translateY(-50%);
+        }
+
+        .popup-question.slide-in {
+            opacity: 1;
+            transform: translateX(0) translateY(-50%);
+        }
+
+        .popup-buttons {
+            text-align: center;
+            margin-top: 40px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .popup-buttons button {
+            margin: 5px;
+            padding: 10px 20px;
+            color: black;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            flex: 0 0 auto;
+            min-width: 80px;
+        }
+
+        .popup-buttons button.yes-button {
+            background-color: #90EE90;
+        }
+
+        .popup-buttons button.yes-button:hover {
+            background-color: #73c973;
+        }
+
+        .popup-buttons button.no-button {
+            background-color: #F08080;
+        }
+
+        .popup-buttons button.no-button:hover {
+            background-color: #e36b6b;
+        }
+    </style>
+</head>
+
+<body>
+    <ul class="circles">
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+    </ul>
+
+    <!-- Popup Overlay (hidden by default) -->
+    <div class="popup-overlay" id="popupOverlay">
+        <div class="popup-content">
+            <h1>Welcome!</h1>
+            <h2>Firstly, let's check your knowledge!</h2>
+            <ul style="position: relative;">
+                <li class="popup-question" data-question-id="string_language">
+                    <p>Are you familiar with what a 'string' or a 'language' is in the context of computer science? For
+                        example, a string could be 'hello', '1010', or 'abc', and a language could be a set of such
+                        strings, like all binary strings starting with '1'.</p>
+                    <div class="popup-buttons">
+                        <button class="yes-button" onclick="handleAnswer('string_language', true)">Yes</button>
+                        <button class="no-button" onclick="handleAnswer('string_language', false)">No</button>
+                    </div>
+                </li>
+
+                <li class="popup-question" data-question-id="logical_operators">
+                    <p>Are you familiar with logical operators like 'AND', 'OR', and 'NOT'? For example, if A is true
+                        and B is false, then 'A ∧ B' (A AND B) is false, 'A ∨ B' (A OR B) is true, and '¬A' (NOT A) is
+                        false.</p>
+                    <div class="popup-buttons">
+                        <button class="yes-button" onclick="handleAnswer('logical_operators', true)">Yes</button>
+                        <button class="no-button" onclick="handleAnswer('logical_operators', false)">No</button>
+                    </div>
+                </li>
+
+                <li class="popup-question" data-question-id="regular_expressions">
+                    <p>Are you familiar with regular expressions (regex)? For example, the regex 'a*b' would match
+                        strings like 'b', 'ab', 'aab', and 'aaab', while 'a+' would match strings like 'a', 'aa', 'aaa'.
+                    </p>
+                    <div class="popup-buttons">
+                        <button class="yes-button" onclick="handleAnswer('regular_expressions', true)">Yes</button>
+                        <button class="no-button" onclick="handleAnswer('regular_expressions', false)">No</button>
+                    </div>
+                </li>
+
+                <li class="popup-question" data-question-id="automata_app">
+                    <p>Are you Interested in learning how the theories and concepts of Automata are applied in our
+                        everyday life?</p>
+                    <div class="popup-buttons">
+                        <button class="yes-button" onclick="handleAnswer('automata_app', true)">Yes</button>
+                        <button class="no-button" onclick="handleAnswer('automata_app', false)">No</button>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="landing-container">
+        <h1>Welcome to Automata Theory Course</h1>
+        <a class="button" href="{{ url_for('course_page') }}">Lessons</a>
+        <a class="button" href="{{ url_for('chat') }}">Chat</a>
+        <a class="button" href="{{ url_for('track_progress') }}">Track Progress</a>
+        <!-- Logout button, handled by JavaScript -->
+        <button class="button" onclick="logout()"
+            style="background-color: #F08080; color: black; font-style:italic;">Logout</button>
+    </div>
+
+    <script>
+        // Logout function
+        function logout() {
+            fetch('/logout', {
+                method: 'POST',
+                credentials: 'same-origin',
+            }).then(response => {
+                if (response.ok) {
+                    window.location.href = '/login'; // Redirect to login page after logout
+                } else {
+                    alert("Logout failed. Please try again.");
+                }
+            });
+        }
+
+        const popupOverlay = document.getElementById('popupOverlay');
+        const popupQuestions = document.querySelectorAll('.popup-question');
+
+        let currentQuestionIndex = 0;
+
+        function showPopup() {
+            popupOverlay.style.display = 'flex';
+            popupQuestions[currentQuestionIndex].classList.add('active');
+        }
+
+        function hidePopup() {
+            popupOverlay.style.display = 'none';
+        }
+
+        function handleAnswer(questionId, answer) {
+            localStorage.setItem(questionId, answer);
+
+            // Send answer to the server
+            fetch('/save_answer', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ questionId: questionId, answer: answer })
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        console.error('Error saving answer:', response.status, response.statusText);
+                        return response.json().then(err => { throw err; });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Answer saved successfully:', data);
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
+                    alert("Failed to save answer. Check the console for details.");
+                });
+
+            // Get current question element
+            const currentQuestion = popupQuestions[currentQuestionIndex];
+
+            // Animate the current question out
+            currentQuestion.classList.add('slide-out');
+
+            setTimeout(() => {
+                // Remove animation classes
+                currentQuestion.classList.remove('active', 'slide-out');
+
+                // Move to next question
+                currentQuestionIndex++;
+
+                if (currentQuestionIndex < popupQuestions.length) {
+                    // Activate the next question
+                    const nextQuestion = popupQuestions[currentQuestionIndex];
+                    nextQuestion.classList.add('active', 'slide-in');
+
+                    // Remove the slide-in class after animation starts
+                    setTimeout(() => {
+                        nextQuestion.classList.remove('slide-in');
+                    }, 300);
+                } else {
+                    // All questions answered, hide popup
+                    hidePopup();
+                }
+            }, 300);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check localStorage to decide whether to show the popup
+            if (!localStorage.getItem('string_language') ||
+                !localStorage.getItem('logical_operators') ||
+                !localStorage.getItem('regular_expressions') ||
+                !localStorage.getItem('automata_app')) {
+                showPopup();
+            }
+        });
+    </script>
+</body>
+
+</html>

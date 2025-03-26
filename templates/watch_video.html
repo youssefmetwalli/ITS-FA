@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Watch Video</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
+
+</head>
+<body>
+    <h1>Watch Video</h1>
+    <iframe width="560" height="315" src="{{ video_url }}" frameborder="0" allowfullscreen></iframe>
+    <br>
+    <a class="button" href="{{ url_for('index') }}">Home</a>
+    <a class="button" href="javascript:history.back()">Back</a>
+</body>
+</html>
