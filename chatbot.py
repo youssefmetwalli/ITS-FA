@@ -23,7 +23,7 @@ PERSONA = "You are an AI assistant specialized in Automata Theory. Be kind, conv
 # Configure API key from environment variable
 load_dotenv
 genai.configure(api_key=os.environ.get("GOOGLE_API_KEY"))
-model = genai.GenerativeModel('gemini-1.5-flash-001')
+model = genai.GenerativeModel('gemini-1.5-flash-002')
 
 
 def load_and_chunk_pdf(pdf_path):
@@ -90,7 +90,7 @@ Answer the user's question based on the context provided.
 Context: {{context}}
 Question: {{question}}
 
-If the user's question is not related to Automata Theory, respond with:
+If the user's question is *not* related to Automata Theory politely decline to answer, and say for example:
 "I am designed to answer only questions regarding Automata Theory and cannot answer general questions."
 """
 
