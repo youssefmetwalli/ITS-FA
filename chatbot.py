@@ -86,12 +86,29 @@ def load_or_create_vector_db(overwrite=False):
 
 # Template for prompt
 template = f"""{PERSONA}
-Answer the user's question based on the context provided.
-Context: {{context}}
-Question: {{question}}
+You are an AI assistant specialized in Automata Theory. 
+You respond concisely and clearly about Automata Theory topics. 
+Do not mention you have a PDF or any external text. 
+Use a helpful, self-contained explanation without referring to external documents or 'the text.'
 
-If the user's question is *not* related to Automata Theory politely decline to answer, and say for example:
-"I am designed to answer only questions regarding Automata Theory and cannot answer general questions."
+If a topic (like pushdown automata or Turing machines) wasn't brought up by the user, 
+avoid mentioning it unless it is necessary to clarify the user's question or to give examples.
+
+If the user's question is not about Automata Theory, politely decline by saying you can only discuss automata theory.
+"""
+
+template = f"""{PERSONA}
+
+Conversation so far:
+{{chat_history}}
+
+Relevant knowledge you can draw upon (do not mention its source):
+{{context}}
+
+User's latest question:
+{{question}}
+
+Answer in a friendly, conversational way, focusing on what the user has specifically asked for.
 """
 
 prompt = ChatPromptTemplate.from_messages([
@@ -105,15 +122,38 @@ llm = model
 def create_chain(overwrite=False):
     vector_db = load_or_create_vector_db(overwrite)
     if vector_db is None:
-      logging.error("Failed to load or create a vector database")
-      return None
+        logging.error("Failed to load or create a vector database")
+        return None
+
     chain = (
-        {"question": RunnablePassthrough(), "context": (RunnableLambda(lambda x : vector_db.similarity_search(x, k=4)) | (lambda x: "\n".join([i.page_content for i in x]))  ) }
-        | prompt
-        | RunnableLambda(lambda x: llm.generate_content(contents=[i.content for i in x.to_messages()]).text)
+        {
+            # We'll pass in the entire input as a dictionary,
+            # which will have keys: {"chat_history": "...", "latest_question": "..."}
+            "chat_history": RunnableLambda(lambda x: x["chat_history"]),
+            "question": RunnableLambda(lambda x: x["question"]),
+            "context": (
+                RunnableLambda(
+                    # Combine the full conversation and the user’s last question 
+                    # so the retriever can see "DFA" references even if the new prompt is vague.
+                    lambda x: vector_db.similarity_search(
+                        f"{x['chat_history']}\n\nUser's latest question: {x['question']}",
+                        k=4
+                    )
+                )
+                # Join all retrieved chunks into a single text blob
+                | (lambda docs: "\n".join([doc.page_content for doc in docs]))
+            ),
+        }
+        # The ChatPromptTemplate references {chat_history}, {question}, {context}
+        | prompt  
+        # Generate the final LLM response
+        | RunnableLambda(lambda x: llm.generate_content(contents=[m.content for m in x.to_messages()]).text)
+        # Convert the response to a plain string
         | StrOutputParser()
     )
+
     return chain
+
 
 def format_response(text):
    """Formats the response with markdown and adds extra lines for visual structure"""
