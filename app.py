@@ -75,6 +75,15 @@ def signup():
         password = request.form.get("password")
 
         try:
+            user = auth.get_user_by_email(email)
+            return render_template("signup.html", error="This email is already in use")
+        except auth.UserNotFoundError:
+            pass
+        password_pattern = r"^(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$"
+        if not re.match(password_pattern, password):
+            return render_template("signup.html", error="Password must be at least 8 characters long, contain at least one number, one uppercase letter, and one symbol. ")
+
+        try:
             # Create user with Firebase Authentication
             user = auth.create_user(email=email, password=password)
             session["user_id"] = user.uid  # Store user session
