@@ -110,20 +110,14 @@ def signup():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    if request.method == "POST":
-        email = request.form.get("email")
-        password = request.form.get("password")
-        try:
-            # Firebase Admin SDK for user retrieval and verification
-            user = auth.get_user_by_email(email)
-            # Add your own password verification logic here since Firebase Admin doesn't handle it directly
-            session["user_id"] = user.uid
-            return redirect(url_for("index"))  # Redirect to index on successful login
-        except Exception as e:
-            logging.error(f"Error signing in: {e}, traceback: {traceback.format_exc()}")
-            return render_template("login.html", error="Invalid email or password")
-    else:
-        return render_template("login.html")
+    firebase_config = {
+        'firebase_api_key': os.getenv('FIREBASE_API_KEY'),
+        'firebase_auth_domain': os.getenv('FIREBASE_AUTH_DOMAIN'),
+        'firebase_project_id': os.getenv('FIREBASE_PROJECT_ID'),
+        'firebase_storage_bucket': os.getenv('FIREBASE_STORAGE_BUCKET'),
+        'firebase_app_id': os.getenv('FIREBASE_APP_ID'),
+    }
+    return render_template("login.html", **firebase_config)
 
 
 @app.route('/logout', methods=['POST'])
@@ -131,9 +125,31 @@ def logout():
     session.pop('user_id', None) 
     return redirect(url_for('index'))
 
+@app.route("/validate_token", methods=["POST"])
+def validate_token():
+    # Get the ID token from the request
+    data = request.get_json()
+    id_token = data.get('idToken')
+
+    if not id_token:
+        return jsonify({"error": "No token provided"}), 400
+
+    try:
+        # Verify the ID token
+        decoded_token = auth.verify_id_token(id_token)
+        uid = decoded_token['uid']
+
+        # Store user session after verifying token
+        session["user_id"] = uid
+        return jsonify({"success": True})  # User authenticated successfully
+
+    except Exception as e:
+        logging.error(f"Error verifying token: {e}")
+        return jsonify({"error": "Invalid token or session expired"}), 401
+
 @app.before_request
 def before_request():
-  if not session.get('user_id') and request.endpoint not in ['login', 'static', 'index','signup']:
+  if not session.get('user_id') and request.endpoint not in ['login', 'static', 'index','signup', 'validate_token']:
         return redirect(url_for('login'))
 
 @app.route('/save_answer', methods=['POST'])
