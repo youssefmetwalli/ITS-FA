@@ -6,25 +6,28 @@
     <title>Sign Up</title>
     <link rel="stylesheet" href="/static/css/styles.css">
     <style>
-     .signup-container {
-         display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-      }
-       .signup-form {
-           background-color: #fff;
-           padding: 20px;
-           border-radius: 10px;
-           box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-           text-align: center;
-           max-width: 400px;
-           width: 80%; /* Responsive width */
-          }
-     .signup-form h2 {
-          margin-bottom: 20px;
-          }
-       .signup-form input {
+        .signup-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .signup-form {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 400px;
+            width: 80%;
+        }
+
+        .signup-form h2 {
+            margin-bottom: 20px;
+        }
+
+        .signup-form input {
             display: block;
             margin: 10px auto;
             padding: 10px;
@@ -32,40 +35,55 @@
             border-radius: 5px;
             width: 90%;
         }
+
         .signup-form button {
             background-color: #007bff;
             color: white;
             border: none;
-             border-radius: 5px;
+            border-radius: 5px;
             padding: 10px 20px;
             cursor: pointer;
             transition: background-color 0.3s ease;
             margin-top: 15px;
         }
+
         .signup-form button:hover {
             background-color: #0056b3;
-       }
-          .error-message {
-            color: red;
-             margin-top: 10px;
-             }
+        }
+
+        .error-message {
+            background-color: #ffe6e6;
+            color: #d8000c;
+            border: 1px solid #d8000c;
+            border-radius: 5px;
+            padding: 10px;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        .login-link {
+            margin-top: 15px;
+            font-size: 14px;
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
     <div class="signup-container">
         <div class="signup-form">
             <h2>Sign Up</h2>
-             <form id="signupForm" method="post" action="/signup">
+            <form id="signupForm" method="post" action="/signup">
                 <input type="email" id="email" name="email" placeholder="Email" required>
                 <input type="password" id="password" name="password" placeholder="Password" required>
-                 <button type="submit">Sign Up</button>
-                  {% if error %}
-                     <p class="error-message">{{ error }}</p>
-                  {% endif %}
-             </form>
-            <p style = "margin-top:15px; font-size:14px; font-style:italic;">  Already have an account? <a href="/login">Log In</a></p>
+                <button type="submit">Sign Up</button>
 
-         </div>
+                {% if error %}
+                    <div class="error-message">{{ error }}</div>
+                {% endif %}
+            </form>
+
+            <p class="login-link">Already have an account? <a href="/login">Log In</a></p>
+        </div>
     </div>
 </body>
 </html>
