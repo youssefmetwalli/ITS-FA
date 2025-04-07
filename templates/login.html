@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login to Automata Tutor</title>
     <link rel="stylesheet" href="/static/css/styles.css">
+
     <style>
         .login-container {
             display: flex;
@@ -53,8 +54,20 @@
         }
 
         .error-message {
-            color: red;
-            margin-top: 10px;
+            background-color: #ffe6e6;
+            color: #d8000c;
+            border: 1px solid #d8000c;
+            border-radius: 5px;
+            padding: 10px;
+            margin-top: 15px;
+            display: none;
+            font-size: 14px;
+        }
+
+        .signup-link {
+            margin-top: 15px;
+            font-size: 14px;
+            font-style: italic;
         }
     </style>
 
@@ -64,7 +77,6 @@
 
     <script>
         window.onload = function () {
-            // Log for debugging
             console.log("DOM fully loaded. Initializing Firebase...");
 
             const firebaseConfig = {
@@ -79,6 +91,8 @@
             const auth = firebase.auth();
 
             const form = document.getElementById('loginForm');
+            const errorBox = document.getElementById('login-error');
+
             if (!form) {
                 console.error("loginForm element not found!");
                 return;
@@ -86,7 +100,7 @@
 
             form.onsubmit = async function (e) {
                 e.preventDefault();
-                console.log("Login form submitted");
+                errorBox.style.display = 'none'; // Hide any previous error
 
                 const email = document.getElementById('email').value;
                 const password = document.getElementById('password').value;
@@ -111,18 +125,27 @@
                         console.log("Token validated. Redirecting...");
                         window.location.href = '/';
                     } else {
-                        alert(data.error || "Login failed");
+                        errorBox.textContent = data.error || "Login failed.";
+                        errorBox.style.display = 'block';
                     }
                 } catch (error) {
                     console.error("Firebase sign-in error:", error);
-                    alert(error.message || "Invalid email or password");
+                    errorBox.textContent = mapFirebaseError(error.code) || "Invalid email or password.";
+                    errorBox.style.display = 'block';
                 }
             };
+
+            function mapFirebaseError(code) {
+                const messages = {
+                    "auth/user-not-found": "No user found with this email. Please sign up.",
+                    "auth/wrong-password": "Incorrect password. Please try again.",
+                    "auth/invalid-email": "The email address is badly formatted.",
+                    "auth/too-many-requests": "Too many attempts. Please wait and try again later."
+                };
+                return messages[code] || null;
+            }
         };
     </script>
-
-
-
 </head>
 
 <body>
@@ -133,11 +156,9 @@
                 <input type="email" id="email" name="email" placeholder="Email" required>
                 <input type="password" id="password" name="password" placeholder="Password" required>
                 <button type="submit">Log In</button>
-                {% if error %}
-                <p class="error-message">{{ error }}</p>
-                {% endif %}
+                <div id="login-error" class="error-message"></div>
             </form>
-            <p style="margin-top:15px; font-size:14px; font-style:italic;">No account? <a href="/signup">Sign Up</a></p>
+            <p class="signup-link">No account? <a href="/signup">Sign Up</a></p>
         </div>
     </div>
 </body>
