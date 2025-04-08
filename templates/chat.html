@@ -83,19 +83,23 @@
         }
 
         #sendButton {
-            padding: 10px;
+            padding: 10px 16px;
             border: 1px solid #ddd;
             border-left: none;
             border-radius: 0 5px 5px 0;
-            background-color: #007bff;
-            color: white;
+            background: linear-gradient(45deg, #007bff, #009eff);
+            color: #fff;
             cursor: pointer;
+            transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
         }
 
         #sendButton:hover {
-            background-color: #0056b3;
+            background: linear-gradient(45deg, #0056b3, #007ce0);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
+        /* Modern styling for save, load, and clear buttons */
         #saveButton,
         #loadButton,
         #clearButton {
@@ -103,49 +107,41 @@
             padding: 10px 20px;
             margin: 10px 5px;
             text-decoration: none;
-            color: white;
-            background-color: blue;
+            color: #fff;
+            background: linear-gradient(45deg, #3b8ee3, #5aa9ed);
             border: none;
             border-radius: 5px;
             font-weight: bold;
             cursor: pointer;
+            transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
         }
 
         #saveButton:hover,
         #loadButton:hover,
         #clearButton:hover {
-            background-color: darkblue;
+            background: linear-gradient(45deg, #3172c1, #4a8abc);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
-        .button {
-            display: inline-block;
-            padding: 10px 20px;
-            margin: 10px 5px;
-            text-decoration: none;
-            color: black;
-            background-color: orange;
-            border-radius: 5px;
-            font-weight: bold;
-        }
 
-        .button:hover {
-            background-color: darkorange;
-        }
 
         /* PDF-specific styles */
         .pdf-message {
-           margin-bottom: 10px;
-           padding: 10px;
-           border-radius: 5px;
-           word-wrap: break-word;
-           page-break-inside: avoid;
-           max-width: 100%; /* Take full width within the pdf container */
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            word-wrap: break-word;
+            page-break-inside: avoid;
+            max-width: 100%;
+            /* Take full width within the pdf container */
         }
 
         .pdf-user-message {
             background-color: #d4f0fc;
             color: #000;
-            margin-left: 0; /* Ensure full width in pdf output */
+            margin-left: 0;
+            /* Ensure full width in pdf output */
             margin-right: 0;
         }
 
@@ -153,8 +149,8 @@
             background-color: #e0f7e9;
             color: #000;
             margin-left: 0;
-           margin-right: 0;
-         }
+            margin-right: 0;
+        }
     </style>
 </head>
 
@@ -187,18 +183,18 @@
             }
 
             // Function to simulate smooth typing effect
-           function typeMessage(element, message, callback) {
+            function typeMessage(element, message, callback) {
                 let index = 0;
                 const intervalId = setInterval(() => {
-                   if (index < message.length) {
-                     element.html(message.substring(0, index + 1));
-                     index++;
-                 } else {
-                     clearInterval(intervalId);
-                      if(callback) callback();
-                 }
-            }, 20); // Adjust typing speed here (milliseconds)
-           }
+                    if (index < message.length) {
+                        element.html(message.substring(0, index + 1));
+                        index++;
+                    } else {
+                        clearInterval(intervalId);
+                        if (callback) callback();
+                    }
+                }, 20); // Adjust typing speed here (milliseconds)
+            }
 
             // Send message on Send button or Enter key
             $('#sendButton').click(function () {
@@ -237,7 +233,7 @@
 
                                 var messageText = renderBoldText(response.message);
                                 // Apply typing effect to the response
-                                typeMessage($('.bot-message:last-child'), messageText, function() {
+                                typeMessage($('.bot-message:last-child'), messageText, function () {
                                     // Auto-scroll to bottom after message is displayed
                                     $('#messages').scrollTop($('#messages')[0].scrollHeight);
                                 });
@@ -249,24 +245,24 @@
                     });
                 }
             }
-    
-           // Save to PDF functionality
+
+            // Save to PDF functionality
             $('#saveButton').click(async function () {
-                 const pdfName = prompt("Enter a name for your PDF file:", "chat_history");
-                    if (pdfName) {
-                         try {
+                const pdfName = prompt("Enter a name for your PDF file:", "chat_history");
+                if (pdfName) {
+                    try {
                         // Create a temporary div for PDF conversion
                         const pdfContainer = document.createElement('div');
                         pdfContainer.style.width = '800px';  // Fixed width for PDF
                         pdfContainer.style.padding = '20px';
-                        
+
                         // Get all messages and clone them with PDF-specific styling
                         const messages = document.querySelectorAll('.message');
                         messages.forEach(msg => {
-                           const pdfMessage = document.createElement('div');
+                            const pdfMessage = document.createElement('div');
                             pdfMessage.innerHTML = msg.innerHTML;
                             pdfMessage.className = 'pdf-message';
-                            
+
                             if (msg.classList.contains('user-message')) {
                                 pdfMessage.classList.add('pdf-user-message');
                             } else {
@@ -275,20 +271,20 @@
 
                             pdfContainer.appendChild(pdfMessage);
                         });
-                        
+
                         // Temporarily add the container to the document
                         document.body.appendChild(pdfContainer);
-                        
+
                         // Convert to canvas
                         const canvas = await html2canvas(pdfContainer, {
                             scale: 2,
                             logging: false,
                             useCORS: true
                         });
-                        
+
                         // Remove temporary container
                         document.body.removeChild(pdfContainer);
-                        
+
                         // Initialize PDF
                         const { jsPDF } = window.jspdf;
                         const pdf = new jsPDF({
@@ -296,19 +292,19 @@
                             unit: 'mm',
                             format: 'a4'
                         });
-                        
+
                         // Calculate dimensions
                         const imgWidth = 210; // A4 width in mm
                         const pageHeight = 295; // A4 height in mm
                         const imgHeight = (canvas.height * imgWidth) / canvas.width;
                         let heightLeft = imgHeight;
                         let position = 0;
-                        
+
                         // Add image to PDF
                         const imgData = canvas.toDataURL('image/png');
                         pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
                         heightLeft -= pageHeight;
-                        
+
                         // Add new pages if needed
                         while (heightLeft >= 0) {
                             position = heightLeft - imgHeight;
@@ -316,9 +312,9 @@
                             pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
                             heightLeft -= pageHeight;
                         }
-                        
+
                         // Save PDF
-                        pdf.save(pdfName +'.pdf');
+                        pdf.save(pdfName + '.pdf');
                     } catch (error) {
                         console.error('Error generating PDF:', error);
                         alert('Error generating PDF. Please try again.');
