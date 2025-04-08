@@ -33,6 +33,7 @@
 
         /* Reveal Hint button */
         .reveal-hint {
+            margin: 6px;
             background: linear-gradient(45deg, #add8e6, #87ceeb);
             /* Light blue gradient */
         }
@@ -58,6 +59,26 @@
         .question-item:hover {
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            /* pushes items to the edges */
+            align-items: center;
+            /* vertically center items */
+            gap: 1rem;
+            /* optional spacing between text & button */
+            margin-bottom: 0.5rem;
+            /* a little space below the row */
+        }
+
+        .question-text {
+            margin: 0;
+            /* remove extra paragraph spacing */
+            flex: 1;
+            /* allow this to take up remaining width */
+        }
+
 
         .hint {
             display: none;
@@ -116,6 +137,14 @@
         .quiz-button:hover {
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
         }
+
+        .incorrect-answer {
+            border: 4px solid rgb(240, 78, 78);
+        }
+
+        .correct-answer {
+            border: 4px solid rgb(82, 213, 82);
+        }
     </style>
 
     <script>
@@ -155,25 +184,34 @@
             timerInterval = setInterval(updateTimer, 1000);
         }
 
-        // Called when user clicks "Submit Quiz" or time runs out
         function submitQuiz() {
             const questionItems = document.querySelectorAll('.question-item');
             let score = 0;
 
             questionItems.forEach((item) => {
-                const selected = item.querySelector(
-                    `input[name="answer-${item.dataset.questionid}"]:checked`
-                );
+                // Clear any previous styling for both correct and incorrect answers
+                item.classList.remove('incorrect-answer', 'correct-answer');
+
+                const selected = item.querySelector(`input[name="answer-${item.dataset.questionid}"]:checked`);
+                const correctAnswer = item.dataset.correctAnswer.trim().toLowerCase();
+
                 if (selected) {
                     const userAnswer = selected.value.trim().toLowerCase();
-                    const correctAnswer = item.dataset.correctAnswer.trim().toLowerCase();
                     if (userAnswer === correctAnswer) {
+                        // Highlight correct answers in green and update score
+                        item.classList.add('correct-answer');
                         score++;
+                    } else {
+                        // Highlight incorrect answers in red
+                        item.classList.add('incorrect-answer');
                     }
+                } else {
+                    // If no answer is selected, mark it as incorrect too
+                    item.classList.add('incorrect-answer');
                 }
             });
 
-            // Stop timer
+            // Stop the timer
             clearInterval(timerInterval);
 
             // Show result locally
@@ -202,6 +240,8 @@
                     console.error('Error sending quiz result:', error);
                 });
         }
+
+
 
         window.onload = function () {
             startTimer();
@@ -240,13 +280,15 @@
         {% set question_id = loop.index0 %}
         <div class="question-item" data-correct-answer="{{ correct_answer }}"
             data-questionid="question-{{ question_id }}">
-            <p>
-                <strong>Question {{ loop.index }}:</strong> {{ question }}
+            <div class="question-header">
+                <p class="question-text">
+                    <strong>Question {{ loop.index }}:</strong> {{ question }}
+                </p>
                 <button id="hint-button-{{ loop.index | string }}" class="quiz-button reveal-hint"
                     onclick="toggleHint('{{ loop.index | string }}')">
                     Reveal Hint
                 </button>
-            </p>
+            </div>
             <div class="options-container">
                 {% set question_index = loop.index0 %}
                 {% set all_options = [
