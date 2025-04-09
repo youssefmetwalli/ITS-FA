@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 from PyPDF2 import PdfReader
 import re
 import firebase_admin
-from firebase_admin import credentials, firestore, auth
+from firebase_admin import credentials, firestore, auth, initialize_app
 import google.generativeai as genai
 from chatbot import create_chain
 import random  # Import random for shuffling
@@ -20,10 +20,14 @@ import traceback
 load_dotenv()
 
 # Firebase setup
-firebase_key_path = "firebase.json"
-cred = credentials.Certificate(firebase_key_path)
-if not firebase_admin._apps:  # Prevent re-initialization
-    firebase_admin.initialize_app(cred)
+credentials_json = os.environ.get("GOOGLE_CREDENTIALS_JSON")
+if credentials_json:
+    creds_dict = json.loads(credentials_json)
+    creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
+    cred = credentials.Certificate(creds_dict)
+    initialize_app(cred)
+else:
+    raise Exception("Firebase credentials not found in environment variables")
 db = firestore.client()
 
 # Flask app setup
