@@ -332,24 +332,6 @@ def module_detail(module_id):
     )
 
 
-@app.route("/lesson/<int:lesson_id>")
-def lesson_detail(lesson_id):
-    lesson = next(
-        (
-            lesson
-            for module in modules
-            for lesson in module["lessons"]
-            if lesson["id"] == lesson_id
-        ),
-        None,
-    )
-    module_id = next(
-        (module["id"] for module in modules if lesson in module["lessons"]), None
-    )
-    if "template" in lesson:
-        return render_template(lesson["template"], lesson=lesson)
-    else:
-        return render_template("lesson_detail.html", lesson=lesson, module_id=module_id)
     
 @app.route('/quiz/<int:chapter_id>')
 def quiz_page(chapter_id):
@@ -468,32 +450,6 @@ def chat_api():
         logging.error(f"Error: {e}")
         return jsonify({"error": str(e)}), 500
 
-
-
-
-@app.route("/save_chat", methods=["POST"])
-def save_chat():
-    chat_history = request.json.get("chat_history")
-    if not chat_history:
-        return jsonify({"error": "No chat history provided"}), 400
-    try:
-        with open(os.path.join(CHATS_DIR, "chat_history.json"), "w") as f:
-            f.write(chat_history)
-        return jsonify({"status": "Chat saved successfully"})
-    except Exception as e:
-        logging.error(f"Error saving chat: {e}")
-        return jsonify({"error": str(e)}), 500
-
-
-@app.route("/load_chat", methods=["GET"])
-def load_chat():
-    try:
-        with open(os.path.join(CHATS_DIR, "chat_history.json"), "r") as f:
-            chat_history = f.read()
-        return jsonify({"chat_history": chat_history})
-    except Exception as e:
-        logging.error(f"Error loading chat: {e}")
-        return jsonify({"error": str(e)}), 500
 
 
 
