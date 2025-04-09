@@ -145,6 +145,24 @@
         .correct-answer {
             border: 4px solid rgb(82, 213, 82);
         }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.2);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .timer-alert {
+            animation: pulse 1s infinite;
+        }
     </style>
 
     <script>
@@ -171,6 +189,16 @@
             timerDisplay.textContent =
                 `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 
+            // When 1 minute or less is remaining, change the display color and add animation
+            if (timeLeft <= 60) {
+                timerDisplay.style.color = 'red';
+                timerDisplay.classList.add('timer-alert');
+            } else {
+                // Reset to default state if timeLeft > 60
+                timerDisplay.style.color = '';
+                timerDisplay.classList.remove('timer-alert');
+            }
+
             if (timeLeft <= 0) {
                 clearInterval(timerInterval);
                 alert('Time is up!');
@@ -179,6 +207,7 @@
                 timeLeft--;
             }
         }
+
 
         function startTimer() {
             timerInterval = setInterval(updateTimer, 1000);
