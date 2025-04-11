@@ -1,8 +1,8 @@
 import logging
 import os
 import google.generativeai as genai
-import PyPDF2
-from PyPDF2.errors import PdfReadError
+# import PyPDF2
+# from PyPDF2.errors import PdfReadError
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_community.vectorstores import FAISS
