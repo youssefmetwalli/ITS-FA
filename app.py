@@ -1,16 +1,12 @@
 from flask import Flask, render_template, redirect, url_for, abort, request, session, jsonify
 # from manim import *
-from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
 import os
 import json
 import logging
-from bs4 import BeautifulSoup
-from PyPDF2 import PdfReader
 import re
 import firebase_admin
 from firebase_admin import credentials, firestore, auth, initialize_app
-import google.generativeai as genai
 from chatbot import create_chain
 import random  # Import random for shuffling
 import traceback
