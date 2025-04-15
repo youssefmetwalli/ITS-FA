@@ -1,89 +1,131 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Up</title>
-    <link rel="stylesheet" href="/static/css/styles.css">
-    <style>
-        .signup-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-
-        .signup-form {
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            max-width: 400px;
-            width: 80%;
-        }
-
-        .signup-form h2 {
-            margin-bottom: 20px;
-        }
-
-        .signup-form input {
-            display: block;
-            margin: 10px auto;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            width: 90%;
-        }
-
-        .signup-form button {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            padding: 10px 20px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-            margin-top: 15px;
-        }
-
-        .signup-form button:hover {
-            background-color: #0056b3;
-        }
-
-        .error-message {
-            background-color: #ffe6e6;
-            color: #d8000c;
-            border: 1px solid #d8000c;
-            border-radius: 5px;
-            padding: 10px;
-            margin-top: 15px;
-            font-size: 14px;
-        }
-
-        .login-link {
-            margin-top: 15px;
-            font-size: 14px;
-            font-style: italic;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Sign Up | Automata ITS</title>
+  <link rel="stylesheet" href="/static/css/styles.css">
+  <style>
+    body {
+      background: linear-gradient(to right, #f0f4f8, #e4ebf1);
+      margin: 0;
+      font-family: 'Arial', sans-serif;
+    }
+    
+    /* Main container to center both header and form */
+    .main-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    
+    .project-header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    .project-header h1 {
+      font-size: 2.5rem;
+      background: linear-gradient(90deg, #1CB5E0, #000851);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin: 0;
+    }
+    
+    .project-header p {
+      font-size: 1.2rem;
+      color: #555;
+      margin-top: 10px;
+    }
+    
+    .signup-container {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .signup-form {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      max-width: 400px;
+      width: 80%;
+    }
+    
+    .signup-form h2 {
+      margin-bottom: 20px;
+    }
+    
+    .signup-form input {
+      display: block;
+      margin: 10px auto;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      width: 90%;
+    }
+    
+    .signup-form button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 10px 20px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      margin-top: 15px;
+    }
+    
+    .signup-form button:hover {
+      background-color: #0056b3;
+    }
+    
+    .error-message {
+      background-color: #ffe6e6;
+      color: #d8000c;
+      border: 1px solid #d8000c;
+      border-radius: 5px;
+      padding: 10px;
+      margin-top: 15px;
+      font-size: 14px;
+    }
+    
+    .login-link {
+      margin-top: 15px;
+      font-size: 14px;
+      font-style: italic;
+    }
+  </style>
 </head>
 <body>
-    <div class="signup-container">
-        <div class="signup-form">
-            <h2>Sign Up</h2>
-            <form id="signupForm" method="post" action="/signup">
-                <input type="email" id="email" name="email" placeholder="Email" required>
-                <input type="password" id="password" name="password" placeholder="Password" required>
-                <button type="submit">Sign Up</button>
-
-                {% if error %}
-                    <div class="error-message">{{ error }}</div>
-                {% endif %}
-            </form>
-
-            <p class="login-link">Already have an account? <a href="/login">Log In</a></p>
-        </div>
+  <div class="main-container">
+    <!-- Project Header -->
+    <div class="project-header">
+      <h1>Automata ITS</h1>
+      <p>Study Automata and The Theory of Computation with ease!</p>
     </div>
+    
+    <!-- Signup Form -->
+    <div class="signup-container">
+      <div class="signup-form">
+        <h2>Sign Up</h2>
+        <form id="signupForm" method="post" action="/signup">
+          <input type="email" id="email" name="email" placeholder="Email" required>
+          <input type="password" id="password" name="password" placeholder="Password" required>
+          <button type="submit">Sign Up</button>
+          {% if error %}
+            <div class="error-message">{{ error }}</div>
+          {% endif %}
+        </form>
+        <p class="login-link">Already have an account? <a href="/login">Log In</a></p>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
