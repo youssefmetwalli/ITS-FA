@@ -17,7 +17,7 @@
 
 /* Apply animated background to the body */
 body {
-    background: linear-gradient(-45deg, #94b6f7, #6f77e7, #5eadca, #86f1ff, #afdcec, #9bdae2);
+    background: linear-gradient(-45deg, #85a4de, #646bd0, #559cb6, #79d9e6, #9ee1f9, #8cc4cb);
     background-size: 400% 400%;
     animation: colorChange 22s ease infinite;
     background-attachment: fixed;
@@ -140,7 +140,7 @@ li {
     margin: 10px 5px;
     text-decoration: none;
     font-weight: bold;
-    color: #413a3a;
+    color: #d1cfcf;
     background: linear-gradient(45deg, #d4fc79, #96e6a1);
     border-radius: 8px;
     transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
