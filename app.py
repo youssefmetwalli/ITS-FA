@@ -7,7 +7,7 @@ import logging
 import re
 import firebase_admin
 from firebase_admin import credentials, firestore, auth, initialize_app
-# from chatbot import create_chain
+from chatbot import create_chain
 import random  # Import random for shuffling
 import traceback
 
@@ -400,55 +400,55 @@ def quiz_result():
         return jsonify({"error": str(e)}), 500
 
 
-# @app.route("/chat")
-# def chat():
-#     return render_template("chat.html")
+@app.route("/chat")
+def chat():
+    return render_template("chat.html")
 
 
-# @app.route("/chat_api", methods=["POST"])
-# def chat_api():
-#     user_message = request.json.get("message")
-#     if not user_message:
-#         return jsonify({"error": "No message provided"}), 400
+@app.route("/chat_api", methods=["POST"])
+def chat_api():
+    user_message = request.json.get("message")
+    if not user_message:
+        return jsonify({"error": "No message provided"}), 400
 
-#     # Pull existing history from session, or use empty list if none
-#     chat_history = session.get("chat_history", [])
+    # Pull existing history from session, or use empty list if none
+    chat_history = session.get("chat_history", [])
 
-#     # Append this new user turn to chat_history
-#     chat_history.append({"role": "user", "content": user_message})
+    # Append this new user turn to chat_history
+    chat_history.append({"role": "user", "content": user_message})
 
-#     try:
-#         logging.info(f"Received message: {user_message}")
+    try:
+        logging.info(f"Received message: {user_message}")
 
-#         # Convert the entire conversation to a single string for the chain
-#         chat_history_str = ""
-#         for turn in chat_history:
-#             role_label = "User" if turn["role"] == "user" else "Assistant"
-#             chat_history_str += f"{role_label}: {turn['content']}\n"
+        # Convert the entire conversation to a single string for the chain
+        chat_history_str = ""
+        for turn in chat_history:
+            role_label = "User" if turn["role"] == "user" else "Assistant"
+            chat_history_str += f"{role_label}: {turn['content']}\n"
 
-#         # Build the chain input:
-#         #   "chat_history" is the string containing prior turns
-#         #   "latest_question" is the newest user message
-#         chain_inputs = {
-#             "chat_history": chat_history_str,
-#             "question": user_message
-#         }
+        # Build the chain input:
+        #   "chat_history" is the string containing prior turns
+        #   "latest_question" is the newest user message
+        chain_inputs = {
+            "chat_history": chat_history_str,
+            "question": user_message
+        }
 
-#         # Invoke the chain
-#         response = chain.invoke(chain_inputs)
-#         logging.info(f"Assistant message: {response}")
+        # Invoke the chain
+        response = chain.invoke(chain_inputs)
+        logging.info(f"Assistant message: {response}")
 
-#         # Add assistant's response to the in-memory chat history
-#         chat_history.append({"role": "assistant", "content": response})
+        # Add assistant's response to the in-memory chat history
+        chat_history.append({"role": "assistant", "content": response})
 
-#         # Save updated chat history in session
-#         session["chat_history"] = chat_history
+        # Save updated chat history in session
+        session["chat_history"] = chat_history
 
-#         # Return the assistant's text
-#         return jsonify({"message": response})
-#     except Exception as e:
-#         logging.error(f"Error: {e}")
-#         return jsonify({"error": str(e)}), 500
+        # Return the assistant's text
+        return jsonify({"message": response})
+    except Exception as e:
+        logging.error(f"Error: {e}")
+        return jsonify({"error": str(e)}), 500
 
 
 
