@@ -25,4 +25,4 @@ EXPOSE 3000
 
 # Define the command to run your app using gunicorn.
 # This assumes your api/index.py exports a WSGI app named "handler".
-CMD ["gunicorn", "--bind", "0.0.0.0:3000", "api.index:handler"]
+CMD ["gunicorn", "--bind", "0.0.0.0:3000", "app:app"]
