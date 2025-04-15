@@ -38,14 +38,6 @@ CHATS_DIR = "chats"
 # Logging setup
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# Related videos for each lesson
-related_videos = {
-    1: "https://www.youtube.com/embed/L2leZPkJ65I",
-    2: "https://www.youtube.com/embed/5A8C5-Qj7JM",
-    3: "https://www.youtube.com/embed/your_video_url_here",
-    4: "https://www.youtube.com/embed/your_video_url_here",
-}
-
 # Initialize RAG chain
 try:
     chain = create_chain()
@@ -66,7 +58,10 @@ app.jinja_env.filters['shuffle'] = shuffle_list
 # Routes
 @app.route("/")
 def index():
+    if not session.get('user_id'):
+         return redirect(url_for("signup"))
     return render_template("index.html")
+
 
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
