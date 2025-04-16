@@ -85,6 +85,15 @@
             vertical-align: middle;
         }
 
+        .example-icon {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            /* space to the right of the icon */
+            vertical-align: middle;
+        }
+
         /* Default: green circle */
         .green-icon {
             background-color: rgb(137, 225, 137);
@@ -129,6 +138,10 @@
             align-items: center;
             gap: 8px;
         }
+
+        .button {
+            color: rgb(47, 45, 45)
+        }
     </style>
 </head>
 
@@ -140,6 +153,16 @@
         <a class="button" href="{{ url_for('index') }}">Home</a>
         <a class="button" href="javascript:history.back()">Back</a>
     </div>
+
+    <!-- Information Section -->
+    <div class="info-container">
+        <p>
+            <strong>Study Tip:</strong> Chapters with a <span class="example-icon green-icon"></span> status icon are
+            recommended for studying, while chapters with a <span class="example-icon yellow-icon"></span> status icon
+            can be skipped if you are already comfortable with the material.
+        </p>
+    </div>
+
 
     <!-- Chapters Section -->
     <div class="module-container">
