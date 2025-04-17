@@ -65,6 +65,13 @@ def index():
 
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
+    firebase_config = {
+        "firebase_api_key": os.getenv("FIREBASE_API_KEY"),
+        "firebase_auth_domain": os.getenv("FIREBASE_AUTH_DOMAIN"),
+        "firebase_project_id": os.getenv("FIREBASE_PROJECT_ID"),
+        "firebase_storage_bucket": os.getenv("FIREBASE_STORAGE_BUCKET"),
+        "firebase_app_id": os.getenv("FIREBASE_APP_ID")
+    }
     if request.method == "POST":
         email = request.form.get("email")
         password = request.form.get("password")
@@ -101,7 +108,7 @@ def signup():
             logging.error(f"Error signing up: {e}, traceback: {traceback.format_exc()}")
             return render_template("signup.html", error="Unable to signup, please make sure you have a valid email and password.")
 
-    return render_template("signup.html")
+    return render_template("signup.html", **firebase_config)
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
