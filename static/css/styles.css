@@ -17,7 +17,7 @@
 
 /* Apply animated background to the body */
 body {
-    background: linear-gradient(-45deg, #85a4de, #646bd0, #559cb6, #79d9e6, #9ee1f9, #8cc4cb);
+    background: linear-gradient(-45deg, #0D1B2A, #1A2C42, #233C5A, #2D4D72, #375F8A, #417FA2);
     background-size: 400% 400%;
     animation: colorChange 22s ease infinite;
     background-attachment: fixed;
@@ -125,6 +125,21 @@ h1 {
     color: #333;
 }
 
+.welcome-heading {
+    font-size: 2.2rem;
+    font-weight: bold;
+    text-align: center;
+    /* Create a subtle pastel gradient for the text */
+    background: linear-gradient(45deg, #e7f7ff, #b0eeff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    /* Add a slight drop shadow for depth */
+    text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    /* Extra spacing for a clean, modern feel */
+    letter-spacing: 1px;
+    margin-bottom: 20px;
+}
+
 ul {
     list-style-type: none;
     padding: 0;
@@ -140,18 +155,20 @@ li {
     margin: 10px 5px;
     text-decoration: none;
     font-weight: bold;
-    color: #5a5959;
-    background: linear-gradient(45deg, #d4fc79, #96e6a1);
+    color: #565454; /* White text for contrast */
+    background: linear-gradient(45deg, #9fdfff, #beb9f0); /* Aqua → Mint */
     border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
     transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 .button:hover {
-    background: linear-gradient(45deg, #96e6a1, #d4fc79);
+    /* Reverse the gradient and add a lift effect */
+    background: linear-gradient(45deg, #84fab0, #8fd3f4);
     transform: translateY(-3px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
 }
+
 
 .button:focus,
 .button:active {
@@ -159,7 +176,26 @@ li {
     box-shadow: 0 0 0 3px rgba(150, 230, 160, 0.5);
 }
 
+.button {
+    display: inline-block;
+    padding: 12px 24px;
+    margin: 10px 5px;
+    text-decoration: none;
+    border: none;
+    font-weight: bold;
+    color: #565454; /* White text for contrast */
+    background: linear-gradient(45deg, #9fdfff, #beb9f0); /* Aqua → Mint */
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
 
+.button:hover {
+    /* Reverse the gradient and add a lift effect */
+    background: linear-gradient(45deg, #84fab0, #8fd3f4);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
 
 
 .header-container {
@@ -187,7 +223,7 @@ li {
 }
 
 .module-container {
-    background-color: rgba(255, 255, 255, 0.8);
+    background-color: white;
     border-radius: 10px;
     padding: 20px;
     margin: 0 auto;
@@ -197,7 +233,7 @@ li {
 .info-container {
     margin: 20px auto;
     max-width: 80%;
-    background-color: rgba(255, 255, 255, 0.8);
+    background-color: white;
     border-left: 4px solid #32acaa;
     padding: 15px 20px;
     border-radius: 8px;
