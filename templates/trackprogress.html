@@ -17,12 +17,16 @@
         .progress-container {
             background-color: #1c1c1c;
             color: #ccc;
+            width: 90%;
+            /* Use a relative width */
             max-width: 400px;
+            /* Maintain a maximum width */
             margin: 20px auto;
             padding: 20px;
             border-radius: 8px;
             font-family: Arial, sans-serif;
         }
+
 
         .progress-item {
             display: flex;
@@ -47,19 +51,22 @@
 
         /* Container for both ring progress bars (stacked) */
         .ring-progress-wrapper {
+            width: 90%;
+            max-width: 400px;
+            margin: 30px auto;
             display: flex;
             flex-direction: column;
-            /* stack vertically */
             align-items: center;
-            margin: 30px auto;
-            max-width: 400px;
         }
 
         /* Each ring card or box */
         .ring-box {
             background-color: #1c1c1c;
             color: #ccc;
-            width: 100%;
+            width: 90%;
+            /* Use a relative width */
+            max-width: 400px;
+            /* Maintain a maximum width */
             margin-bottom: 20px;
             border-radius: 8px;
             padding: 20px;
@@ -148,6 +155,22 @@
 
         .count-4 {
             background-color: #216e39;
+        }
+
+        .button {
+            font-weight: bold;
+            color: #5a5959;
+            background: linear-gradient(45deg, #d4fc79, #96e6a1);
+        }
+
+        @media (max-width: 480px) {
+
+            .progress-container,
+            .ring-box,
+            .ring-progress-wrapper {
+                width: 95%;
+                padding: 15px;
+            }
         }
     </style>
 </head>
