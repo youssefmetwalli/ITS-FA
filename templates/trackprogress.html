@@ -4,8 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Track Your Progress</title>
-
-    <!-- Animated background & circle styles -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/static/css/styles.css">
 
     <!-- Font Awesome for icons (optional) -->
@@ -18,14 +17,18 @@
             background-color: #1c1c1c;
             color: #ccc;
             width: 90%;
-            /* Use a relative width */
-            max-width: 400px;
-            /* Maintain a maximum width */
-            margin: 20px auto;
-            padding: 20px;
-            border-radius: 8px;
+            max-height: 50rem;
+            max-width: 30rem;
+            /* 400px → 25rem */
+            margin: 1.25rem auto;
+            /* 20px → 1.25rem top/bottom, auto left/right */
+            padding: 1.25rem;
+            /* 20px → 1.25rem */
+            border-radius: 0.5rem;
+            /* 8px → 0.5rem */
             font-family: Arial, sans-serif;
         }
+
 
 
         .progress-item {
@@ -163,15 +166,6 @@
             background: linear-gradient(45deg, #d4fc79, #96e6a1);
         }
 
-        @media (max-width: 480px) {
-
-            .progress-container,
-            .ring-box,
-            .ring-progress-wrapper {
-                width: 95%;
-                padding: 15px;
-            }
-        }
     </style>
 </head>
 
