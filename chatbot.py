@@ -84,31 +84,21 @@ def load_or_create_vector_db(overwrite=False):
         else:
             return None
 
-# Template for prompt
-template = f"""{PERSONA}
-You are an AI assistant specialized in Automata Theory. 
-You respond concisely and clearly about Automata Theory topics. 
-Do not mention you have a PDF or any external text. 
-Use a helpful, self-contained explanation without referring to external documents or 'the text.'
-
-If a topic (like pushdown automata or Turing machines) wasn't brought up by the user, 
-avoid mentioning it unless it is necessary to clarify the user's question or to give examples.
-
-If the user's question is not about Automata Theory, politely decline by saying you can only discuss automata theory.
-"""
 
 template = f"""{PERSONA}
 
 Conversation so far:
 {{chat_history}}
 
-Relevant knowledge you can draw upon (do not mention its source):
+Relevant knowledge you can draw upon (do not mention its source) or refer to it at all when answering:
 {{context}}
 
 User's latest question:
 {{question}}
 
-Answer in a friendly, conversational way, focusing on what the user has specifically asked for.
+You are an AI assistant specialized in Automata Theory. 
+You respond concisely and clearly about Automata Theory topics. 
+Answer in a friendly, conversational way, focusing on what the user has specifically asked for. Politelty decline answering any question unrelated to Automata Theory.
 """
 
 prompt = ChatPromptTemplate.from_messages([
