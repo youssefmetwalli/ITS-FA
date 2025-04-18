@@ -78,12 +78,12 @@ def signup():
 
         try:
             user = auth.get_user_by_email(email)
-            return render_template("signup.html", error="This email is already in use")
+            return render_template("signup.html", error="This email is already in use", **firebase_config)
         except auth.UserNotFoundError:
             pass
         password_pattern = r"^(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$"
         if not re.match(password_pattern, password):
-            return render_template("signup.html", error="Password must be at least 8 characters long, contain at least one number, one uppercase letter, and one symbol. ")
+            return render_template("signup.html", error="Password must be at least 8 characters long, contain at least one number, one uppercase letter, and one symbol. ", **firebase_config)
 
         try:
             # Create user with Firebase Authentication
@@ -106,7 +106,7 @@ def signup():
 
         except Exception as e:
             logging.error(f"Error signing up: {e}, traceback: {traceback.format_exc()}")
-            return render_template("signup.html", error="Unable to signup, please make sure you have a valid email and password.")
+            return render_template("signup.html", error="Unable to signup, please make sure you have a valid email and password.", **firebase_config)
 
     return render_template("signup.html", **firebase_config)
 
