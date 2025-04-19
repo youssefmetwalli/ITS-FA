@@ -22,7 +22,7 @@
 
     <style>
         .chat-container {
-            max-width: 70%;
+            max-width: 85%;
             margin: 0 auto;
             background-color: #f4f4f4;
             padding: 20px;
@@ -70,7 +70,6 @@
             white-space: pre-wrap;
         }
 
-
         .input-container {
             display: flex;
         }
@@ -81,6 +80,29 @@
             border: 1px solid #ddd;
             border-radius: 5px 0 0 5px;
         }
+
+        #voiceButton {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: linear-gradient(45deg, #ff9a9e, #fad0c4);
+            cursor: pointer;
+            transition: background 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #voiceButton:hover {
+            background: linear-gradient(45deg, #fad0c4, #ff9a9e);
+        }
+
+        #voiceButton svg {
+            width: 1.2em;
+            height: 1.2em;
+            fill: currentColor;
+        }
+
 
         #sendButton {
             padding: 10px 16px;
@@ -99,7 +121,6 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
-        /* Modern styling for save, load, and clear buttons */
         #saveButton,
         #loadButton,
         #clearButton {
@@ -124,9 +145,6 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
-
-
-        /* PDF-specific styles */
         .pdf-message {
             margin-bottom: 10px;
             padding: 10px;
@@ -134,14 +152,12 @@
             word-wrap: break-word;
             page-break-inside: avoid;
             max-width: 100%;
-            /* Take full width within the pdf container */
         }
 
         .pdf-user-message {
             background-color: #d4f0fc;
             color: #000;
             margin-left: 0;
-            /* Ensure full width in pdf output */
             margin-right: 0;
         }
 
@@ -171,6 +187,14 @@
         <div class="messages" id="messages"></div>
 
         <div class="input-container">
+            <button id="voiceButton" title="Speak">
+                <!-- Bootstrap “mic” icon SVG (inline) :contentReference[oaicite:0]{index=0} -->
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+                    <path
+                        d="M3.5 6.5A.5.5 0 0 1 4 7v1a4 4 0 0 0 8 0V7a.5.5 0 0 1 1 0v1a5 5 0 0 1-4.5 4.975V15h3a.5.5 0 0 1 0 1h-7a.5.5 0 0 1 0-1h3v-2.025A5 5 0 0 1 3 8V7a.5.5 0 0 1 .5-.5" />
+                    <path d="M10 8a2 2 0 1 1-4 0V3a2 2 0 1 1 4 0zM8 0a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V3a3 3 0 0 0-3-3" />
+                </svg>
+            </button>
             <input type="text" id="userInput" placeholder="Type a message...">
             <button id="sendButton">Send</button>
         </div>
@@ -183,160 +207,129 @@
 
     <script>
         $(document).ready(function () {
-            // Function to replace bold Markdown with HTML strong tags
+            let messages = [];
+
+            // Load saved chat history
+            $.getJSON('/load_chat')
+                .done(function (data) {
+                    if (data.chat_history) {
+                        try {
+                            const saved = JSON.parse(data.chat_history);
+                            messages = saved;
+                            saved.forEach(m => {
+                                const cls = m.role === 'user' ? 'user-message' : 'bot-message';
+                                $('#messages').append(
+                                    `<div class="message ${cls}">${escapeHtml(m.content)}</div>`
+                                );
+                            });
+                            $('#messages').scrollTop($('#messages')[0].scrollHeight);
+                        } catch (_) { }
+                    }
+                });
+
+            // Speech Recognition setup
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            let recognition;
+            if (SpeechRecognition) {
+                recognition = new SpeechRecognition();
+                recognition.lang = 'en-US';
+                recognition.interimResults = false;
+                recognition.maxAlternatives = 1;
+
+                recognition.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript;
+                    $('#userInput').val(transcript);
+                    sendMessage();
+                };
+                recognition.onerror = (event) => {
+                    console.error('Speech recognition error', event.error);
+                };
+                $('#voiceButton').click(() => {
+                    recognition.start();
+                });
+            } else {
+                $('#voiceButton').attr('disabled', true).attr('title', 'Speech recognition not supported');
+            }
+
             function renderBoldText(text) {
                 return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
             }
 
-            // Function to simulate smooth typing effect
             function typeMessage(element, message, callback) {
-                let index = 0;
-                const intervalId = setInterval(() => {
-                    if (index < message.length) {
-                        element.html(message.substring(0, index + 1));
-                        index++;
+                let idx = 0;
+                const iv = setInterval(() => {
+                    if (idx < message.length) {
+                        element.html(message.substring(0, idx + 1));
+                        idx++;
                     } else {
-                        clearInterval(intervalId);
-                        if (callback) callback();
+                        clearInterval(iv);
+                        callback && callback();
                     }
-                }, 20); // Adjust typing speed here (milliseconds)
+                }, 20);
             }
 
-            // Send message on Send button or Enter key
-            $('#sendButton').click(function () {
-                sendMessage();
-            });
+            function sendMessage() {
+                const userInput = $('#userInput').val().trim();
+                if (!userInput) return;
+                $('#messages').append(
+                    `<div class="message user-message">${escapeHtml(userInput)}</div>`
+                );
+                messages.push({ role: 'user', content: userInput });
+                $('#userInput').val('');
 
-            $('#userInput').on('keydown', function (e) {
+                $.ajax({
+                    url: '/chat_api',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        chat_history: messages,
+                        message: userInput
+                    }),
+                    success: function (response) {
+                        if (response.error) {
+                            alert(response.error);
+                            return;
+                        }
+                        const botContainer = $('<div class="message bot-message"></div>');
+                        $('#messages').append(botContainer);
+                        typeMessage(botContainer, renderBoldText(response.message), function () {
+                            $('#messages').scrollTop($('#messages')[0].scrollHeight);
+                        });
+                        messages.push({ role: 'bot', content: response.message });
+
+                    },
+                    error: function (xhr, status, err) {
+                        alert('Error: ' + err);
+                    }
+                });
+            }
+
+            $('#sendButton').click(sendMessage);
+            $('#userInput').on('keydown', e => {
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     sendMessage();
                 }
             });
 
-            function sendMessage() {
-                var userInput = $('#userInput').val().trim();
-                if (userInput) {
-                    // Add the user's message to chat
-                    $('#messages').append(
-                        '<div class="message user-message">' + escapeHtml(userInput) + '</div>'
-                    );
-                    $('#userInput').val('');
-
-                    // AJAX call to your server endpoint
-                    $.ajax({
-                        url: '/chat_api',
-                        method: 'POST',
-                        contentType: 'application/json',
-                        data: JSON.stringify({ message: userInput }),
-                        success: function (response) {
-                            if (response.error) {
-                                alert(response.error);
-                            } else {
-                                // Render bold text using the function
-                                var botContainer = $('<div class="message bot-message"></div>');
-                                $('#messages').append(botContainer);
-
-                                var messageText = renderBoldText(response.message);
-                                // Apply typing effect to the response
-                                typeMessage($('.bot-message:last-child'), messageText, function () {
-                                    // Auto-scroll to bottom after message is displayed
-                                    $('#messages').scrollTop($('#messages')[0].scrollHeight);
-                                });
-                            }
-                        },
-                        error: function (xhr, status, error) {
-                            alert('Error: ' + error);
-                        }
-                    });
-                }
-            }
-
-            // Save to PDF functionality
-            $('#saveButton').click(async function () {
-                const pdfName = prompt("Enter a name for your PDF file:", "chat_history");
-                if (pdfName) {
-                    try {
-                        // Create a temporary div for PDF conversion
-                        const pdfContainer = document.createElement('div');
-                        pdfContainer.style.width = '800px';  // Fixed width for PDF
-                        pdfContainer.style.padding = '20px';
-
-                        // Get all messages and clone them with PDF-specific styling
-                        const messages = document.querySelectorAll('.message');
-                        messages.forEach(msg => {
-                            const pdfMessage = document.createElement('div');
-                            pdfMessage.innerHTML = msg.innerHTML;
-                            pdfMessage.className = 'pdf-message';
-
-                            if (msg.classList.contains('user-message')) {
-                                pdfMessage.classList.add('pdf-user-message');
-                            } else {
-                                pdfMessage.classList.add('pdf-bot-message');
-                            }
-
-                            pdfContainer.appendChild(pdfMessage);
-                        });
-
-                        // Temporarily add the container to the document
-                        document.body.appendChild(pdfContainer);
-
-                        // Convert to canvas
-                        const canvas = await html2canvas(pdfContainer, {
-                            scale: 2,
-                            logging: false,
-                            useCORS: true
-                        });
-
-                        // Remove temporary container
-                        document.body.removeChild(pdfContainer);
-
-                        // Initialize PDF
-                        const { jsPDF } = window.jspdf;
-                        const pdf = new jsPDF({
-                            orientation: 'portrait',
-                            unit: 'mm',
-                            format: 'a4'
-                        });
-
-                        // Calculate dimensions
-                        const imgWidth = 210; // A4 width in mm
-                        const pageHeight = 295; // A4 height in mm
-                        const imgHeight = (canvas.height * imgWidth) / canvas.width;
-                        let heightLeft = imgHeight;
-                        let position = 0;
-
-                        // Add image to PDF
-                        const imgData = canvas.toDataURL('image/png');
-                        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-                        heightLeft -= pageHeight;
-
-                        // Add new pages if needed
-                        while (heightLeft >= 0) {
-                            position = heightLeft - imgHeight;
-                            pdf.addPage();
-                            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-                            heightLeft -= pageHeight;
-                        }
-
-                        // Save PDF
-                        pdf.save(pdfName + '.pdf');
-                    } catch (error) {
-                        console.error('Error generating PDF:', error);
-                        alert('Error generating PDF. Please try again.');
-                    }
-                }
+            $('#saveButton').click(() => {
+                $.ajax({
+                    url: '/save_chat',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ chat_history: JSON.stringify(messages) })
+                })
+                    .done(() => alert('Chat saved!'))
+                    .fail(() => alert('Save failed.'));
             });
 
-
-            // Clear the conversation
-            $('#clearButton').click(function () {
-                $('#messages').html('');
+            $('#clearButton').click(() => {
+                messages = [];
+                $('#messages').empty();
             });
 
-            // Simple HTML-escape function for user text
-            function escapeHtml(text) {
-                return text
+            function escapeHtml(txt) {
+                return txt
                     .replace(/&/g, "&")
                     .replace(/</g, "<")
                     .replace(/>/g, ">");
