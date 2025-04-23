@@ -212,7 +212,7 @@
             if (!window.SpeechRecognition && !window.webkitSpeechRecognition) {
                 voiceButton.disabled = true;
                 voiceButton.title = "Sorry, this feature is only supported on chrome and edge as of now.";
-                return;        
+                return;
             }
             // Speech Recognition setup
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -299,42 +299,88 @@
                 }
             });
 
-                        $('#saveButton').click(async function () {
+            $('#saveButton').click(async function () {
                 const pdfName = prompt("Enter a name for your PDF file:", "chat_history");
-                if (pdfName) {
-                    try {
-                        const pdfContainer = document.createElement('div');
-                        pdfContainer.style.width = '800px';
-                        pdfContainer.style.padding = '20px';
-                        document.querySelectorAll('.message').forEach((msg) => {
-                            const pdfMessage = document.createElement('div');
-                            pdfMessage.innerHTML = msg.innerHTML;
-                            pdfMessage.className = 'pdf-message';
-                            if (msg.classList.contains('user-message')) {
-                                pdfMessage.classList.add('pdf-user-message');
-                            } else {
-                                pdfMessage.classList.add('pdf-bot-message');
+                if (!pdfName) return;
+
+                try {
+                    const { jsPDF } = window.jspdf;
+                    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+                    const pageW = pdf.internal.pageSize.getWidth();
+                    const pageH = pdf.internal.pageSize.getHeight();
+                    const margin = 15;
+                    const usableWidth = pageW - 2 * margin;
+                    const bubblePadding = 3;
+                    const bubbleRadius = 3;
+                    const lineSpacingFactor = 1.4;
+                    const messageSpacing = 4;
+                    const fontSize = 11;
+                    const userBubbleColor = '#DCF8C6';
+                    const botBubbleColor = '#E0F7FA';
+                    const textColor = '#000000';
+                    const maxBubbleWidthRatio = 0.75;
+
+                    pdf.setFontSize(fontSize);
+                    pdf.setTextColor(textColor);
+
+                    let currentY = margin;
+
+                    const messages = document.querySelectorAll('.message');
+
+                    messages.forEach(msgElement => {
+                        const isUser = msgElement.classList.contains('user-message');
+                        const text = msgElement.innerText;
+
+                        const maxTextWidth = usableWidth * maxBubbleWidthRatio - (2 * bubblePadding);
+                        const textLines = pdf.splitTextToSize(text, maxTextWidth);
+
+                        const fontHeightMm = fontSize * 0.3528;
+                        const textBlockHeight = textLines.length * fontHeightMm * lineSpacingFactor;
+                        const bubbleHeight = textBlockHeight + (2 * bubblePadding);
+
+                        let maxLineWidth = 0;
+                        textLines.forEach(line => {
+                            const lineWidth = pdf.getTextWidth(line);
+                            if (lineWidth > maxLineWidth) {
+                                maxLineWidth = lineWidth;
                             }
-                            pdfContainer.appendChild(pdfMessage);
                         });
-                        document.body.appendChild(pdfContainer);
-                        const canvas = await html2canvas(pdfContainer, {
-                            scale: 2,
-                            logging: false,
-                            useCORS: true
+                        const bubbleWidth = maxLineWidth + (2 * bubblePadding);
+
+                        if (currentY + bubbleHeight + messageSpacing > pageH - margin) {
+                            pdf.addPage();
+                            currentY = margin;
+                        }
+
+                        const bubbleX = isUser
+                            ? pageW - margin - bubbleWidth
+                            : margin;
+
+                        pdf.setFillColor(isUser ? userBubbleColor : botBubbleColor);
+                        try {
+                            pdf.roundedRect(bubbleX, currentY, bubbleWidth, bubbleHeight, bubbleRadius, bubbleRadius, 'F');
+                        } catch (e) {
+                            console.warn("jsPDF roundedRect not available, using standard rect.");
+                            pdf.rect(bubbleX, currentY, bubbleWidth, bubbleHeight, 'F');
+                        }
+
+                        const textX = bubbleX + bubblePadding;
+                        const textY = currentY + bubblePadding + fontHeightMm;
+
+                        pdf.text(textLines, textX, textY, {
+                            lineHeightFactor: lineSpacingFactor,
+                            maxWidth: maxTextWidth
                         });
-                        const imgData = canvas.toDataURL('image/png');
-                        const pdf = new jspdf.jsPDF({
-                            orientation: 'portrait',
-                            unit: 'px',
-                            format: [canvas.width, canvas.height]
-                        });
-                        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-                        pdf.save(`${pdfName}.pdf`);
-                        document.body.removeChild(pdfContainer);
-                    } catch (error) {
-                        console.error('Error generating PDF', error);
-                    }
+
+                        currentY += bubbleHeight + messageSpacing;
+                    });
+
+                    pdf.save(`${pdfName}.pdf`);
+
+                } catch (error) {
+                    console.error('Error generating PDF:', error);
+                    alert(`Error generating PDF: ${error.message || error}. Please check the console for more details.`);
                 }
             });
 
