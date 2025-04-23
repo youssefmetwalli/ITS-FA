@@ -209,24 +209,11 @@
         $(document).ready(function () {
             let messages = [];
 
-            // Load saved chat history
-            $.getJSON('/load_chat')
-                .done(function (data) {
-                    if (data.chat_history) {
-                        try {
-                            const saved = JSON.parse(data.chat_history);
-                            messages = saved;
-                            saved.forEach(m => {
-                                const cls = m.role === 'user' ? 'user-message' : 'bot-message';
-                                $('#messages').append(
-                                    `<div class="message ${cls}">${escapeHtml(m.content)}</div>`
-                                );
-                            });
-                            $('#messages').scrollTop($('#messages')[0].scrollHeight);
-                        } catch (_) { }
-                    }
-                });
-
+            if (!window.SpeechRecognition && !window.webkitSpeechRecognition) {
+                voiceButton.disabled = true;
+                voiceButton.title = "Sorry, this feature is only supported on chrome and edge as of now.";
+                return;        
+            }
             // Speech Recognition setup
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             let recognition;
@@ -312,15 +299,43 @@
                 }
             });
 
-            $('#saveButton').click(() => {
-                $.ajax({
-                    url: '/save_chat',
-                    method: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({ chat_history: JSON.stringify(messages) })
-                })
-                    .done(() => alert('Chat saved!'))
-                    .fail(() => alert('Save failed.'));
+                        $('#saveButton').click(async function () {
+                const pdfName = prompt("Enter a name for your PDF file:", "chat_history");
+                if (pdfName) {
+                    try {
+                        const pdfContainer = document.createElement('div');
+                        pdfContainer.style.width = '800px';
+                        pdfContainer.style.padding = '20px';
+                        document.querySelectorAll('.message').forEach((msg) => {
+                            const pdfMessage = document.createElement('div');
+                            pdfMessage.innerHTML = msg.innerHTML;
+                            pdfMessage.className = 'pdf-message';
+                            if (msg.classList.contains('user-message')) {
+                                pdfMessage.classList.add('pdf-user-message');
+                            } else {
+                                pdfMessage.classList.add('pdf-bot-message');
+                            }
+                            pdfContainer.appendChild(pdfMessage);
+                        });
+                        document.body.appendChild(pdfContainer);
+                        const canvas = await html2canvas(pdfContainer, {
+                            scale: 2,
+                            logging: false,
+                            useCORS: true
+                        });
+                        const imgData = canvas.toDataURL('image/png');
+                        const pdf = new jspdf.jsPDF({
+                            orientation: 'portrait',
+                            unit: 'px',
+                            format: [canvas.width, canvas.height]
+                        });
+                        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+                        pdf.save(`${pdfName}.pdf`);
+                        document.body.removeChild(pdfContainer);
+                    } catch (error) {
+                        console.error('Error generating PDF', error);
+                    }
+                }
             });
 
             $('#clearButton').click(() => {
