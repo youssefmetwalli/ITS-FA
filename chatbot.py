@@ -1,9 +1,9 @@
 import logging
 import os
 import google.generativeai as genai
-# import PyPDF2
-# from PyPDF2.errors import PdfReadError
-# from langchain.text_splitter import RecursiveCharacterTextSplitter
+import PyPDF2
+from PyPDF2.errors import PdfReadError
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder, HumanMessagePromptTemplate
@@ -21,8 +21,9 @@ VECTOR_STORE_FILE = "index.faiss"
 PERSONA = "You are an AI assistant specialized in Automata Theory. Be kind, conversational, and helpful"
 
 # Configure API key from environment variable
-load_dotenv
+load_dotenv()
 genai.configure(api_key=os.environ.get("GOOGLE_API_KEY"))
+print(os.environ.get("GOOGLE_API_KEY"))
 model = genai.GenerativeModel('gemini-1.5-flash-002')
 
 
@@ -87,9 +88,6 @@ def load_or_create_vector_db(overwrite=False):
 
 template = f"""{PERSONA}
 
-Conversation so far:
-{{chat_history}}
-
 Relevant knowledge you can draw upon (do not mention its source) or refer to it at all when answering:
 {{context}}
 
@@ -118,22 +116,11 @@ def create_chain(overwrite=False):
 
     chain = (
         {
-            # We'll pass in the entire input as a dictionary,
-            # which will have keys: {"chat_history": "...", "latest_question": "..."}
-            "chat_history": RunnableLambda(lambda x: x["chat_history"]),
-            "question": RunnableLambda(lambda x: x["question"]),
+            "question": RunnablePassthrough(),
             "context": (
-                RunnableLambda(
-                    # Combine the full conversation and the user’s last question 
-                    # so the retriever can see "DFA" references even if the new prompt is vague.
-                    lambda x: vector_db.similarity_search(
-                        f"{x['chat_history']}\n\nUser's latest question: {x['question']}",
-                        k=4
-                    )
-                )
-                # Join all retrieved chunks into a single text blob
-                | (lambda docs: "\n".join([doc.page_content for doc in docs]))
-            ),
+                RunnableLambda(lambda q: vector_db.similarity_search(q, k=4))
+                | (lambda docs: "\n".join([d.page_content for d in docs]))
+            )
         }
         # The ChatPromptTemplate references {chat_history}, {question}, {context}
         | prompt  
