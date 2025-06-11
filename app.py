@@ -1,7 +1,7 @@
 from flask import Flask, render_template, redirect, url_for, abort, request, session, jsonify
 # from manim import *
 from dotenv import load_dotenv
-import os
+import os, base64
 import json
 import logging
 import re
@@ -10,22 +10,19 @@ from firebase_admin import credentials, firestore, auth, initialize_app
 from chatbot import create_chain
 import random  # Import random for shuffling
 import traceback
-
+import google.generativeai as genai
 
 # Load environment variables
 load_dotenv()
+b64 = os.environ.get("GOOGLE_CREDS_B64")
+if not b64:
+    raise RuntimeError("Missing GOOGLE_CREDS_B64")
 
-# Firebase setup
-credentials_json = os.environ.get("GOOGLE_CREDENTIALS_JSON")
-if credentials_json:
-    creds_dict = json.loads(credentials_json)
-    creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
-    cred = credentials.Certificate(creds_dict)
-    initialize_app(cred)
-else:
-    raise Exception("Firebase credentials not found in environment variables")
+creds_dict = json.loads(base64.b64decode(b64))
+initialize_app(credentials.Certificate(creds_dict))
 db = firestore.client()
-
+genai.configure(api_key=os.environ.get("GOOGLE_API_KEY"))
+model = genai.GenerativeModel("gemini-1.5-flash-002")
 # Flask app setup
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY")  # Used for cookies
@@ -413,47 +410,23 @@ def chat_api():
     if not user_message:
         return jsonify({"error": "No message provided"}), 400
 
-    # Pull existing history from session, or use empty list if none
-    chat_history = session.get("chat_history", [])
-
-    # Append this new user turn to chat_history
-    chat_history.append({"role": "user", "content": user_message})
+    global chain
+    if chain is None:
+        chain = create_chain()
+        if chain is None:
+            return jsonify({"error": "Assistant initialisation failed"}), 500
 
     try:
-        logging.info(f"Received message: {user_message}")
+        logging.info("Received message: %s", user_message)
 
-        # Convert the entire conversation to a single string for the chain
-        chat_history_str = ""
-        for turn in chat_history:
-            role_label = "User" if turn["role"] == "user" else "Assistant"
-            chat_history_str += f"{role_label}: {turn['content']}\n"
+        # ➜ DO NOT wrap in {"question": ...}
+        response = chain.invoke(user_message)       # <-- pass a string
+        logging.info("Assistant message: %s", response)
 
-        # Build the chain input:
-        #   "chat_history" is the string containing prior turns
-        #   "latest_question" is the newest user message
-        chain_inputs = {
-            "chat_history": chat_history_str,
-            "question": user_message
-        }
-
-        # Invoke the chain
-        response = chain.invoke(chain_inputs)
-        logging.info(f"Assistant message: {response}")
-
-        # Add assistant's response to the in-memory chat history
-        chat_history.append({"role": "assistant", "content": response})
-
-        # Save updated chat history in session
-        session["chat_history"] = chat_history
-
-        # Return the assistant's text
         return jsonify({"message": response})
-    except Exception as e:
-        logging.error(f"Error: {e}")
-        return jsonify({"error": str(e)}), 500
-
-
-
+    except Exception:
+        logging.error("Error:\n%s", traceback.format_exc())
+        return jsonify({"error": "Internal server error"}), 500
 
 @app.route("/track_progress")
 def track_progress():
@@ -476,6 +449,82 @@ def track_progress():
         quizzes_completed=quizzes_completed
     )
 
+def _generate_regex():
+    try:
+        prompt = (
+            "Generate a single random regular expression over the alphabet {a, b}. "
+            "Use +,-,* but make sure the regular expression ends in a or b"
+            "Do not include any explanation—just output the regex itself. "
+            "Make it relatively simple."
+        )
+        response = model.generate_content(
+            prompt,
+            generation_config=genai.types.GenerationConfig(
+                temperature=0.9,
+                max_output_tokens=30
+            )
+        )
+        regex = response.text.strip()
+        if not regex:
+            regex = "(a|b)*" # Fallback for empty response
+        return regex
+    except Exception as e:
+        logging.error(f"Gemini API call failed: {e}")
+        # Provide a default regex if the API call fails
+        return "a*(b|a)b*"
+
+# MODIFIED /drawer route
+@app.route("/drawer")
+def drawer():
+    # Check if the client is requesting JSON data specifically
+    if request.args.get('format') == 'json':
+        new_regex = _generate_regex()
+        return jsonify({"regex": new_regex})
+
+    # Otherwise, perform the standard full-page render
+    initial_regex = _generate_regex()
+    return render_template("drawer.html", regex=initial_regex)
+
+@app.route('/api/check-fsm', methods=['POST'])
+def check_fsm():
+    """
+    Receives an FSM description and a regex, asks Gemini to verify,
+    and returns the result.
+    """
+    if not request.json or 'regex' not in request.json or 'fsm_description' not in request.json:
+        return jsonify({"error": "Missing regex or FSM description"}), 400
+
+    data = request.get_json()
+    regex = data['regex']
+    fsm_description = data['fsm_description']
+
+    # --- Prompt Engineering: This is the key part ---
+    prompt = f"""
+You are an expert in automata theory and formal languages.
+Your task is to determine if a given Finite State Machine (FSM) correctly accepts the language described by a given regular expression over the alphabet {{a, b}}.
+
+**Regular Expression:**
+`{regex}`
+
+**FSM Description:**
+{fsm_description}
+
+**Instructions:**
+1. Analyze the FSM and the regular expression.
+2. On the very first line, respond with a single word: "Correct" or "Incorrect".
+3. On a new line, provide a brief and clear explanation for your reasoning.
+   - If incorrect, specify a simple string that is either wrongly accepted or wrongly rejected by the FSM. For example: "The FSM incorrectly accepts the string 'b'" or "The FSM fails to accept the valid string 'aba'".
+   - If correct, briefly explain why it correctly models the regex.
+"""
+
+    try:
+        logging.info("Sending FSM check request to Gemini.")
+        response = model.generate_content(prompt)
+        # We send the raw text back, the frontend will format it.
+        return jsonify({"result": response.text})
+    except Exception as e:
+        logging.error(f"Error calling Gemini API for FSM check: {e}")
+        return jsonify({"error": "Failed to get analysis from the AI model."}), 500
 
 
 if __name__ == "__main__":

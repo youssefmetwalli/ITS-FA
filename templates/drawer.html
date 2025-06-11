@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FSM Drawer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}" />
+    <style>
+        #canvas-container {
+            background: #fafafa;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            height: 500px;
+            margin: 1em 0;
+        }
+
+        svg#canvas {
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+        }
+
+        #gemini-result {
+            margin-top: 1em;
+            padding: 1em;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+            white-space: pre-wrap;
+            /* Allows line breaks in the output */
+            min-height: 50px;
+            transition: all 0.3s;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header-container">
+        <h1>Finite State Machine Drawer</h1>
+        <a class="button" href="{{ url_for('index') }}">Home</a>
+    </div>
+
+    <div class="module-container">
+        <h2>Draw Your FSM</h2>
+        <button class="button" id="new-regex-btn">New Regex</button>
+        <p>
+            <strong>Regular Expression:</strong>
+            <span id="regex-display">{{ regex }}</span>
+        </p>
+        <p>
+            <strong>Click</strong> on canvas to add a state. Drag states to move.
+            <br />
+            <strong>Shift-click</strong> from one state to another for transitions.
+            <br />
+            <strong>Double-click</strong> a state to toggle it as a final/accepting state.
+            <br />
+            <strong>Click</strong> on a transition label to modify it.
+            <strong>Hover</strong> over a state and press <strong>Backspace</strong> or <strong>Delete</strong> to
+            remove it.
+        </p>
+
+        <div id="canvas-container">
+            <svg id="canvas" xmlns="http://www.w3.org/2000/svg">
+                <style type="text/css">
+                    .state circle {
+                        fill: #fff;
+                        stroke: #333;
+                        stroke-width: 2px;
+                        transition: stroke 0.2s;
+                    }
+
+                    .state.final-state circle.inner {
+                        fill: none;
+                        stroke: #333;
+                        stroke-width: 2px;
+                    }
+
+                    .state:hover circle.outer {
+                        stroke: #007bff;
+                    }
+
+                    .transition {
+                        fill: none;
+                        stroke: #000;
+                        stroke-width: 2px;
+                        marker-end: url(#arrowhead);
+                    }
+
+                    .transition-label {
+                        font-size: 14px;
+                        user-select: none;
+                        font-family: monospace;
+                    }
+                </style>
+                <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" />
+                    </marker>
+                </defs>
+            </svg>
+        </div>
+        <div>
+            <button class="button" id="export-btn">Export as PNG</button>
+            <button class="button" id="check-fsm-btn" style="background-color: #28a745;">Ask Gemini</button>
+        </div>
+        <div id="gemini-result">
+            Gemini's analysis will appear here.
+        </div>
+    </div>
+
+    <script>
+        // Main drawing script
+        (function () {
+            const svg = document.getElementById('canvas');
+            let stateCount = 0;
+            const statePos = {}, states = {}, transitions = [];
+            const finalStates = new Set();
+            let selected = null, dragging = false, dragId = null, offset = {};
+            let hoveredStateId = null;
+
+            function mousePos(evt) {
+                const r = svg.getBoundingClientRect();
+                return { x: evt.clientX - r.left, y: evt.clientY - r.top };
+            }
+
+            function makeState(x, y) {
+                const id = 'q' + stateCount++;
+                statePos[id] = { x, y };
+
+                const g = document.createElementNS(svg.namespaceURI, 'g');
+                g.classList.add('state');
+                g.dataset.id = id;
+                g.setAttribute('transform', `translate(${x},${y})`);
+
+                const c_outer = document.createElementNS(svg.namespaceURI, 'circle');
+                c_outer.setAttribute('r', 20);
+                c_outer.classList.add('outer');
+                g.appendChild(c_outer);
+
+                const t = document.createElementNS(svg.namespaceURI, 'text');
+                t.setAttribute('text-anchor', 'middle');
+                t.setAttribute('dy', '.3em');
+                t.textContent = id;
+                g.appendChild(t);
+
+                // --- EVENT LISTENERS FOR THE STATE ('g' element) ---
+                g.addEventListener('mousedown', e => {
+                    e.stopPropagation();
+                    dragging = true;
+                    dragId = id;
+                    const m = mousePos(e);
+                    offset.x = statePos[id].x - m.x;
+                    offset.y = statePos[id].y - m.y;
+                });
+
+                g.addEventListener('click', e => {
+                    e.stopPropagation();
+                    if (!e.shiftKey) {
+                        if (selected) {
+                            states[selected].querySelector('circle.outer').setAttribute('stroke', '#333');
+                            selected = null;
+                        }
+                        return;
+                    }
+                    if (!selected) {
+                        selected = id;
+                        c_outer.setAttribute('stroke', '#d00');
+                    } else if (selected !== id) {
+                        const lbl = prompt('Transition label (e.g., a, b, ε):', '');
+                        if (lbl !== null && lbl.trim() !== "") {
+                            makeTrans(selected, id, lbl.trim());
+                        }
+                        states[selected].querySelector('circle.outer').setAttribute('stroke', '#333');
+                        selected = null;
+                    }
+                });
+
+                g.addEventListener('dblclick', e => {
+                    e.stopPropagation();
+                    g.classList.toggle('final-state');
+                    if (finalStates.has(id)) {
+                        finalStates.delete(id);
+                        const inner = g.querySelector('.inner');
+                        if (inner) g.removeChild(inner);
+                    } else {
+                        finalStates.add(id);
+                        const c_inner = document.createElementNS(svg.namespaceURI, 'circle');
+                        c_inner.setAttribute('r', 16);
+                        c_inner.classList.add('inner');
+                        g.insertBefore(c_inner, t);
+                    }
+                });
+                g.addEventListener('mouseover', () => { hoveredStateId = id; });
+                g.addEventListener('mouseout', () => { hoveredStateId = id; });
+
+                svg.appendChild(g);
+                states[id] = g;
+            }
+
+            // --- EVENT LISTENERS FOR THE CANVAS ('svg' element) ---
+            svg.addEventListener('click', e => {
+                if (e.target !== svg) return;
+                if (selected) {
+                    states[selected].querySelector('circle.outer').setAttribute('stroke', '#333');
+                    selected = null;
+                    return;
+                }
+                const p = mousePos(e);
+                makeState(p.x, p.y);
+            });
+
+            function makeTrans(src, tgt, label) {
+                const p = document.createElementNS(svg.namespaceURI, 'path');
+                p.classList.add('transition');
+                svg.insertBefore(p, svg.firstChild);
+
+                const txt = document.createElementNS(svg.namespaceURI, 'text');
+                txt.classList.add('transition-label');
+                txt.setAttribute('text-anchor', 'middle');
+                txt.textContent = label || '';
+                svg.appendChild(txt);
+
+                txt.addEventListener('click', e => {
+                    e.stopPropagation(); // Prevent canvas click from firing
+                    const newLabel = prompt('Enter new transition label:', txt.textContent);
+                    if (newLabel !== null && newLabel.trim() !== '') {
+                        txt.textContent = newLabel.trim();
+                    }
+                });
+                const obj = { src, tgt, path: p, label: txt };
+                transitions.push(obj);
+                updateTrans(obj);
+            }
+            function deleteState(stateId) {
+                if (!states[stateId]) return; // Safety check
+
+                // 1. Find all transitions connected to this state
+                const transitionsToRemove = transitions.filter(t => t.src === stateId || t.tgt === stateId);
+                const transitionsToKeep = transitions.filter(t => t.src !== stateId && t.tgt !== stateId);
+
+                transitionsToRemove.forEach(t => {
+                    svg.removeChild(t.path);
+                    svg.removeChild(t.label);
+                });
+
+                transitions.length = 0;
+                transitions.push(...transitionsToKeep);
+
+                svg.removeChild(states[stateId]);
+
+                delete states[stateId];
+                delete statePos[stateId];
+                finalStates.delete(stateId);
+
+                hoveredStateId = null;
+            }
+
+            window.addEventListener('keydown', e => {
+                if ((e.key === 'Backspace' || e.key === 'Delete') && hoveredStateId) {
+                    e.preventDefault(); // Prevent browser from navigating back
+                    deleteState(hoveredStateId);
+                }
+            });
+
+
+            function updateTrans(o) {
+                const a = statePos[o.src], b = statePos[o.tgt];
+                // Self-loop
+                if (a === b) {
+                    const x = a.x, y = a.y - 20;
+                    o.path.setAttribute('d', `M ${x - 18},${y + 5} A 15,15 0 1,1 ${x + 18},${y + 5}`);
+                    o.label.setAttribute('x', x);
+                    o.label.setAttribute('y', y - 22);
+                } else { // Standard transition
+                    const dx = b.x - a.x, dy = b.y - a.y, L = Math.hypot(dx, dy);
+                    if (L < 1) return;
+                    const ox = dx / L * 20, oy = dy / L * 20;
+                    const x1 = a.x + ox, y1 = a.y + oy, x2 = b.x - ox, y2 = b.y - oy;
+                    o.path.setAttribute('d', `M${x1},${y1} L${x2},${y2}`);
+                    const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+                    const perp_dx = -dy / L, perp_dy = dx / L;
+                    o.label.setAttribute('x', mx + perp_dx * 15);
+                    o.label.setAttribute('y', my + perp_dy * 15 - 2);
+                }
+            }
+
+            function updateAll() { transitions.forEach(updateTrans); }
+
+            window.addEventListener('mousemove', e => {
+                if (!dragging || !dragId) return;
+                const m = mousePos(e), nx = m.x + offset.x, ny = m.y + offset.y;
+                statePos[dragId] = { x: nx, y: ny };
+                states[dragId].setAttribute('transform', `translate(${nx},${ny})`);
+                updateAll();
+            });
+
+            window.addEventListener('mouseup', () => {
+                dragging = false;
+                dragId = null;
+            });
+
+            function serializeFSM() {
+                if (Object.keys(states).length === 0) { return "No FSM has been drawn."; }
+                const startState = "q0";
+                const stateList = Object.keys(states);
+                const finalStateList = Array.from(finalStates).sort();
+                let description = `States: {${stateList.join(', ')}}\n`;
+                description += `Alphabet: {a, b}\n`;
+                description += `Start State: ${startState}\n`;
+                description += `Final States: {${finalStateList.join(', ') || 'none'}}\n`;
+                description += "Transitions:\n";
+                if (transitions.length === 0) {
+                    description += "- (No transitions)";
+                } else {
+                    transitions.forEach(t => { description += `- from ${t.src} to ${t.tgt} on label '${t.label.textContent}'\n`; });
+                }
+                return description.trim();
+            }
+
+            // Seed the canvas with an initial state
+            makeState(100, 100);
+
+            // --- Button Event Listeners ---
+            document.getElementById('export-btn').addEventListener('click', () => {
+                const clone = svg.cloneNode(true);
+                if (!clone.getAttribute('xmlns')) clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+                const str = new XMLSerializer().serializeToString(clone);
+                const blob = new Blob([str], { type: 'image/svg+xml;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const img = new Image();
+                img.onload = () => {
+                    const c = document.createElement('canvas');
+                    c.width = svg.clientWidth; c.height = svg.clientHeight;
+                    const ctx = c.getContext('2d');
+                    ctx.fillStyle = '#fafafa'; ctx.fillRect(0, 0, c.width, c.height);
+                    ctx.drawImage(img, 0, 0);
+                    URL.revokeObjectURL(url);
+                    const png = c.toDataURL('image/png');
+                    const a = document.createElement('a');
+                    a.href = png; a.download = 'fsm.png';
+                    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                };
+                img.src = url;
+            });
+
+            document.getElementById('check-fsm-btn').addEventListener('click', async () => {
+                const regex = document.getElementById('regex-display').textContent;
+                const fsm_description = serializeFSM();
+                const resultDiv = document.getElementById('gemini-result');
+                resultDiv.textContent = 'Asking Gemini for analysis...';
+                resultDiv.style.color = '#333';
+                resultDiv.style.borderColor = '#ccc';
+                try {
+                    const response = await fetch('/api/check-fsm', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ regex: regex, fsm_description: fsm_description }),
+                    });
+                    if (!response.ok) {
+                        const errData = await response.json();
+                        throw new Error(errData.error || 'Server responded with an error.');
+                    }
+                    const data = await response.json();
+                    const firstLine = data.result.split('\n')[0].trim();
+                    resultDiv.textContent = data.result;
+                    if (firstLine.toLowerCase() === 'correct') {
+                        resultDiv.style.color = '#28a745';
+                        resultDiv.style.borderColor = '#28a745';
+                    } else {
+                        resultDiv.style.color = '#dc3545';
+                        resultDiv.style.borderColor = '#dc3545';
+                    }
+                } catch (error) {
+                    console.error('Error checking FSM:', error);
+                    resultDiv.textContent = `Error: ${error.message}`;
+                    resultDiv.style.color = '#dc3545';
+                }
+            });
+        })();
+
+        // Dynamic Regex Fetcher
+        document.addEventListener('DOMContentLoaded', () => {
+            const newRegexBtn = document.getElementById('new-regex-btn');
+            const regexDisplay = document.getElementById('regex-display');
+            newRegexBtn.addEventListener('click', () => {
+                regexDisplay.textContent = 'Generating...';
+                fetch('/drawer?format=json')
+                    .then(response => {
+                        if (!response.ok) throw new Error('Network response was not ok');
+                        return response.json();
+                    })
+                    .then(data => { regexDisplay.textContent = data.regex; })
+                    .catch(error => {
+                        console.error('Error fetching new regex:', error);
+                        regexDisplay.textContent = 'Error!';
+                    });
+            });
+        });
+    </script>
+
+</body>
+
+</html>
