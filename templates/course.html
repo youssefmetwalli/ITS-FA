@@ -20,9 +20,7 @@
 
         ol {
             list-style: none;
-            /* Remove default numbering */
             padding-left: 0;
-            /* Remove left padding */
         }
 
         ol li {
@@ -31,7 +29,6 @@
             margin-bottom: 10px;
         }
 
-        /* Chapter link styles */
         ol li a.chapter-link {
             display: inline-block;
             padding: 8px 15px;
@@ -48,7 +45,6 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
-        /* Quiz button styles */
         .quiz-button {
             display: inline-block;
             padding: 10px 15px;
@@ -74,14 +70,12 @@
             padding-bottom: 0.3em;
         }
 
-        /* Icon for status */
         .status-icon {
             display: inline-block;
             width: 12px;
             height: 12px;
             border-radius: 50%;
             margin-right: 8px;
-            /* space to the right of the icon */
             vertical-align: middle;
         }
 
@@ -90,16 +84,13 @@
             width: 12px;
             height: 12px;
             border-radius: 50%;
-            /* space to the right of the icon */
             vertical-align: middle;
         }
 
-        /* Default: green circle */
         .green-icon {
             background-color: rgb(137, 225, 137);
         }
 
-        /* Override: yellow circle */
         .yellow-icon {
             background-color: #f5e787;
         }
@@ -149,13 +140,11 @@
 
 <body>
 
-    <!-- Header Section -->
     <div class="header-container">
         <h1>Learning Agenda</h1>
         <a class="button" href="{{ url_for('index') }}">Home</a>
     </div>
 
-    <!-- Information Section -->
     <div class="info-container">
         <p>
             <strong>Study Tip:</strong> Chapters with a <span class="example-icon green-icon"></span> status icon are
@@ -164,12 +153,9 @@
         </p>
     </div>
 
-
-    <!-- Chapters Section -->
     <div class="module-container">
         <h2>Chapters</h2>
         <ol>
-            <!-- INTRODUCTION -->
             <li class="section-title">Introduction</li>
             {% for chapter in chapters if chapter.id <= 4 %} <li class="chapter-item">
                 <!-- Left side: chapter link -->
@@ -183,9 +169,11 @@
                     <a class="quiz-button" href="{{ url_for('quiz_page', chapter_id=chapter.id) }}">
                         Quiz
                     </a>
+                    {% if chapter.id in read_chapters %}
                     <button class="mark-unread-button" data-chapter-id="{{ chapter.id }}">
                         Mark as Unread
                     </button>
+                    {% endif %}
                 </div>
                 </li>
                 {% endfor %}
@@ -202,9 +190,11 @@
                         <a class="quiz-button" href="{{ url_for('quiz_page', chapter_id=chapter.id) }}">
                             Quiz
                         </a>
+                        {% if chapter.id in read_chapters %}
                         <button class="mark-unread-button" data-chapter-id="{{ chapter.id }}">
                             Mark as Unread
                         </button>
+                        {% endif %}
                     </div>
                     </li>
                     {% endfor %}
@@ -221,9 +211,11 @@
                             <a class="quiz-button" href="{{ url_for('quiz_page', chapter_id=chapter.id) }}">
                                 Quiz
                             </a>
+                            {% if chapter.id in read_chapters %}
                             <button class="mark-unread-button" data-chapter-id="{{ chapter.id }}">
                                 Mark as Unread
                             </button>
+                            {% endif %}
                         </div>
                         </li>
                         {% endfor %}
@@ -240,9 +232,11 @@
                                 <a class="quiz-button" href="{{ url_for('quiz_page', chapter_id=chapter.id) }}">
                                     Quiz
                                 </a>
+                                {% if chapter.id in read_chapters %}
                                 <button class="mark-unread-button" data-chapter-id="{{ chapter.id }}">
                                     Mark as Unread
                                 </button>
+                                {% endif %}
                             </div>
                             </li>
                             {% endfor %}
@@ -260,9 +254,11 @@
                                     <a class="quiz-button" href="{{ url_for('quiz_page', chapter_id=chapter.id) }}">
                                         Quiz
                                     </a>
+                                    {% if chapter.id in read_chapters %}
                                     <button class="mark-unread-button" data-chapter-id="{{ chapter.id }}">
                                         Mark as Unread
                                     </button>
+                                    {% endif %}
                                 </div>
                                 </li>
                                 {% endfor %}
@@ -280,9 +276,11 @@
                                         <a class="quiz-button" href="{{ url_for('quiz_page', chapter_id=chapter.id) }}">
                                             Quiz
                                         </a>
+                                        {% if chapter.id in read_chapters %}
                                         <button class="mark-unread-button" data-chapter-id="{{ chapter.id }}">
                                             Mark as Unread
                                         </button>
+                                        {% endif %}
                                     </div>
                                     </li>
                                     {% endfor %}
@@ -301,9 +299,11 @@
                                                 href="{{ url_for('quiz_page', chapter_id=chapter.id) }}">
                                                 Quiz
                                             </a>
+                                            {% if chapter.id in read_chapters %}
                                             <button class="mark-unread-button" data-chapter-id="{{ chapter.id }}">
                                                 Mark as Unread
                                             </button>
+                                            {% endif %}
                                         </div>
                                         </li>
                                         {% endfor %}
@@ -332,8 +332,6 @@
         document.addEventListener('DOMContentLoaded', function () {
             // The .chapter-link elements, if needed for indexing
             const chapterLinks = document.querySelectorAll('.chapter-link');
-
-            // The status icons in the same order as the chapters
             const statusIcons = document.querySelectorAll('.status-icon');
 
             // Retrieve answers from userAnswers
@@ -360,7 +358,6 @@
                 }
             }
 
-            // Apply specific "yellow" icons if conditions are met
             if (stringKnowledge) {
                 switchIconToYellow(1); // 2nd in the list
             }
@@ -378,7 +375,6 @@
     </script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // ...
             const unreadButtons = document.querySelectorAll('.mark-unread-button');
 
             unreadButtons.forEach(button => {

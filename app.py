@@ -1,5 +1,4 @@
 from flask import Flask, render_template, redirect, url_for, abort, request, session, jsonify
-# from manim import *
 from dotenv import load_dotenv
 import os, base64
 import json
@@ -8,11 +7,10 @@ import re
 import firebase_admin
 from firebase_admin import credentials, firestore, auth, initialize_app
 from chatbot import create_chain
-import random  # Import random for shuffling
+import random 
 import traceback
 import google.generativeai as genai
 
-# Load environment variables
 load_dotenv()
 b64 = os.environ.get("GOOGLE_CREDS_B64")
 if not b64:
@@ -23,16 +21,13 @@ initialize_app(credentials.Certificate(creds_dict))
 db = firestore.client()
 genai.configure(api_key=os.environ.get("GOOGLE_API_KEY"))
 model = genai.GenerativeModel("gemini-1.5-flash-002")
-# Flask app setup
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY")  # Used for cookies
+app.secret_key = os.environ.get("SECRET_KEY")
 
 # Directories for static content
 STATIC_DIR = "static"
 VIDEOS_DIR = os.path.join(STATIC_DIR, "videos")
 CHATS_DIR = "chats"
-
-# Logging setup
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Initialize RAG chain
@@ -42,9 +37,8 @@ try:
         raise Exception("Failed to initialize the RAG chain")
 except Exception as e:
     logging.error(f"Chain initialization error: {e}")
-    chain = None  # Prevent crashes
+    chain = None 
 
-# Custom Jinja2 filter to shuffle a list
 def shuffle_list(seq):
     shuffled = list(seq)
     random.shuffle(shuffled)
@@ -158,8 +152,8 @@ def save_answer():
 
     user_id = session['user_id']
     try:
-        data = request.get_json()  # Changed to get_json()
-        print(f"Received data: {data}")  # Added printing data
+        data = request.get_json() 
+        print(f"Received data: {data}")
         question_id = data.get("questionId")
         answer = data.get("answer")
 
@@ -168,7 +162,7 @@ def save_answer():
 
     except Exception as e:
         print(f"Error parsing JSON: {e}")
-        return jsonify({"error": f"Invalid JSON: {str(e)}"}), 400  # More specific error message
+        return jsonify({"error": f"Invalid JSON: {str(e)}"}), 400 
 
     try:
         user_ref = db.collection("Users").document(user_id)
@@ -193,10 +187,6 @@ def save_answer():
     
 @app.route('/increment_chapter_read/<int:chapter_id>', methods=['POST'])
 def increment_chapter_read(chapter_id):
-    """
-    Increments the user's 'chapters_read' count by 1
-    and adds 'chapter_id' to 'read_chapters' list if not already present.
-    """
     if 'user_id' not in session:
         return jsonify({"error": "Unauthorized"}), 401
 
@@ -207,20 +197,15 @@ def increment_chapter_read(chapter_id):
         user_doc = user_ref.get()
         if user_doc.exists:
             user_data = user_doc.to_dict()
-
-            # Increment the overall chapters_read
             current_count = user_data.get('chapters_read', 0)
             user_ref.update({'chapters_read': current_count + 1})
-
-            # Ensure read_chapters is a list
             read_chapters = user_data.get('read_chapters', [])
+
             if chapter_id not in read_chapters:
                 read_chapters.append(chapter_id)
                 user_ref.update({"read_chapters": read_chapters})
 
         else:
-            # If user doc doesn't exist for some reason, create it
-            # Initialize both fields
             user_ref.set({
                 'chapters_read': 1,
                 'read_chapters': [chapter_id]
@@ -267,19 +252,14 @@ def lessons():
 
 @app.route("/course")
 def course_page():
-    # 1. Check for logged-in user
     if 'user_id' not in session:
         return redirect(url_for('login'))  # or however you handle unauthorized access
 
     user_id = session['user_id']
-
-    # 2. Fetch user data from Firestore
     user_doc = db.collection("Users").document(user_id).get()
     user_data = user_doc.to_dict() if user_doc.exists else {}
     user_answers = user_data.get("answers", {})
     read_chapters = user_data.get("read_chapters", [])
-
-    # 3. Fetch all chapters
     chapters_ref = db.collection("chapters")
     chapters = []
 
@@ -289,11 +269,8 @@ def course_page():
         # Convert document ID to integer for easier sorting
         chapter["id"] = int(doc.id)
         chapters.append(chapter)
-
-    # Sort chapters numerically by ID
     chapters.sort(key=lambda x: x["id"])
 
-    # 4. Pass both the chapters and the user's answers into the template
     return render_template(
         "course.html",
         chapters=chapters,
@@ -305,27 +282,23 @@ def course_page():
 
 @app.route("/module/<int:module_id>")
 def module_detail(module_id):
-    # Fetch the selected chapter
     chapter_ref = db.collection("chapters").document(str(module_id))
     chapter = chapter_ref.get()
 
     if not chapter.exists:
-        abort(404)  # If chapter doesn't exist, return 404
+        abort(404) 
 
     chapter_data = chapter.to_dict()
     chapter_data["id"] = module_id
-
-    # Fetch subchapters for the selected chapter
     subchapters_ref = db.collection("subchapters").where("chapter_id", "==", module_id)
     subchapters = []
-
     subchapter_docs = subchapters_ref.stream()
+
     for doc in subchapter_docs:
         subchapter = doc.to_dict()
         subchapter["id"] = doc.id
         subchapters.append(subchapter)
 
-    # Render the module details page
     return render_template(
         "module_detail.html", module=chapter_data, subchapters=subchapters
     )
@@ -352,20 +325,17 @@ def quiz_page(chapter_id):
         correct_answers=correct_answers,
         incorrect_answers=incorrect_answers,
         hints=hints,
-        zip=zip  # Pass the zip function to the template
+        zip=zip 
     )
 
 
 @app.route('/quiz_result', methods=['POST'])
 def quiz_result():
-    # 1. Check for logged-in user
     if 'user_id' not in session:
         return jsonify({"error": "Unauthorized"}), 401
 
     user_id = session['user_id']
     user_ref = db.collection("Users").document(user_id)
-
-    # 2. Parse JSON from the request
     data = request.get_json()
     score = data.get('score', 0)
     total = data.get('total', 0)
@@ -374,12 +344,9 @@ def quiz_result():
         user_doc = user_ref.get()
         if user_doc.exists:
             user_data = user_doc.to_dict()
-
-            # 3. Increment quizzes_attempted
             current_attempted = user_data.get('quizzes_attempted', 0)
             user_ref.update({'quizzes_attempted': current_attempted + 1})
 
-            # 4. If perfect score, increment quizzes_completed
             if score == total:
                 current_completed = user_data.get('quizzes_completed', 0)
                 user_ref.update({'quizzes_completed': current_completed + 1})
@@ -418,9 +385,7 @@ def chat_api():
 
     try:
         logging.info("Received message: %s", user_message)
-
-        # ➜ DO NOT wrap in {"question": ...}
-        response = chain.invoke(user_message)       # <-- pass a string
+        response = chain.invoke(user_message)       
         logging.info("Assistant message: %s", response)
 
         return jsonify({"message": response})
@@ -437,7 +402,6 @@ def track_progress():
     user_doc = db.collection("Users").document(user_id).get()
     user_data = user_doc.to_dict() if user_doc.exists else {}
 
-    # Default to zero if not found
     chapters_read = user_data.get("chapters_read", 0)
     quizzes_attempted = user_data.get("quizzes_attempted", 0)
     quizzes_completed = user_data.get("quizzes_completed", 0)
@@ -466,22 +430,19 @@ def _generate_regex():
         )
         regex = response.text.strip()
         if not regex:
-            regex = "(a|b)*" # Fallback for empty response
+            regex = "(a|b)*"
         return regex
     except Exception as e:
         logging.error(f"Gemini API call failed: {e}")
-        # Provide a default regex if the API call fails
         return "a*(b|a)b*"
 
-# MODIFIED /drawer route
 @app.route("/drawer")
 def drawer():
-    # Check if the client is requesting JSON data specifically
+
     if request.args.get('format') == 'json':
         new_regex = _generate_regex()
         return jsonify({"regex": new_regex})
 
-    # Otherwise, perform the standard full-page render
     initial_regex = _generate_regex()
     return render_template("drawer.html", regex=initial_regex)
 
@@ -498,7 +459,6 @@ def check_fsm():
     regex = data['regex']
     fsm_description = data['fsm_description']
 
-    # --- Prompt Engineering: This is the key part ---
     prompt = f"""
 You are an expert in automata theory and formal languages.
 Your task is to determine if a given Finite State Machine (FSM) correctly accepts the language described by a given regular expression over the alphabet {{a, b}}.
@@ -520,7 +480,7 @@ Your task is to determine if a given Finite State Machine (FSM) correctly accept
     try:
         logging.info("Sending FSM check request to Gemini.")
         response = model.generate_content(prompt)
-        # We send the raw text back, the frontend will format it.
+        # send the raw text back, the frontend will format it.
         return jsonify({"result": response.text})
     except Exception as e:
         logging.error(f"Error calling Gemini API for FSM check: {e}")
