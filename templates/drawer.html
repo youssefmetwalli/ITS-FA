@@ -32,6 +32,26 @@
             min-height: 50px;
             transition: all 0.3s;
         }
+
+        .regex-button {
+            display: inline-block;
+            padding: 12px 24px;
+            margin: 10px 5px;
+            text-decoration: none;
+            font-weight: bold;
+            background: linear-gradient(45deg, #84fab0, #8fd3f4);
+            border-radius: 8px;
+            border: none;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+            transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .regex-button:hover {
+            background: linear-gradient(45deg, #9fdfff, #beb9f0);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+        }
+        
     </style>
 </head>
 
@@ -43,21 +63,22 @@
     </div>
 
     <div class="module-container">
-        <h2>Draw Your FSM</h2>
-        <button class="button" id="new-regex-btn">New Regex</button>
+        <h2>Practice Drawing a FSM</h2>
         <p>
-            <strong>Regular Expression:</strong>
+            <strong>Given Regular Expression:</strong>
             <span id="regex-display">{{ regex }}</span>
+            <button class="regex-button" id="new-regex-btn">Generate New Regex</button>
         </p>
         <p>
-            <strong>Click</strong> on canvas to add a state. Drag states to move.
+            > <strong>Click</strong> on canvas to add a state. Drag states to move.
             <br />
-            <strong>Shift-click</strong> from one state to another for transitions.
+            > <strong>Shift-click</strong> from one state to another for transitions.
             <br />
-            <strong>Double-click</strong> a state to toggle it as a final/accepting state.
+            > <strong>Double-click</strong> a state to toggle it as a final/accepting state.
             <br />
-            <strong>Click</strong> on a transition label to modify it.
-            <strong>Hover</strong> over a state and press <strong>Backspace</strong> or <strong>Delete</strong> to
+            > <strong>Click</strong> on a transition label to modify it.
+            <br />
+            > <strong>Hover</strong> over a state and press <strong>Backspace</strong> or <strong>Delete</strong> to
             remove it.
         </p>
 
@@ -103,10 +124,10 @@
         </div>
         <div>
             <button class="button" id="export-btn">Export as PNG</button>
-            <button class="button" id="check-fsm-btn" style="background-color: #28a745;">Ask Gemini</button>
+            <button class="button" id="check-fsm-btn">Check with AI</button>
         </div>
         <div id="gemini-result">
-            Gemini's analysis will appear here.
+            Built-in AI's analysis will appear here.
         </div>
     </div>
 
@@ -208,7 +229,7 @@
                     return;
                 }
                 const p = mousePos(e);
-                makeState(p.x, p.y);
+                makeState(p.x,     p.y);
             });
 
             function makeTrans(src, tgt, label) {
