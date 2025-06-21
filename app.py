@@ -448,10 +448,7 @@ def drawer():
 
 @app.route('/api/check-fsm', methods=['POST'])
 def check_fsm():
-    """
-    Receives an FSM description and a regex, asks Gemini to verify,
-    and returns the result.
-    """
+
     if not request.json or 'regex' not in request.json or 'fsm_description' not in request.json:
         return jsonify({"error": "Missing regex or FSM description"}), 400
 

@@ -23,13 +23,30 @@
     <style>
         .chat-container {
             max-width: 85%;
-            margin: 0 auto;
-            background-color: #f4f4f4;
+            margin: 20px auto;
+            /* Added top margin for spacing */
             padding: 20px;
             border-radius: 10px;
             display: flex;
             flex-direction: column;
             height: 500px;
+            /* Or consider min-height for flexible content */
+
+            /* --- Glassmorphism Properties --- */
+            /* 1. Replace the solid background with a semi-transparent one */
+            background: rgba(255, 255, 255, 0.15);
+            /* Slightly more transparent than the header */
+
+            /* 2. Add the blur effect */
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+
+            /* 3. Define the glass edge with a border */
+            border: 1px solid rgba(255, 255, 255, 0.18);
+
+            /* 4. Add a shadow to lift it off the page */
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+            /* --- End of Glassmorphism Properties --- */
         }
 
         @media (min-width: 768px) {
