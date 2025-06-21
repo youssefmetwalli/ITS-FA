@@ -8,8 +8,19 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}" />
     <style>
         #canvas-container {
-            background: #fafafa;
-            border: 1px solid #ddd;
+            background: rgba(255, 255, 255, 0.15);
+            /* Slightly more transparent than the header */
+
+            /* 2. Add the blur effect */
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+
+            /* 3. Define the glass edge with a border */
+            border: 1px solid rgba(255, 255, 255, 0.18);
+
+            /* 4. Add a shadow to lift it off the page */
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+            /* --- End of Glassmorphism Properties --- */
             border-radius: 4px;
             height: 500px;
             margin: 1em 0;
@@ -51,7 +62,6 @@
             transform: translateY(-3px);
             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
         }
-        
     </style>
 </head>
 
@@ -229,7 +239,7 @@
                     return;
                 }
                 const p = mousePos(e);
-                makeState(p.x,     p.y);
+                makeState(p.x, p.y);
             });
 
             function makeTrans(src, tgt, label) {
