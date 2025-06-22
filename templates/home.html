@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Home</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+        integrity="sha512-..." crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            display: grid;
+            grid-template-columns: 1.7fr 1fr;
+            grid-template-rows: 1.7fr 1fr;
+            grid-template-areas:
+                "lessons chat"
+                "main   practice";
+            position: relative;
+        }
+
+        .circles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: -1;
+        }
+
+        .lessons-container,
+        .chat-container {
+            display: flex;
+            height: 75%;
+            justify-content: center;
+            align-items: center;
+            text-decoration: none;
+            color: #e0e0e0;
+            font-weight: bold;
+            font-size: 2rem;
+            text-align: center;
+            padding: 20px;
+            border-radius: 0.8rem;
+            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            transition: all 0.2s ease-in-out;
+            margin: 65px 0px;
+        }
+
+        .lessons-container:hover,
+        .chat-container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.45);
+            background: rgba(81, 163, 171, 0.6);
+        }
+
+        .lessons-container {
+            grid-area: lessons;
+            margin-right: 20px;
+            margin-left: 30px;
+            background: rgba(131, 58, 58, 0.45);
+        }
+
+        .chat-container {
+            background: rgba(48, 51, 118, 0.45);
+            grid-area: chat;
+            margin-right: 20px;
+        }
+
+        .bottom-left-quarter {
+            grid-area: main;
+            display: flex;
+            flex-direction: row;
+            justify-content: start;
+            align-items: stretch;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .bottom-right-quarter {
+            grid-area: practice;
+            display: flex;
+            gap: 20px;
+            padding-top: 20px;
+            padding-bottom: 20px;
+            justify-content: end;
+            align-items: stretch;
+            margin-right: 10px;
+
+        }
+
+        .progress-container {
+            width: 100%;
+            max-width: 280px;
+            margin: 10px;
+            padding: 1.25rem;
+            border-radius: 0.8rem;
+            color: #e0e0e0;
+            background: rgba(28, 28, 28, 0.45);
+            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+        }
+
+        .practice-container {
+            width: 100%;
+            margin: 10px;
+            max-width: 280px;
+            padding: 1.25rem;
+            border-radius: 0.8rem;
+            color: #e0e0e0;
+            background: rgba(36, 122, 79, 0.45);
+            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-decoration: none;
+            cursor: pointer;
+            font-size: 1.8rem;
+            font-weight: bold;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .practice-container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.45);
+            background: rgba(81, 163, 171, 0.6);
+        }
+        .logout-button {
+            position: absolute;
+            top: 20px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: #e0e0e0; /* Matches your other text color */
+            font-size: 1.8rem; /* A good size for a corner icon */
+            cursor: pointer;
+            transition: color 0.2s ease-in-out, transform 0.2s ease-in-out;
+            z-index: 100; /* Ensures it stays on top of other elements */
+        }
+
+        .logout-button:hover {
+            color: #fff; /* A brighter color on hover */
+            transform: scale(1.1); /* A subtle zoom effect */
+        }
+
+        @media (max-width: 600px) {
+            .popup-content {
+                height: 55% !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <ul class="circles">
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+    </ul>
+
+    <button class="logout-button" onclick="logout()" title="Logout">
+        <i class="fas fa-right-from-bracket"></i>
+    </button>
+
+    <div class="popup-overlay" id="popupOverlay">
+        <div class="popup-content">
+            <h1>Welcome!</h1>
+            <h2>Firstly, let's check your knowledge!</h2>
+            <ul style="position: relative;">
+                <li class="popup-question" data-question-id="string_language">
+                    <p>Are you familiar with what a 'string' or a 'language' is in the context of computer science? For
+                        example, a string could be 'hello', '1010', or 'abc', and a language could be a set of such
+                        strings, like all binary strings starting with '1'.</p>
+                    <div class="popup-buttons">
+                        <button class="yes-button" onclick="handleAnswer('string_language', true)">Yes</button>
+                        <button class="no-button" onclick="handleAnswer('string_language', false)">No</button>
+                    </div>
+                </li>
+
+                <li class="popup-question" data-question-id="logical_operators">
+                    <p>Are you familiar with logical operators like 'AND', 'OR', and 'NOT'? For example, if A is true
+                        and B is false, then 'A ∧ B' (A AND B) is false, 'A ∨ B' (A OR B) is true, and '¬A' (NOT A) is
+                        false.</p>
+                    <div class="popup-buttons">
+                        <button class="yes-button" onclick="handleAnswer('logical_operators', true)">Yes</button>
+                        <button class="no-button" onclick="handleAnswer('logical_operators', false)">No</button>
+                    </div>
+                </li>
+
+                <li class="popup-question" data-question-id="regular_expressions">
+                    <p>Are you familiar with regular expressions (regex)? For example, the regex 'a*b' would match
+                        strings like 'b', 'ab', 'aab', and 'aaab', while 'a+' would match strings like 'a', 'aa', 'aaa'.
+                    </p>
+                    <div class="popup-buttons">
+                        <button class="yes-button" onclick="handleAnswer('regular_expressions', true)">Yes</button>
+                        <button class="no-button" onclick="handleAnswer('regular_expressions', false)">No</button>
+                    </div>
+                </li>
+
+                <li class="popup-question" data-question-id="automata_app">
+                    <p>Are you Interested in learning how the theories and concepts of Automata are applied in our
+                        everyday life?</p>
+                    <div class="popup-buttons">
+                        <button class="yes-button" onclick="handleAnswer('automata_app', true)">Yes</button>
+                        <button class="no-button" onclick="handleAnswer('automata_app', false)">No</button>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <a href="{{ url_for('course_page') }}" class="lessons-container">
+        Lesson Modules and Quizzes
+    </a>
+    <a href="chat" class="chat-container">
+        Chat
+    </a>
+
+
+    <div class="bottom-left-quarter">
+        <div class="progress-container">
+            <div class="progress-item">
+                <i class="progress-icon fas fa-book-open"></i>
+                <span class="progress-label">Chapters Read:</span>
+                <span class="progress-value">{{ chapters_read }}</span>
+            </div>
+            <div class="progress-item">
+                <i class="progress-icon fas fa-question-circle"></i>
+                <span class="progress-label">Quizzes Attempted:</span>
+                <span class="progress-value">{{ quizzes_attempted }}</span>
+            </div>
+            <div class="progress-item">
+                <i class="progress-icon fas fa-check-circle"></i>
+                <span class="progress-label">Quizzes Completed:</span>
+                <span class="progress-value">{{ quizzes_completed }}</span>
+            </div>
+        </div>
+
+        <div class="ring-progress-wrapper">
+            <div class="ring-box">
+                <h2>Chapters Progress</h2>
+                <svg class="progress-ring" viewBox="0 0 120 120">
+                    <defs>
+                        <linearGradient id="ringGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#90ee90" />
+                            <stop offset="100%" stop-color="#32CD32" />
+                        </linearGradient>
+                    </defs>
+                    <circle class="progress-ring__bg" cx="60" cy="60" r="54" />
+                    <circle id="chaptersFg" class="progress-ring__fg" cx="60" cy="60" r="54" stroke-dasharray="339.292"
+                        stroke-dashoffset="339.292" />
+                    <text id="chaptersText" class="ring-text" x="50%" y="50%">0%</text>
+                </svg>
+            </div>
+
+            <div class="ring-box">
+                <h2>Quizzes Progress</h2>
+                <svg class="progress-ring" viewBox="0 0 120 120">
+                    <defs>
+                        <linearGradient id="ringGradient2" x1="0%" y1="100%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#90ee90" />
+                            <stop offset="100%" stop-color="#32CD32" />
+                        </linearGradient>
+                    </defs>
+                    <circle class="progress-ring__bg" cx="60" cy="60" r="54" />
+                    <circle id="quizzesFg" class="progress-ring__fg" cx="60" cy="60" r="54" stroke-dasharray="339.292"
+                        stroke-dashoffset="339.292" stroke="url(#ringGradient2)" />
+                    <text id="quizzesText" class="ring-text" x="50%" y="50%">0%</text>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="bottom-right-quarter">
+        <a href="drawer" class="practice-container">
+            Practice
+        </a>
+    </div>
+
+
+    <script>
+        const chaptersRead = {{ chapters_read }};
+        const quizzesCompleted = {{ quizzes_completed }};
+        const TOTAL = 42;
+        const chaptersPercent = Math.round((chaptersRead / TOTAL) * 100);
+        const quizzesPercent = Math.round((quizzesCompleted / TOTAL) * 100);
+        const circumference = 2 * Math.PI * 54;
+
+        // CHAPTERS ring
+        const chaptersFg = document.getElementById("chaptersFg");
+        const chaptersText = document.getElementById("chaptersText");
+        const chaptersOffset = circumference - (chaptersPercent / 100 * circumference);
+        chaptersFg.style.strokeDashoffset = chaptersOffset;
+        chaptersText.textContent = chaptersPercent + "%";
+
+        // QUIZZES ring
+        const quizzesFg = document.getElementById("quizzesFg");
+        const quizzesText = document.getElementById("quizzesText");
+        const quizzesOffset = circumference - (quizzesPercent / 100 * circumference);
+        quizzesFg.style.strokeDashoffset = quizzesOffset;
+        quizzesText.textContent = quizzesPercent + "%";
+
+        // Logout function
+        function logout() {
+            fetch('/logout', {
+                method: 'POST',
+                credentials: 'same-origin',
+            }).then(response => {
+                if (response.ok) {
+                    window.location.href = '/login'; // Redirect to login page after logout
+                } else {
+                    alert("Logout failed. Please try again.");
+                }
+            });
+        }
+
+        const popupOverlay = document.getElementById('popupOverlay');
+        const popupQuestions = document.querySelectorAll('.popup-question');
+
+        let currentQuestionIndex = 0;
+
+        function showPopup() {
+            popupOverlay.style.display = 'flex';
+            popupQuestions[currentQuestionIndex].classList.add('active');
+        }
+
+        function hidePopup() {
+            popupOverlay.style.display = 'none';
+        }
+
+        function handleAnswer(questionId, answer) {
+            localStorage.setItem(questionId, answer);
+
+            // Send answer to the server
+            fetch('/save_answer', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ questionId: questionId, answer: answer })
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        console.error('Error saving answer:', response.status, response.statusText);
+                        return response.json().then(err => { throw err; });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Answer saved successfully:', data);
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
+                    alert("Failed to save answer. Check the console for details.");
+                });
+
+            // Get current question element
+            const currentQuestion = popupQuestions[currentQuestionIndex];
+
+            // Animate the current question out
+            currentQuestion.classList.add('slide-out');
+
+            setTimeout(() => {
+                // Remove animation classes
+                currentQuestion.classList.remove('active', 'slide-out');
+
+                // Move to next question
+                currentQuestionIndex++;
+
+                if (currentQuestionIndex < popupQuestions.length) {
+                    // Activate the next question
+                    const nextQuestion = popupQuestions[currentQuestionIndex];
+                    nextQuestion.classList.add('active', 'slide-in');
+
+                    // Remove the slide-in class after animation starts
+                    setTimeout(() => {
+                        nextQuestion.classList.remove('slide-in');
+                    }, 300);
+                } else {
+                    // All questions answered, hide popup
+                    hidePopup();
+                }
+            }, 300);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check localStorage to decide whether to show the popup
+            if (!localStorage.getItem('string_language') ||
+                !localStorage.getItem('logical_operators') ||
+                !localStorage.getItem('regular_expressions') ||
+                !localStorage.getItem('automata_app')) {
+                showPopup();
+            }
+        });
+    </script>
+</body>
+
+</html>
