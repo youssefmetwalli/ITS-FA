@@ -8,19 +8,8 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}" />
     <style>
         #canvas-container {
-            background: rgba(255, 255, 255, 0.15);
-            /* Slightly more transparent than the header */
-
-            /* 2. Add the blur effect */
-            -webkit-backdrop-filter: blur(10px);
-            backdrop-filter: blur(10px);
-
-            /* 3. Define the glass edge with a border */
-            border: 1px solid rgba(255, 255, 255, 0.18);
-
-            /* 4. Add a shadow to lift it off the page */
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
-            /* --- End of Glassmorphism Properties --- */
+            background: #fafafa;
+            border: 1px solid #ddd;
             border-radius: 4px;
             height: 500px;
             margin: 1em 0;
@@ -39,7 +28,6 @@
             border-radius: 4px;
             background-color: #f9f9f9;
             white-space: pre-wrap;
-            /* Allows line breaks in the output */
             min-height: 50px;
             transition: all 0.3s;
         }
@@ -62,6 +50,7 @@
             transform: translateY(-3px);
             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
         }
+        
     </style>
 </head>
 
@@ -70,6 +59,8 @@
     <div class="header-container">
         <h1>Finite State Machine Drawer</h1>
         <a class="button" href="{{ url_for('index') }}">Home</a>
+        <a class="button" href="/chat">Chat</a>
+        <a class="button" href="/drawer">Practice</a>
     </div>
 
     <div class="module-container">
@@ -239,7 +230,7 @@
                     return;
                 }
                 const p = mousePos(e);
-                makeState(p.x, p.y);
+                makeState(p.x,     p.y);
             });
 
             function makeTrans(src, tgt, label) {
