@@ -51,7 +51,20 @@ app.jinja_env.filters['shuffle'] = shuffle_list
 def index():
     if not session.get('user_id'):
          return redirect(url_for("signup"))
-    return render_template("index.html")
+    user_id = session['user_id']
+    user_doc = db.collection("Users").document(user_id).get()
+    user_data = user_doc.to_dict() if user_doc.exists else {}
+
+    chapters_read = user_data.get("chapters_read", 0)
+    quizzes_attempted = user_data.get("quizzes_attempted", 0)
+    quizzes_completed = user_data.get("quizzes_completed", 0)
+
+    return render_template(
+        "home.html",
+        chapters_read=chapters_read,
+        quizzes_attempted=quizzes_attempted,
+        quizzes_completed=quizzes_completed
+    )
 
 
 @app.route("/signup", methods=["GET", "POST"])
@@ -393,25 +406,6 @@ def chat_api():
         logging.error("Error:\n%s", traceback.format_exc())
         return jsonify({"error": "Internal server error"}), 500
 
-@app.route("/track_progress")
-def track_progress():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-
-    user_id = session['user_id']
-    user_doc = db.collection("Users").document(user_id).get()
-    user_data = user_doc.to_dict() if user_doc.exists else {}
-
-    chapters_read = user_data.get("chapters_read", 0)
-    quizzes_attempted = user_data.get("quizzes_attempted", 0)
-    quizzes_completed = user_data.get("quizzes_completed", 0)
-
-    return render_template(
-        "trackprogress.html",
-        chapters_read=chapters_read,
-        quizzes_attempted=quizzes_attempted,
-        quizzes_completed=quizzes_completed
-    )
 
 def _generate_regex():
     try:
@@ -448,7 +442,6 @@ def drawer():
 
 @app.route('/api/check-fsm', methods=['POST'])
 def check_fsm():
-
     if not request.json or 'regex' not in request.json or 'fsm_description' not in request.json:
         return jsonify({"error": "Missing regex or FSM description"}), 400
 
