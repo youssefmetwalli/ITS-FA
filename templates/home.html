@@ -176,8 +176,12 @@
 
         @media (max-width: 768px) {
 
-            html,
+            html {
+                position: relative;
+            }
             body {
+                min-height: 100vh;
+                height: auto;
                 overflow-y: auto;
                 overflow-x: hidden;
                 -webkit-overflow-scrolling: touch;
@@ -188,7 +192,6 @@
             .practice-container,
             .progress-container {
                 -webkit-backdrop-filter: none;
-                /* Disable expensive filter */
                 backdrop-filter: none;
             }
 
