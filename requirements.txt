@@ -8,3 +8,4 @@ langchain-community==0.3.13
 faiss-cpu==1.8.0.post1
 gunicorn==20.1.0
 PyPDF2==3.0.1
+whitenoise==6.9.0
