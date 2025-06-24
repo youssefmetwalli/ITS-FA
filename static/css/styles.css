@@ -323,7 +323,7 @@ tr:hover {
     text-align: left;
     max-width: 600px;
     width: 80%;
-    height: 40%;
+    height: 37vh;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
     opacity: 0;
     transform: translateY(20px);
