@@ -180,6 +180,16 @@
             body {
                 overflow-y: auto;
                 overflow-x: hidden;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .lessons-container,
+            .chat-container,
+            .practice-container,
+            .progress-container {
+                -webkit-backdrop-filter: none;
+                /* Disable expensive filter */
+                backdrop-filter: none;
             }
 
             .lessons-container {
@@ -224,6 +234,7 @@
                 font-size: 1.5rem;
                 max-width: none;
             }
+
             .practice-container {
                 height: auto;
                 min-height: 150px;
@@ -249,6 +260,7 @@
                 margin-right: 30px;
 
             }
+
             .ring-progress-wrapper {
                 display: flex;
                 flex-direction: row;
