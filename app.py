@@ -6,6 +6,7 @@ import logging
 import re
 import firebase_admin
 from firebase_admin import credentials, firestore, auth, initialize_app
+from whitenoise import WhiteNoise
 from chatbot import create_chain
 import random 
 import traceback
@@ -23,6 +24,7 @@ genai.configure(api_key=os.environ.get("GOOGLE_API_KEY"))
 model = genai.GenerativeModel("gemini-1.5-flash-002")
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY")
+app.wsgi_app = WhiteNoise(app.wsgi_app, root='static/', prefix='static/')
 
 # Directories for static content
 STATIC_DIR = "static"
