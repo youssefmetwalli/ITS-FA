@@ -242,9 +242,14 @@ li {
     font-size: 1rem;
     color: #333;
 }
-
-
-
+@media (max-width: 768px) {
+    .header-container h1 {
+        display: none;
+    }
+    .header-container {
+        justify-content: space-evenly;
+    }
+}
 /* progress styles */
 
 .table-container {
