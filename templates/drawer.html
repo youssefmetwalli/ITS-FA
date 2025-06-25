@@ -6,6 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>FSM Drawer</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+        integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
         #canvas-container {
             background: #fafafa;
@@ -13,12 +16,61 @@
             border-radius: 4px;
             height: 500px;
             margin: 1em 0;
+            position: relative;
         }
 
         svg#canvas {
             width: 100%;
             height: 100%;
             cursor: crosshair;
+        }
+
+        .instructions-container {
+            background-color: #e0faf7;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 1.5em;
+            margin-top: 1.5em;
+        }
+
+        .instructions-container h3 {
+            margin-top: 0;
+            color: #343a40;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 0.5em;
+            margin-bottom: 1em;
+        }
+
+        .instructions-container ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            color: #495057;
+        }
+
+        .instructions-container li {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 0;
+        }
+
+        .instructions-container .icon {
+            font-size: 1.2em;
+            width: 24px;
+            text-align: center;
+            color: #007bff;
+        }
+
+        .instructions-container kbd {
+            background-color: #e9ecef;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            padding: 2px 6px;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+            font-size: 0.9em;
+            color: #212529;
+            box-shadow: 1px 1px 1px rgba(0, 0, 0, 0.1);
         }
 
         #gemini-result {
@@ -44,6 +96,7 @@
             color: #464040;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
             transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+            cursor: pointer;
         }
 
         .regex-button:hover {
@@ -51,10 +104,22 @@
             transform: translateY(-3px);
             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
         }
+
         .button {
             border: none;
+            /* Using a more generic class for action buttons */
+            border: 1px solid #ccc;
+            background-color: #f0f0f0;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s;
         }
-        
+
+        .button:hover {
+            background-color: #e0e0e0;
+            border-color: #999;
+        }
     </style>
 </head>
 
@@ -74,18 +139,17 @@
             <span id="regex-display">{{ regex }}</span>
             <button class="regex-button" id="new-regex-btn">Generate New Regex</button>
         </p>
-        <p>
-            > <strong>Click</strong> on canvas to add a state. Drag states to move.
-            <br />
-            > <strong>Shift-click</strong> from one state to another for transitions.
-            <br />
-            > <strong>Double-click</strong> a state to toggle it as a final/accepting state.
-            <br />
-            > <strong>Click</strong> on a transition label to modify it.
-            <br />
-            > <strong>Hover</strong> over a state and press <strong>Backspace</strong> or <strong>Delete</strong> to
-            remove it.
-        </p>
+        <div class="instructions-container">
+            <h3>Instructions</h3>
+            <ul>
+                <li><i class="fas fa-mouse-pointer icon"></i> <strong>Click</strong> on canvas to add a state. Drag states to move.</li>
+                <li><i class="fas fa-link icon"></i> <strong>Shift-click</strong> a state, then <strong>Shift-click</strong> another (or the same) for transitions.</li>
+                <li><i class="fas fa-check-double icon"></i> <strong>Double-click</strong> a state to toggle it as a final/accepting state.</li>
+                <li><i class="fas fa-flag icon"></i> <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <strong>Click</strong> a state to set it as the start state.</li>
+                <li><i class="fas fa-tag icon"></i> <strong>Click</strong> a transition label to modify it. Use <kbd>e</kbd>, <kbd>eps</kbd>, or leave blank for epsilon (ε).</li>
+                <li><i class="fas fa-keyboard icon"></i> Hover over a state and press <kbd>Backspace</kbd> or <kbd>Delete</kbd> to remove it.</li>
+            </ul>
+        </div>
 
         <div id="canvas-container">
             <svg id="canvas" xmlns="http://www.w3.org/2000/svg">
@@ -95,6 +159,11 @@
                         stroke: #333;
                         stroke-width: 2px;
                         transition: stroke 0.2s;
+                    }
+
+                    /* Added stroke change to selected state for better feedback */
+                    .state.selected circle.outer {
+                        stroke: #d00;
                     }
 
                     .state.final-state circle.inner {
@@ -114,10 +183,19 @@
                         marker-end: url(#arrowhead);
                     }
 
+                    /* New style for the start state indicator */
+                    .start-arrow {
+                        fill: none;
+                        stroke: #000;
+                        stroke-width: 2px;
+                        marker-end: url(#arrowhead);
+                    }
+
                     .transition-label {
                         font-size: 14px;
                         user-select: none;
                         font-family: monospace;
+                        cursor: pointer;
                     }
                 </style>
                 <defs>
@@ -130,6 +208,7 @@
         <div>
             <button class="button" id="export-btn">Export as PNG</button>
             <button class="button" id="check-fsm-btn">Check with AI</button>
+            <button class="button" id="clear-btn">Clear Canvas</button>
         </div>
         <div id="gemini-result">
             Built-in AI's analysis will appear here.
@@ -141,14 +220,37 @@
         (function () {
             const svg = document.getElementById('canvas');
             let stateCount = 0;
-            const statePos = {}, states = {}, transitions = [];
-            const finalStates = new Set();
+            let statePos = {}, states = {}, transitions = [];
+            let finalStates = new Set();
             let selected = null, dragging = false, dragId = null, offset = {};
             let hoveredStateId = null;
+
+            // Variables for new features
+            let startStateId = null;
+            let startArrow = null;
 
             function mousePos(evt) {
                 const r = svg.getBoundingClientRect();
                 return { x: evt.clientX - r.left, y: evt.clientY - r.top };
+            }
+
+            function setStartState(id) {
+                if (!states[id]) return;
+                startStateId = id;
+                if (!startArrow) {
+                    startArrow = document.createElementNS(svg.namespaceURI, 'path');
+                    startArrow.classList.add('start-arrow');
+                    svg.insertBefore(startArrow, svg.firstChild);
+                }
+                updateStartArrow();
+            }
+
+            function updateStartArrow() {
+                if (!startStateId || !startArrow) return;
+                const pos = statePos[startStateId];
+                const x1 = pos.x - 50, y1 = pos.y;
+                const x2 = pos.x - 22, y2 = pos.y;
+                startArrow.setAttribute('d', `M${x1},${y1} L${x2},${y2}`);
             }
 
             function makeState(x, y) {
@@ -183,22 +285,31 @@
 
                 g.addEventListener('click', e => {
                     e.stopPropagation();
+
+                    if (e.ctrlKey || e.metaKey) { // Handle setting start state
+                        setStartState(id);
+                        return;
+                    }
+
                     if (!e.shiftKey) {
                         if (selected) {
                             states[selected].querySelector('circle.outer').setAttribute('stroke', '#333');
+                            states[selected].classList.remove('selected');
                             selected = null;
                         }
                         return;
                     }
                     if (!selected) {
                         selected = id;
-                        c_outer.setAttribute('stroke', '#d00');
-                    } else if (selected !== id) {
+                        c_outer.setAttribute('stroke', '#d00'); // Use stroke color for feedback
+                        g.classList.add('selected');
+                    } else if (selected) {
                         const lbl = prompt('Transition label (e.g., a, b, ε):', '');
-                        if (lbl !== null && lbl.trim() !== "") {
-                            makeTrans(selected, id, lbl.trim());
+                        if (lbl !== null) { // Allow empty string for epsilon
+                            makeTrans(selected, id, lbl);
                         }
                         states[selected].querySelector('circle.outer').setAttribute('stroke', '#333');
+                        states[selected].classList.remove('selected');
                         selected = null;
                     }
                 });
@@ -219,10 +330,14 @@
                     }
                 });
                 g.addEventListener('mouseover', () => { hoveredStateId = id; });
-                g.addEventListener('mouseout', () => { hoveredStateId = id; });
+                g.addEventListener('mouseout', () => { hoveredStateId = null; });
 
                 svg.appendChild(g);
                 states[id] = g;
+
+                if (startStateId === null) {
+                    setStartState(id);
+                }
             }
 
             // --- EVENT LISTENERS FOR THE CANVAS ('svg' element) ---
@@ -230,14 +345,16 @@
                 if (e.target !== svg) return;
                 if (selected) {
                     states[selected].querySelector('circle.outer').setAttribute('stroke', '#333');
+                    states[selected].classList.remove('selected');
                     selected = null;
                     return;
                 }
                 const p = mousePos(e);
-                makeState(p.x,     p.y);
+                makeState(p.x, p.y);
             });
 
             function makeTrans(src, tgt, label) {
+                const displayLabel = (label.trim().toLowerCase() === 'e' || label.trim().toLowerCase() === 'eps' || label.trim() === '') ? 'ε' : label.trim();
                 const p = document.createElementNS(svg.namespaceURI, 'path');
                 p.classList.add('transition');
                 svg.insertBefore(p, svg.firstChild);
@@ -245,14 +362,16 @@
                 const txt = document.createElementNS(svg.namespaceURI, 'text');
                 txt.classList.add('transition-label');
                 txt.setAttribute('text-anchor', 'middle');
-                txt.textContent = label || '';
+                txt.textContent = displayLabel;
                 svg.appendChild(txt);
 
                 txt.addEventListener('click', e => {
                     e.stopPropagation(); // Prevent canvas click from firing
-                    const newLabel = prompt('Enter new transition label:', txt.textContent);
-                    if (newLabel !== null && newLabel.trim() !== '') {
-                        txt.textContent = newLabel.trim();
+                    const currentLabel = txt.textContent === 'ε' ? '' : txt.textContent;
+                    const newLabelRaw = prompt('Enter new transition label:', currentLabel);
+                    if (newLabelRaw !== null) {
+                        const newLabelDisplay = (newLabelRaw.trim().toLowerCase() === 'e' || newLabelRaw.trim().toLowerCase() === 'eps' || newLabelRaw.trim() === '') ? 'ε' : newLabelRaw.trim();
+                        txt.textContent = newLabelDisplay;
                     }
                 });
                 const obj = { src, tgt, path: p, label: txt };
@@ -262,15 +381,14 @@
             function deleteState(stateId) {
                 if (!states[stateId]) return; // Safety check
 
-                // 1. Find all transitions connected to this state
-                const transitionsToRemove = transitions.filter(t => t.src === stateId || t.tgt === stateId);
-                const transitionsToKeep = transitions.filter(t => t.src !== stateId && t.tgt !== stateId);
-
-                transitionsToRemove.forEach(t => {
-                    svg.removeChild(t.path);
-                    svg.removeChild(t.label);
+                const transitionsToKeep = transitions.filter(t => {
+                    if (t.src === stateId || t.tgt === stateId) {
+                        svg.removeChild(t.path);
+                        svg.removeChild(t.label);
+                        return false;
+                    }
+                    return true;
                 });
-
                 transitions.length = 0;
                 transitions.push(...transitionsToKeep);
 
@@ -279,6 +397,16 @@
                 delete states[stateId];
                 delete statePos[stateId];
                 finalStates.delete(stateId);
+
+                if (startStateId === stateId) {
+                    if (startArrow) svg.removeChild(startArrow);
+                    startArrow = null;
+                    startStateId = null;
+                    const remaining = Object.keys(states);
+                    if (remaining.length > 0) {
+                        setStartState(remaining[0]);
+                    }
+                }
 
                 hoveredStateId = null;
             }
@@ -290,16 +418,14 @@
                 }
             });
 
-
             function updateTrans(o) {
                 const a = statePos[o.src], b = statePos[o.tgt];
-                // Self-loop
                 if (a === b) {
                     const x = a.x, y = a.y - 20;
                     o.path.setAttribute('d', `M ${x - 18},${y + 5} A 15,15 0 1,1 ${x + 18},${y + 5}`);
                     o.label.setAttribute('x', x);
                     o.label.setAttribute('y', y - 22);
-                } else { // Standard transition
+                } else {
                     const dx = b.x - a.x, dy = b.y - a.y, L = Math.hypot(dx, dy);
                     if (L < 1) return;
                     const ox = dx / L * 20, oy = dy / L * 20;
@@ -312,7 +438,10 @@
                 }
             }
 
-            function updateAll() { transitions.forEach(updateTrans); }
+            function updateAll() {
+                transitions.forEach(updateTrans);
+                if (startStateId) updateStartArrow();
+            }
 
             window.addEventListener('mousemove', e => {
                 if (!dragging || !dragId) return;
@@ -327,14 +456,36 @@
                 dragId = null;
             });
 
+            function clearCanvas() {
+                Object.keys(states).forEach(id => svg.removeChild(states[id]));
+                transitions.forEach(t => {
+                    svg.removeChild(t.path);
+                    svg.removeChild(t.label);
+                });
+                if (startArrow) svg.removeChild(startArrow);
+
+                stateCount = 0;
+                states = {};
+                statePos = {};
+                transitions.length = 0;
+                finalStates.clear();
+                selected = null;
+                startStateId = null;
+                startArrow = null;
+
+                makeState(100, 100);
+            }
+
             function serializeFSM() {
                 if (Object.keys(states).length === 0) { return "No FSM has been drawn."; }
-                const startState = "q0";
-                const stateList = Object.keys(states);
+
+                if (!startStateId) { return "Error: A start state must be defined. Please Ctrl-click a state to select it."; }
+
+                const stateList = Object.keys(states).sort();
                 const finalStateList = Array.from(finalStates).sort();
                 let description = `States: {${stateList.join(', ')}}\n`;
                 description += `Alphabet: {a, b}\n`;
-                description += `Start State: ${startState}\n`;
+                description += `Start State: ${startStateId}\n`;
                 description += `Final States: {${finalStateList.join(', ') || 'none'}}\n`;
                 description += "Transitions:\n";
                 if (transitions.length === 0) {
@@ -349,6 +500,8 @@
             makeState(100, 100);
 
             // --- Button Event Listeners ---
+            document.getElementById('clear-btn').addEventListener('click', clearCanvas);
+
             document.getElementById('export-btn').addEventListener('click', () => {
                 const clone = svg.cloneNode(true);
                 if (!clone.getAttribute('xmlns')) clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
@@ -378,6 +531,12 @@
                 resultDiv.textContent = 'Asking Gemini for analysis...';
                 resultDiv.style.color = '#333';
                 resultDiv.style.borderColor = '#ccc';
+                if (fsm_description.startsWith("Error:")) {
+                    resultDiv.textContent = fsm_description;
+                    resultDiv.style.color = '#dc3545';
+                    resultDiv.style.borderColor = '#dc3545';
+                    return;
+                }
                 try {
                     const response = await fetch('/api/check-fsm', {
                         method: 'POST',

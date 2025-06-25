@@ -411,26 +411,25 @@ def chat_api():
 
 def _generate_regex():
     try:
-        prompt = (
-            "Generate a single random regular expression over the alphabet {a, b}. "
-            "Use +,-,* but make sure the regular expression ends in a or b"
-            "Do not include any explanation—just output the regex itself. "
-            "Make it relatively simple."
-        )
-        response = model.generate_content(
-            prompt,
-            generation_config=genai.types.GenerationConfig(
-                temperature=0.9,
-                max_output_tokens=30
-            )
-        )
-        regex = response.text.strip()
-        if not regex:
-            regex = "(a|b)*"
-        return regex
+        # Define the building blocks of our regex
+        components = [
+            'a', 'b', 'a*', 'b*', 'a+', 'b+', '(a|b)', '(a|b)*', '(a|b)+'
+        ]
+
+        num_components = random.randint(1, 2)
+        
+        body = "".join(random.choices(components, k=num_components))
+        
+        terminator = random.choice(['a', 'b'])
+
+        if random.random() < 0.2: 
+            return terminator
+            
+        return body + terminator
+
     except Exception as e:
-        logging.error(f"Gemini API call failed: {e}")
-        return "a*(b|a)b*"
+        logging.error(f"Error generating regex programmatically: {e}")
+        return "a*(b|a)b"
 
 @app.route("/drawer")
 def drawer():
