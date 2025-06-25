@@ -129,12 +129,6 @@
             align-items: center;
             gap: 8px;
         }
-
-        .button {
-            font-weight: bold;
-            color: #5a5959;
-            background: linear-gradient(45deg, #d4fc79, #96e6a1);
-        }
     </style>
 </head>
 
@@ -400,9 +394,7 @@
 
     <script>
         window.addEventListener('pageshow', function (event) {
-            // if the page was restored from bfcache or via back button…
             if (event.persisted || performance.navigation.type === 2) {
-                // …reload it from the server so our read_chapters list is fresh
                 window.location.reload();
             }
         });

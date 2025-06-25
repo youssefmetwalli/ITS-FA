@@ -247,8 +247,10 @@ li {
         display: none;
     }
     .header-container {
+        width: 85%;
         justify-content: space-evenly;
     }
+    
 }
 /* progress styles */
 
