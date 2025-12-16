@@ -198,8 +198,13 @@
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
     </style>
 </head>
@@ -354,7 +359,6 @@
                     return true;
                 }
             }
-
             $('#saveButton').click(async function () {
                 if (messages.length === 0) {
                     alert('No conversation to save!');
@@ -369,22 +373,22 @@
                     $('#loadingOverlay').css('display', 'flex');
                     $('#loadingMessage').text('Filtering automata theory content...');
 
-                    // Filter messages to only include automata theory related Q&A pairs
+                    // Filter messages
                     const filteredMessages = [];
                     for (let i = 0; i < messages.length; i++) {
                         if (messages[i].role === 'user' && i + 1 < messages.length && messages[i + 1].role === 'bot') {
                             const userMsg = messages[i];
                             const botMsg = messages[i + 1];
-                            
-                            $('#loadingMessage').text(`Analyzing message ${Math.floor(i/2) + 1} of ${Math.floor(messages.length/2)}...`);
-                            
+
+                            $('#loadingMessage').text(`Analyzing message ${Math.floor(i / 2) + 1} of ${Math.floor(messages.length / 2)}...`);
+
                             const isRelevant = await isAutomataTheoryRelated(userMsg.content, botMsg.content);
-                            
+
                             if (isRelevant) {
                                 filteredMessages.push(userMsg);
                                 filteredMessages.push(botMsg);
                             }
-                            i++; // Skip the bot message as we've already processed it
+                            i++;
                         }
                     }
 
@@ -418,23 +422,23 @@
                     // REPORT HEADER
                     pdf.setFillColor(52, 152, 219);
                     pdf.rect(0, 0, pageW, 40, 'F');
-                    
+
                     pdf.setTextColor(255, 255, 255);
                     pdf.setFontSize(22);
                     pdf.setFont(undefined, 'bold');
                     pdf.text('Automata Theory Chat Report', pageW / 2, 20, { align: 'center' });
-                    
+
                     pdf.setFontSize(10);
                     pdf.setFont(undefined, 'normal');
-                    const date = new Date().toLocaleDateString('en-US', { 
-                        year: 'numeric', 
-                        month: 'long', 
+                    const date = new Date().toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
                         day: 'numeric',
                         hour: '2-digit',
                         minute: '2-digit'
                     });
                     pdf.text(`Generated on: ${date}`, pageW / 2, 30, { align: 'center' });
-                    
+
                     currentY = 50;
 
                     // SUMMARY SECTION
@@ -454,8 +458,7 @@
                     currentY += 6;
                     pdf.text(`Bot Responses: ${botMsgCount}`, margin + 5, currentY);
                     currentY += 6;
-                    
-                    // Add note about filtering
+
                     pdf.setFontSize(9);
                     pdf.setTextColor(100, 100, 100);
                     pdf.text('(Only automata theory related conversations included)', margin + 5, currentY);
@@ -466,15 +469,9 @@
                     pdf.setDrawColor(200, 200, 200);
                     pdf.setLineWidth(0.5);
                     pdf.line(margin, currentY, pageW - margin, currentY);
-                    currentY += 10;
+                    currentY += 6;
 
                     // CONVERSATION SECTION
-                    pdf.setFontSize(12);
-                    pdf.setFont(undefined, 'bold');
-                    pdf.text('Full Conversation', margin, currentY);
-                    currentY += 10;
-
-                    // Process filtered messages
                     let messageNumber = 1;
 
                     for (let i = 0; i < filteredMessages.length; i++) {
@@ -482,43 +479,100 @@
                         const isUser = msg.role === 'user';
                         const text = msg.content;
 
-                        checkPageBreak(20);
-                        
-                        const fillR = isUser ? 220 : 224;
-                        const fillG = isUser ? 248 : 247;
-                        const fillB = isUser ? 198 : 250;
-                        pdf.setFillColor(fillR, fillG, fillB);
-                        pdf.roundedRect(margin, currentY, usableWidth, 8, 2, 2, 'F');
-                        
-                        pdf.setFontSize(10);
-                        pdf.setFont(undefined, 'bold');
-                        const textR = isUser ? 46 : 21;
-                        const textG = isUser ? 125 : 101;
-                        const textB = isUser ? 50 : 192;
-                        pdf.setTextColor(textR, textG, textB);
-                        pdf.text(`${messageNumber}. ${isUser ? 'User Question' : 'Bot Response'}`, margin + 3, currentY + 5.5);
-                        currentY += 12;
-
-                        pdf.setFont(undefined, 'normal');
-                        pdf.setTextColor(0, 0, 0);
-                        pdf.setFontSize(10);
-                        
-                        const textLines = pdf.splitTextToSize(text, usableWidth - 6);
-                        
-                        textLines.forEach(line => {
-                            checkPageBreak(7);
-                            pdf.text(line, margin + 3, currentY);
-                            currentY += 6;
-                        });
-
-                        currentY += 6;
-                        
                         if (isUser) {
+                            // --- MODIFIED: Bigger Font and Bold for Questions ---
+                            checkPageBreak(15);
+
+                            pdf.setFontSize(14); // Changed from 12
+                            pdf.setFont(undefined, 'bold'); // Changed from 'normal'
+                            pdf.setTextColor(0, 0, 0);
+
+                            const questionText = `Q${messageNumber}: ${text}`;
+                            const questionLines = pdf.splitTextToSize(questionText, usableWidth);
+
+                            questionLines.forEach(line => {
+                                checkPageBreak(8); // Slightly more space for bigger font
+                                pdf.text(line, margin, currentY);
+                                currentY += 4;
+                            });
+
+                            pdf.setDrawColor(0, 0, 0);
+                            pdf.setLineWidth(0.3);
+                            pdf.line(margin, currentY, pageW - margin, currentY);
+                            currentY += 6; // Increased spacing slightly
+                        } else {
+                            // --- MODIFIED: Flow-based text rendering to fix the * line skip ---
+                            checkPageBreak(10);
+
+                            pdf.setTextColor(0, 0, 0);
+                            pdf.setFontSize(10);
+
+                            // 1. Parse Segments (Bold vs Normal)
+                            const boldPattern = /\*\*(.*?)\*\*/g;
+                            const segments = [];
+                            let lastIndex = 0;
+                            let match;
+
+                            while ((match = boldPattern.exec(text)) !== null) {
+                                if (match.index > lastIndex) {
+                                    segments.push({ text: text.substring(lastIndex, match.index), bold: false });
+                                }
+                                segments.push({ text: match[1], bold: true });
+                                lastIndex = match.index + match[0].length;
+                            }
+                            if (lastIndex < text.length) {
+                                segments.push({ text: text.substring(lastIndex), bold: false });
+                            }
+                            if (segments.length === 0) {
+                                segments.push({ text: text, bold: false });
+                            }
+
+                            // 2. Render Text Flow
+                            let cursorX = margin;
+                            const lineHeight = 4;
+
+                            segments.forEach(segment => {
+                                pdf.setFont(undefined, segment.bold ? 'bold' : 'normal');
+
+                                // Split segment by explicit newlines first
+                                const lines = segment.text.split('\n');
+
+                                lines.forEach((line, lineIdx) => {
+                                    // If we hit a newline in the source text, move cursor down
+                                    if (lineIdx > 0) {
+                                        currentY += lineHeight;
+                                        cursorX = margin;
+                                        checkPageBreak(lineHeight);
+                                    }
+
+                                    // Split the current line into words/spaces to handle wrapping
+                                    // The regex splits by whitespace but keeps the delimiter
+                                    const words = line.split(/(\s+)/);
+
+                                    words.forEach(word => {
+                                        const wordWidth = pdf.getTextWidth(word);
+
+                                        // Check if word fits on current line
+                                        if (cursorX + wordWidth > margin + usableWidth) {
+                                            currentY += lineHeight;
+                                            cursorX = margin;
+                                            checkPageBreak(lineHeight);
+                                            // If the wrapping word is just a space, ignore it on new line
+                                            if (/^\s+$/.test(word)) return;
+                                        }
+
+                                        pdf.text(word, cursorX, currentY);
+                                        cursorX += wordWidth;
+                                    });
+                                });
+                            });
+
+                            currentY += 10;
                             messageNumber++;
                         }
                     }
 
-                    // FOOTER on all pages
+                    // FOOTER
                     const totalPages = pdf.internal.getNumberOfPages();
                     for (let i = 1; i <= totalPages; i++) {
                         pdf.setPage(i);
@@ -529,14 +583,14 @@
                     }
 
                     pdf.save(`${pdfName}.pdf`);
-                    
+
                     $('#loadingOverlay').hide();
                     alert(`Chat report saved successfully! ${filteredMessages.length / 2} automata theory Q&A pairs included.`);
 
                 } catch (error) {
                     console.error('Error generating PDF:', error);
                     $('#loadingOverlay').hide();
-                    alert(`Error generating PDF: ${error.message || error}. Please check the console for more details.`);
+                    alert(`Error generating PDF: ${error.message || error}`);
                 }
             });
 
