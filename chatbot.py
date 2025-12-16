@@ -24,7 +24,7 @@ PERSONA = "You are an AI assistant specialized in Automata Theory. Be kind, conv
 load_dotenv()
 genai.configure(api_key=os.environ.get("GOOGLE_API_KEY"))
 print(os.environ.get("GOOGLE_API_KEY"))
-model = genai.GenerativeModel('gemini-1.5-flash-002')
+model = genai.GenerativeModel('gemini-2.0-flash')
 
 
 def load_and_chunk_pdf(pdf_path):
