@@ -30,7 +30,6 @@
             box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
         }
 
-
         .messages {
             flex: 1;
             overflow-y: auto;
@@ -95,7 +94,6 @@
             height: 1.2em;
             fill: currentColor;
         }
-
 
         #sendButton {
             padding: 10px 16px;
@@ -166,6 +164,43 @@
                 width: 100% !important;
             }
         }
+
+        /* Loading overlay styles */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loading-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            max-width: 400px;
+        }
+
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 
@@ -182,7 +217,6 @@
 
         <div class="input-container">
             <button id="voiceButton" title="Speak">
-                <!-- Bootstrap “mic” icon SVG (inline) :contentReference[oaicite:0]{index=0} -->
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
                     <path
                         d="M3.5 6.5A.5.5 0 0 1 4 7v1a4 4 0 0 0 8 0V7a.5.5 0 0 1 1 0v1a5 5 0 0 1-4.5 4.975V15h3a.5.5 0 0 1 0 1h-7a.5.5 0 0 1 0-1h3v-2.025A5 5 0 0 1 3 8V7a.5.5 0 0 1 .5-.5" />
@@ -196,6 +230,14 @@
         <div>
             <button id="saveButton">Save</button>
             <button id="clearButton">Clear</button>
+        </div>
+    </div>
+
+    <!-- Loading overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <p id="loadingMessage">Filtering automata theory content...</p>
         </div>
     </div>
 
@@ -293,6 +335,26 @@
                 }
             });
 
+            // Function to check if a Q&A pair is related to automata theory
+            async function isAutomataTheoryRelated(userQuestion, botAnswer) {
+                try {
+                    const response = await $.ajax({
+                        url: '/check_automata_relevance',
+                        method: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({
+                            question: userQuestion,
+                            answer: botAnswer
+                        })
+                    });
+                    return response.is_relevant;
+                } catch (error) {
+                    console.error('Error checking relevance:', error);
+                    // If there's an error, include the message by default
+                    return true;
+                }
+            }
+
             $('#saveButton').click(async function () {
                 if (messages.length === 0) {
                     alert('No conversation to save!');
@@ -303,6 +365,37 @@
                 if (!pdfName) return;
 
                 try {
+                    // Show loading overlay
+                    $('#loadingOverlay').css('display', 'flex');
+                    $('#loadingMessage').text('Filtering automata theory content...');
+
+                    // Filter messages to only include automata theory related Q&A pairs
+                    const filteredMessages = [];
+                    for (let i = 0; i < messages.length; i++) {
+                        if (messages[i].role === 'user' && i + 1 < messages.length && messages[i + 1].role === 'bot') {
+                            const userMsg = messages[i];
+                            const botMsg = messages[i + 1];
+                            
+                            $('#loadingMessage').text(`Analyzing message ${Math.floor(i/2) + 1} of ${Math.floor(messages.length/2)}...`);
+                            
+                            const isRelevant = await isAutomataTheoryRelated(userMsg.content, botMsg.content);
+                            
+                            if (isRelevant) {
+                                filteredMessages.push(userMsg);
+                                filteredMessages.push(botMsg);
+                            }
+                            i++; // Skip the bot message as we've already processed it
+                        }
+                    }
+
+                    if (filteredMessages.length === 0) {
+                        $('#loadingOverlay').hide();
+                        alert('No automata theory related conversations found to export!');
+                        return;
+                    }
+
+                    $('#loadingMessage').text('Generating PDF...');
+
                     const { jsPDF } = window.jspdf;
                     const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
@@ -313,7 +406,6 @@
 
                     let currentY = margin;
 
-                    // Helper function to check if we need a new page
                     function checkPageBreak(heightNeeded) {
                         if (currentY + heightNeeded > pageH - margin) {
                             pdf.addPage();
@@ -324,7 +416,7 @@
                     }
 
                     // REPORT HEADER
-                    pdf.setFillColor(52, 152, 219); // Blue header background
+                    pdf.setFillColor(52, 152, 219);
                     pdf.rect(0, 0, pageW, 40, 'F');
                     
                     pdf.setTextColor(255, 255, 255);
@@ -354,13 +446,20 @@
 
                     pdf.setFontSize(10);
                     pdf.setFont(undefined, 'normal');
-                    pdf.text(`Total Messages: ${messages.length}`, margin + 5, currentY);
+                    pdf.text(`Total Automata Theory Messages: ${filteredMessages.length}`, margin + 5, currentY);
                     currentY += 6;
-                    const userMsgCount = messages.filter(m => m.role === 'user').length;
-                    const botMsgCount = messages.filter(m => m.role === 'bot').length;
-                    pdf.text(`User Messages: ${userMsgCount}`, margin + 5, currentY);
+                    const userMsgCount = filteredMessages.filter(m => m.role === 'user').length;
+                    const botMsgCount = filteredMessages.filter(m => m.role === 'bot').length;
+                    pdf.text(`User Questions: ${userMsgCount}`, margin + 5, currentY);
                     currentY += 6;
                     pdf.text(`Bot Responses: ${botMsgCount}`, margin + 5, currentY);
+                    currentY += 6;
+                    
+                    // Add note about filtering
+                    pdf.setFontSize(9);
+                    pdf.setTextColor(100, 100, 100);
+                    pdf.text('(Only automata theory related conversations included)', margin + 5, currentY);
+                    pdf.setTextColor(0, 0, 0);
                     currentY += 12;
 
                     // Divider line
@@ -375,18 +474,16 @@
                     pdf.text('Full Conversation', margin, currentY);
                     currentY += 10;
 
-                    // Process each message
-                    const messagesElements = document.querySelectorAll('.message');
+                    // Process filtered messages
                     let messageNumber = 1;
 
-                    messagesElements.forEach(msgElement => {
-                        const isUser = msgElement.classList.contains('user-message');
-                        const text = msgElement.innerText;
+                    for (let i = 0; i < filteredMessages.length; i++) {
+                        const msg = filteredMessages[i];
+                        const isUser = msg.role === 'user';
+                        const text = msg.content;
 
-                        // Message header with number
                         checkPageBreak(20);
                         
-                        // Set colors based on message type
                         const fillR = isUser ? 220 : 224;
                         const fillG = isUser ? 248 : 247;
                         const fillB = isUser ? 198 : 250;
@@ -402,7 +499,6 @@
                         pdf.text(`${messageNumber}. ${isUser ? 'User Question' : 'Bot Response'}`, margin + 3, currentY + 5.5);
                         currentY += 12;
 
-                        // Message content
                         pdf.setFont(undefined, 'normal');
                         pdf.setTextColor(0, 0, 0);
                         pdf.setFontSize(10);
@@ -415,11 +511,14 @@
                             currentY += 6;
                         });
 
-                        currentY += 6; // Space between messages
-                        messageNumber++;
-                    });
+                        currentY += 6;
+                        
+                        if (isUser) {
+                            messageNumber++;
+                        }
+                    }
 
-                    // FOOTER on last page
+                    // FOOTER on all pages
                     const totalPages = pdf.internal.getNumberOfPages();
                     for (let i = 1; i <= totalPages; i++) {
                         pdf.setPage(i);
@@ -430,10 +529,13 @@
                     }
 
                     pdf.save(`${pdfName}.pdf`);
-                    alert('Chat report saved successfully!');
+                    
+                    $('#loadingOverlay').hide();
+                    alert(`Chat report saved successfully! ${filteredMessages.length / 2} automata theory Q&A pairs included.`);
 
                 } catch (error) {
                     console.error('Error generating PDF:', error);
+                    $('#loadingOverlay').hide();
                     alert(`Error generating PDF: ${error.message || error}. Please check the console for more details.`);
                 }
             });
@@ -445,9 +547,9 @@
 
             function escapeHtml(txt) {
                 return txt
-                    .replace(/&/g, "&")
-                    .replace(/</g, "<")
-                    .replace(/>/g, ">");
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;");
             }
         });
     </script>
