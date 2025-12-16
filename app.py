@@ -409,6 +409,60 @@ def chat_api():
         return jsonify({"error": "Internal server error"}), 500
 
 
+
+@app.route('/check_automata_relevance', methods=['POST'])
+def check_automata_relevance():
+    """
+    Check if a question-answer pair is related to automata theory.
+    Returns a boolean indicating relevance.
+    """
+    try:
+        data = request.get_json()
+        question = data.get('question', '')
+        answer = data.get('answer', '')
+        
+        if not question or not answer:
+            return jsonify({"is_relevant": False}), 400
+        
+        prompt = f"""
+You are an expert in automata theory and formal languages. Your task is to determine if a conversation is related to automata theory topics.
+
+Automata theory topics include:
+- Finite State Machines (FSM, DFA, NFA)
+- Regular expressions and regular languages
+- Context-free grammars and pushdown automata
+- Turing machines and computability
+- Formal languages and language hierarchy
+- Automata operations (union, intersection, concatenation, closure)
+- Language recognition and acceptance
+- State transitions and formal definitions
+- Pumping lemmas
+- Decidability and complexity theory
+
+Question: {question}
+
+Answer: {answer}
+
+Respond with ONLY "YES" if this conversation is clearly related to automata theory, or "NO" if it is not related or only tangentially related (like general greetings, unrelated topics, etc.).
+
+Response:"""
+
+        # Use the global model instance
+        response = model.generate_content(prompt)
+        result_text = response.text.strip().upper()
+        
+        # Determine if relevant based on response
+        is_relevant = "YES" in result_text
+        
+        logging.info(f"Relevance check - Question: '{question[:50]}...', Relevant: {is_relevant}")
+        
+        return jsonify({"is_relevant": is_relevant}), 200
+        
+    except Exception as e:
+        logging.error(f"Error checking automata relevance: {e}")
+        # Default to including the message if there's an error
+        return jsonify({"is_relevant": True}), 200
+
 def _generate_regex():
     try:
         # Define the building blocks of our regex
