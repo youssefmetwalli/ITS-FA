@@ -107,7 +107,6 @@
 
         .button {
             border: none;
-            /* Using a more generic class for action buttons */
             border: 1px solid #ccc;
             background-color: #f0f0f0;
             padding: 8px 16px;
@@ -120,6 +119,62 @@
             background-color: #e0e0e0;
             border-color: #999;
         }
+
+        .mode-toggle {
+            display: inline-flex;
+            gap: 8px;
+            align-items: center;
+            margin-left: 8px;
+            flex-wrap: wrap;
+        }
+
+        .mode-pill {
+            padding: 6px 10px;
+            border-radius: 999px;
+            border: 1px solid #ddd;
+            background: #fff;
+            font-size: 0.9em;
+        }
+
+        .row {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .input {
+            padding: 10px 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            min-width: 260px;
+            font-family: monospace;
+        }
+
+        .hint {
+            color: #6c757d;
+            font-size: 0.95em;
+            margin-top: 6px;
+        }
+
+        .readonly-banner {
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            color: #856404;
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-top: 10px;
+        }
+
+        pre#fsm-text {
+            background: #f6f8fa;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 12px;
+            overflow: auto;
+            white-space: pre-wrap;
+            margin-top: 10px;
+        }
     </style>
 </head>
 
@@ -130,26 +185,87 @@
         <a class="button" href="{{ url_for('index') }}">Home</a>
         <a class="button" href="{{ url_for('course_page') }}">Course</a>
         <a class="button" href="/chat">Chat</a>
+
+        <span class="mode-toggle">
+            <span class="mode-pill">
+                Mode:
+                {% if mode == 'fsm-to-regex' %}
+                <strong>FSM → Regex</strong>
+                {% else %}
+                <strong>Regex → FSM</strong>
+                {% endif %}
+            </span>
+            <a class="button" href="/drawer?mode=regex-to-fsm">Regex → FSM</a>
+            <a class="button" href="/drawer?mode=fsm-to-regex">FSM → Regex</a>
+        </span>
     </div>
 
-    <div class="module-container">
+    <div class="module-container" data-mode="{{ mode|default('regex-to-fsm') }}"
+        data-initial-regex='{{ (regex|default(""))|tojson }}' data-initial-fsm='{{ (fsm|default({}))|tojson }}'>
+
+        {% if mode == 'fsm-to-regex' %}
+        <h2>Find the Regular Expression for the Given FSM</h2>
+        <p>
+            <strong>Given FSM:</strong> Drawn on the canvas below.
+            <button class="regex-button" id="new-fsm-btn">Generate New FSM</button>
+        </p>
+
+        <div class="row">
+            <label for="student-regex"><strong>Your Regular Expression:</strong></label>
+            <input id="student-regex" class="input" placeholder="e.g., ab* | (a|b)*a" />
+            <button class="button" id="check-regex-btn">Check Regex</button>
+        </div>
+        <div class="hint">Alphabet is assumed to be <strong>{a, b}</strong>. Use <strong>|</strong>, concatenation,
+            <strong>*</strong>, and parentheses.
+        </div>
+
+        <div class="readonly-banner">
+            <i class="fas fa-lock"></i>
+            This FSM is <strong>read-only</strong> in FSM → Regex mode (you only submit a regex).
+        </div>
+
+        <pre id="fsm-text">Loading FSM...</pre>
+
+        <div class="instructions-container">
+            <h3>Instructions (FSM → Regex)</h3>
+            <ul>
+                <li><i class="fas fa-eye icon"></i> Inspect the FSM on the canvas (start arrow + accepting states).</li>
+                <li><i class="fas fa-pen icon"></i> Enter a regex that matches the <strong>same language</strong> as the
+                    FSM.</li>
+                <li><i class="fas fa-check icon"></i> Click <strong>Check Regex</strong> to receive feedback and a
+                    counterexample if incorrect.</li>
+            </ul>
+        </div>
+
+        {% else %}
         <h2>Practice Drawing a FSM</h2>
         <p>
             <strong>Given Regular Expression:</strong>
             <span id="regex-display">{{ regex }}</span>
             <button class="regex-button" id="new-regex-btn">Generate New Regex</button>
         </p>
+
         <div class="instructions-container">
-            <h3>Instructions</h3>
+            <h3>Instructions (Regex → FSM)</h3>
             <ul>
-                <li><i class="fas fa-mouse-pointer icon"></i> <strong>Click</strong> on canvas to add a state. Drag states to move.</li>
-                <li><i class="fas fa-link icon"></i> <strong>Shift-click</strong> a state, then <strong>Shift-click</strong> another (or the same) for transitions.</li>
-                <li><i class="fas fa-check-double icon"></i> <strong>Double-click</strong> a state to toggle it as a final/accepting state.</li>
-                <li><i class="fas fa-flag icon"></i> <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <strong>Click</strong> a state to set it as the start state.</li>
-                <li><i class="fas fa-tag icon"></i> <strong>Click</strong> a transition label to modify it. Use <kbd>e</kbd>, <kbd>eps</kbd>, or leave blank for epsilon (ε).</li>
-                <li><i class="fas fa-keyboard icon"></i> Hover over a state and press <kbd>Backspace</kbd> or <kbd>Delete</kbd> to remove it.</li>
+                <li><i class="fas fa-mouse-pointer icon"></i> <strong>Click</strong> on canvas to add a state. Drag
+                    states to move.</li>
+                <li><i class="fas fa-link icon"></i> <strong>Shift-click</strong> a state, then
+                    <strong>Shift-click</strong> another (or the same) for transitions.
+                </li>
+                <li><i class="fas fa-check-double icon"></i> <strong>Double-click</strong> a state to toggle it as a
+                    final/accepting state.</li>
+                <li><i class="fas fa-flag icon"></i> <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <strong>Click</strong> a state to
+                    set it as the start state.</li>
+                <li><i class="fas fa-tag icon"></i> <strong>Click</strong> a transition label to modify it. Use
+                    <kbd>e</kbd>, <kbd>eps</kbd>, or leave blank for epsilon (ε).
+                </li>
+                <li><i class="fas fa-keyboard icon"></i> Hover over a state and press <kbd>Backspace</kbd> or
+                    <kbd>Delete</kbd> to remove it.
+                </li>
             </ul>
         </div>
+        {% endif %}
 
         <div id="canvas-container">
             <svg id="canvas" xmlns="http://www.w3.org/2000/svg">
@@ -161,7 +277,6 @@
                         transition: stroke 0.2s;
                     }
 
-                    /* Added stroke change to selected state for better feedback */
                     .state.selected circle.outer {
                         stroke: #d00;
                     }
@@ -183,7 +298,6 @@
                         marker-end: url(#arrowhead);
                     }
 
-                    /* New style for the start state indicator */
                     .start-arrow {
                         fill: none;
                         stroke: #000;
@@ -205,11 +319,18 @@
                 </defs>
             </svg>
         </div>
+
         <div>
             <button class="button" id="export-btn">Export as PNG</button>
+
+            {% if mode == 'fsm-to-regex' %}
+            <button class="button" id="clear-btn" title="Re-center/reload current FSM">Reload FSM</button>
+            {% else %}
             <button class="button" id="check-fsm-btn">Check with AI</button>
             <button class="button" id="clear-btn">Clear Canvas</button>
+            {% endif %}
         </div>
+
         <div id="gemini-result">
             Built-in AI's analysis will appear here.
         </div>
@@ -219,15 +340,35 @@
         // Main drawing script
         (function () {
             const svg = document.getElementById('canvas');
+            const moduleEl = document.querySelector('.module-container');
+            const mode = moduleEl?.dataset?.mode || 'regex-to-fsm';
+            let INITIAL_REGEX = '';
+            let INITIAL_FSM = {};
             let stateCount = 0;
             let statePos = {}, states = {}, transitions = [];
             let finalStates = new Set();
             let selected = null, dragging = false, dragId = null, offset = {};
             let hoveredStateId = null;
+            try {
+                INITIAL_REGEX = JSON.parse(moduleEl?.dataset?.initialRegex || '""');
+            } catch (e) {
+                INITIAL_REGEX = '';
+            }
+            try {
+                INITIAL_FSM = JSON.parse(moduleEl?.dataset?.initialFsm || '{}');
+            } catch (e) {
+                INITIAL_FSM = {};
+            }
 
-            // Variables for new features
+            // Readonly toggle for FSM->Regex mode
+            const IS_READONLY = (mode === 'fsm-to-regex');
+
+            // Start state
             let startStateId = null;
             let startArrow = null;
+
+            // Keep the "given FSM" in memory for checking (FSM->Regex)
+            let givenFSM = (INITIAL_FSM && Object.keys(INITIAL_FSM).length) ? INITIAL_FSM : null;
 
             function mousePos(evt) {
                 const r = svg.getBoundingClientRect();
@@ -253,8 +394,16 @@
                 startArrow.setAttribute('d', `M${x1},${y1} L${x2},${y2}`);
             }
 
-            function makeState(x, y) {
-                const id = 'q' + stateCount++;
+            function makeState(x, y, idOverride = null) {
+                const id = idOverride || ('q' + stateCount++);
+                if (!idOverride) {
+                    // normal creation already bumped stateCount
+                } else {
+                    // keep stateCount at least > numeric suffix
+                    const m = String(idOverride).match(/^q(\d+)$/);
+                    if (m) stateCount = Math.max(stateCount, parseInt(m[1], 10) + 1);
+                }
+
                 statePos[id] = { x, y };
 
                 const g = document.createElementNS(svg.namespaceURI, 'g');
@@ -275,6 +424,7 @@
 
                 // --- EVENT LISTENERS FOR THE STATE ('g' element) ---
                 g.addEventListener('mousedown', e => {
+                    if (IS_READONLY) return;
                     e.stopPropagation();
                     dragging = true;
                     dragId = id;
@@ -284,9 +434,10 @@
                 });
 
                 g.addEventListener('click', e => {
+                    if (IS_READONLY) return;
                     e.stopPropagation();
 
-                    if (e.ctrlKey || e.metaKey) { // Handle setting start state
+                    if (e.ctrlKey || e.metaKey) { // set start state
                         setStartState(id);
                         return;
                     }
@@ -299,13 +450,14 @@
                         }
                         return;
                     }
+
                     if (!selected) {
                         selected = id;
-                        c_outer.setAttribute('stroke', '#d00'); // Use stroke color for feedback
+                        c_outer.setAttribute('stroke', '#d00');
                         g.classList.add('selected');
-                    } else if (selected) {
+                    } else {
                         const lbl = prompt('Transition label (e.g., a, b, ε):', '');
-                        if (lbl !== null) { // Allow empty string for epsilon
+                        if (lbl !== null) {
                             makeTrans(selected, id, lbl);
                         }
                         states[selected].querySelector('circle.outer').setAttribute('stroke', '#333');
@@ -315,20 +467,11 @@
                 });
 
                 g.addEventListener('dblclick', e => {
+                    if (IS_READONLY) return;
                     e.stopPropagation();
-                    g.classList.toggle('final-state');
-                    if (finalStates.has(id)) {
-                        finalStates.delete(id);
-                        const inner = g.querySelector('.inner');
-                        if (inner) g.removeChild(inner);
-                    } else {
-                        finalStates.add(id);
-                        const c_inner = document.createElementNS(svg.namespaceURI, 'circle');
-                        c_inner.setAttribute('r', 16);
-                        c_inner.classList.add('inner');
-                        g.insertBefore(c_inner, t);
-                    }
+                    toggleFinalState(id, g, t);
                 });
+
                 g.addEventListener('mouseover', () => { hoveredStateId = id; });
                 g.addEventListener('mouseout', () => { hoveredStateId = null; });
 
@@ -340,9 +483,26 @@
                 }
             }
 
+            function toggleFinalState(id, g, tNode) {
+                g.classList.toggle('final-state');
+                if (finalStates.has(id)) {
+                    finalStates.delete(id);
+                    const inner = g.querySelector('.inner');
+                    if (inner) g.removeChild(inner);
+                } else {
+                    finalStates.add(id);
+                    const c_inner = document.createElementNS(svg.namespaceURI, 'circle');
+                    c_inner.setAttribute('r', 16);
+                    c_inner.classList.add('inner');
+                    g.insertBefore(c_inner, tNode);
+                }
+            }
+
             // --- EVENT LISTENERS FOR THE CANVAS ('svg' element) ---
             svg.addEventListener('click', e => {
+                if (IS_READONLY) return;
                 if (e.target !== svg) return;
+
                 if (selected) {
                     states[selected].querySelector('circle.outer').setAttribute('stroke', '#333');
                     states[selected].classList.remove('selected');
@@ -353,7 +513,7 @@
                 makeState(p.x, p.y);
             });
 
-            function makeTrans(src, tgt, label) {
+            function makeTrans(src, tgt, label, forceEditable = true) {
                 const displayLabel = (label.trim().toLowerCase() === 'e' || label.trim().toLowerCase() === 'eps' || label.trim() === '') ? 'ε' : label.trim();
                 const p = document.createElementNS(svg.namespaceURI, 'path');
                 p.classList.add('transition');
@@ -365,21 +525,29 @@
                 txt.textContent = displayLabel;
                 svg.appendChild(txt);
 
-                txt.addEventListener('click', e => {
-                    e.stopPropagation(); // Prevent canvas click from firing
-                    const currentLabel = txt.textContent === 'ε' ? '' : txt.textContent;
-                    const newLabelRaw = prompt('Enter new transition label:', currentLabel);
-                    if (newLabelRaw !== null) {
-                        const newLabelDisplay = (newLabelRaw.trim().toLowerCase() === 'e' || newLabelRaw.trim().toLowerCase() === 'eps' || newLabelRaw.trim() === '') ? 'ε' : newLabelRaw.trim();
-                        txt.textContent = newLabelDisplay;
-                    }
-                });
+                // allow editing only in regex-to-fsm mode
+                if (!IS_READONLY && forceEditable) {
+                    txt.addEventListener('click', e => {
+                        e.stopPropagation();
+                        const currentLabel = txt.textContent === 'ε' ? '' : txt.textContent;
+                        const newLabelRaw = prompt('Enter new transition label:', currentLabel);
+                        if (newLabelRaw !== null) {
+                            const newLabelDisplay = (newLabelRaw.trim().toLowerCase() === 'e' || newLabelRaw.trim().toLowerCase() === 'eps' || newLabelRaw.trim() === '') ? 'ε' : newLabelRaw.trim();
+                            txt.textContent = newLabelDisplay;
+                        }
+                    });
+                } else {
+                    txt.style.cursor = 'default';
+                }
+
                 const obj = { src, tgt, path: p, label: txt };
                 transitions.push(obj);
                 updateTrans(obj);
             }
+
             function deleteState(stateId) {
-                if (!states[stateId]) return; // Safety check
+                if (IS_READONLY) return;
+                if (!states[stateId]) return;
 
                 const transitionsToKeep = transitions.filter(t => {
                     if (t.src === stateId || t.tgt === stateId) {
@@ -412,15 +580,18 @@
             }
 
             window.addEventListener('keydown', e => {
+                if (IS_READONLY) return;
                 if ((e.key === 'Backspace' || e.key === 'Delete') && hoveredStateId) {
-                    e.preventDefault(); // Prevent browser from navigating back
+                    e.preventDefault();
                     deleteState(hoveredStateId);
                 }
             });
 
             function updateTrans(o) {
                 const a = statePos[o.src], b = statePos[o.tgt];
-                if (a === b) {
+                if (!a || !b) return;
+
+                if (o.src === o.tgt) {
                     const x = a.x, y = a.y - 20;
                     o.path.setAttribute('d', `M ${x - 18},${y + 5} A 15,15 0 1,1 ${x + 18},${y + 5}`);
                     o.label.setAttribute('x', x);
@@ -444,6 +615,7 @@
             }
 
             window.addEventListener('mousemove', e => {
+                if (IS_READONLY) return;
                 if (!dragging || !dragId) return;
                 const m = mousePos(e), nx = m.x + offset.x, ny = m.y + offset.y;
                 statePos[dragId] = { x: nx, y: ny };
@@ -456,7 +628,7 @@
                 dragId = null;
             });
 
-            function clearCanvas() {
+            function clearCanvas(hardReset = false) {
                 Object.keys(states).forEach(id => svg.removeChild(states[id]));
                 transitions.forEach(t => {
                     svg.removeChild(t.path);
@@ -473,12 +645,18 @@
                 startStateId = null;
                 startArrow = null;
 
+                if (mode === 'fsm-to-regex') {
+                    if (!hardReset && givenFSM) {
+                        loadFSM(givenFSM);
+                    }
+                    return; // <-- prevents the extra q0
+                }
+
                 makeState(100, 100);
             }
 
             function serializeFSM() {
                 if (Object.keys(states).length === 0) { return "No FSM has been drawn."; }
-
                 if (!startStateId) { return "Error: A start state must be defined. Please Ctrl-click a state to select it."; }
 
                 const stateList = Object.keys(states).sort();
@@ -496,12 +674,92 @@
                 return description.trim();
             }
 
-            // Seed the canvas with an initial state
-            makeState(100, 100);
+            function renderFSMText(fsm) {
+                const pre = document.getElementById('fsm-text');
+                if (!pre) return;
+                if (!fsm) { pre.textContent = 'No FSM.'; return; }
 
-            // --- Button Event Listeners ---
-            document.getElementById('clear-btn').addEventListener('click', clearCanvas);
+                let out = '';
+                out += `States: {${(fsm.states || []).join(', ')}}\n`;
+                out += `Alphabet: {a, b}\n`;
+                out += `Start State: ${fsm.start}\n`;
+                out += `Final States: {${(fsm.final || []).join(', ') || 'none'}}\n`;
+                out += `Transitions:\n`;
+                (fsm.transitions || []).forEach(tr => {
+                    out += `- from ${tr.from} to ${tr.to} on '${tr.label}'\n`;
+                });
+                if (fsm.description) out += `\nDescription: ${fsm.description}`;
+                pre.textContent = out.trim();
+            }
 
+            function loadFSM(fsm) {
+                // Reset canvas completely then draw fsm in a simple circular layout
+                clearCanvas(true);
+
+                if (!fsm || !fsm.states || !fsm.states.length) {
+                    makeState(100, 100);
+                    return;
+                }
+
+                const width = svg.clientWidth || 900;
+                const height = svg.clientHeight || 500;
+                const cx = width / 2;
+                const cy = height / 2;
+                const radius = Math.min(width, height) * 0.32;
+
+                const statesList = [...fsm.states];
+                const n = statesList.length;
+
+                // Create states
+                statesList.forEach((id, i) => {
+                    const angle = (2 * Math.PI * i) / n - Math.PI / 2;
+                    const x = cx + radius * Math.cos(angle);
+                    const y = cy + radius * Math.sin(angle);
+                    makeState(x, y, id);
+                });
+
+                // Set start
+                if (fsm.start) setStartState(fsm.start);
+
+                // Set finals
+                (fsm.final || []).forEach(fid => {
+                    const g = states[fid];
+                    if (!g) return;
+                    const tNode = g.querySelector('text');
+                    if (!finalStates.has(fid)) toggleFinalState(fid, g, tNode);
+                });
+
+                // Transitions
+                (fsm.transitions || []).forEach(tr => {
+                    const src = tr.from;
+                    const tgt = tr.to;
+                    const label = tr.label ?? '';
+                    if (states[src] && states[tgt]) {
+                        makeTrans(src, tgt, label, false);
+                    }
+                });
+
+                updateAll();
+                renderFSMText(fsm);
+            }
+
+            // ---- Seed / initialize based on mode ----
+            if (mode === 'fsm-to-regex') {
+                // show given FSM (read-only)
+                if (givenFSM) {
+                    loadFSM(givenFSM);
+                } else {
+                    // fallback: at least show one state
+                    makeState(100, 100);
+                    const pre = document.getElementById('fsm-text');
+                    if (pre) pre.textContent = 'No FSM provided by server.';
+                }
+            } else {
+                // regex-to-fsm mode: empty drawing with initial state
+                makeState(100, 100);
+            }
+
+            // --- Buttons ---
             document.getElementById('export-btn').addEventListener('click', () => {
                 const clone = svg.cloneNode(true);
                 if (!clone.getAttribute('xmlns')) clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
@@ -524,64 +782,183 @@
                 img.src = url;
             });
 
-            document.getElementById('check-fsm-btn').addEventListener('click', async () => {
-                const regex = document.getElementById('regex-display').textContent;
-                const fsm_description = serializeFSM();
-                const resultDiv = document.getElementById('gemini-result');
-                resultDiv.textContent = 'Asking Gemini for analysis...';
-                resultDiv.style.color = '#333';
-                resultDiv.style.borderColor = '#ccc';
-                if (fsm_description.startsWith("Error:")) {
-                    resultDiv.textContent = fsm_description;
-                    resultDiv.style.color = '#dc3545';
-                    resultDiv.style.borderColor = '#dc3545';
-                    return;
-                }
-                try {
-                    const response = await fetch('/api/check-fsm', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ regex: regex, fsm_description: fsm_description }),
-                    });
-                    if (!response.ok) {
-                        const errData = await response.json();
-                        throw new Error(errData.error || 'Server responded with an error.');
-                    }
-                    const data = await response.json();
-                    const firstLine = data.result.split('\n')[0].trim();
-                    resultDiv.textContent = data.result;
-                    if (firstLine.toLowerCase() === 'correct') {
-                        resultDiv.style.color = '#28a745';
-                        resultDiv.style.borderColor = '#28a745';
+            const clearBtn = document.getElementById('clear-btn');
+            if (clearBtn) {
+                clearBtn.addEventListener('click', () => {
+                    if (mode === 'fsm-to-regex') {
+                        // Reload current given FSM (re-center)
+                        clearCanvas(false);
                     } else {
+                        clearCanvas(false);
+                    }
+                });
+            }
+
+            // Regex->FSM check (existing)
+            const checkFsmBtn = document.getElementById('check-fsm-btn');
+            if (checkFsmBtn) {
+                checkFsmBtn.addEventListener('click', async () => {
+                    const regex = document.getElementById('regex-display').textContent;
+                    const fsm_description = serializeFSM();
+                    const resultDiv = document.getElementById('gemini-result');
+                    resultDiv.textContent = 'Asking Gemini for analysis...';
+                    resultDiv.style.color = '#333';
+                    resultDiv.style.borderColor = '#ccc';
+
+                    if (fsm_description.startsWith("Error:")) {
+                        resultDiv.textContent = fsm_description;
+                        resultDiv.style.color = '#dc3545';
+                        resultDiv.style.borderColor = '#dc3545';
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch('/api/check-fsm', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ regex: regex, fsm_description: fsm_description }),
+                        });
+                        if (!response.ok) {
+                            const errData = await response.json();
+                            throw new Error(errData.error || 'Server responded with an error.');
+                        }
+                        const data = await response.json();
+                        const firstLine = data.result.split('\n')[0].trim();
+                        resultDiv.textContent = data.result;
+                        if (firstLine.toLowerCase() === 'correct') {
+                            resultDiv.style.color = '#28a745';
+                            resultDiv.style.borderColor = '#28a745';
+                        } else {
+                            resultDiv.style.color = '#dc3545';
+                            resultDiv.style.borderColor = '#dc3545';
+                        }
+                    } catch (error) {
+                        console.error('Error checking FSM:', error);
+                        resultDiv.textContent = `Error: ${error.message}`;
                         resultDiv.style.color = '#dc3545';
                         resultDiv.style.borderColor = '#dc3545';
                     }
-                } catch (error) {
-                    console.error('Error checking FSM:', error);
-                    resultDiv.textContent = `Error: ${error.message}`;
-                    resultDiv.style.color = '#dc3545';
-                }
-            });
+                });
+            }
+
+            // FSM->Regex check (new)
+            const checkRegexBtn = document.getElementById('check-regex-btn');
+            if (checkRegexBtn) {
+                checkRegexBtn.addEventListener('click', async () => {
+                    const studentRegex = (document.getElementById('student-regex')?.value || '').trim();
+                    const resultDiv = document.getElementById('gemini-result');
+                    resultDiv.textContent = 'Checking your regex...';
+                    resultDiv.style.color = '#333';
+                    resultDiv.style.borderColor = '#ccc';
+
+                    if (!givenFSM) {
+                        resultDiv.textContent = 'Error: No FSM provided.';
+                        resultDiv.style.color = '#dc3545';
+                        resultDiv.style.borderColor = '#dc3545';
+                        return;
+                    }
+                    if (!studentRegex) {
+                        resultDiv.textContent = 'Please enter a regular expression before checking.';
+                        resultDiv.style.color = '#dc3545';
+                        resultDiv.style.borderColor = '#dc3545';
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch('/api/check-regex', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ fsm: givenFSM, student_regex: studentRegex }),
+                        });
+                        if (!response.ok) {
+                            const errData = await response.json();
+                            throw new Error(errData.error || 'Server responded with an error.');
+                        }
+                        const data = await response.json();
+                        const firstLine = (data.result || '').split('\n')[0].trim();
+                        resultDiv.textContent = data.result || 'No response.';
+                        if (firstLine.toLowerCase() === 'correct') {
+                            resultDiv.style.color = '#28a745';
+                            resultDiv.style.borderColor = '#28a745';
+                        } else {
+                            resultDiv.style.color = '#dc3545';
+                            resultDiv.style.borderColor = '#dc3545';
+                        }
+                    } catch (error) {
+                        console.error('Error checking regex:', error);
+                        resultDiv.textContent = `Error: ${error.message}`;
+                        resultDiv.style.color = '#dc3545';
+                        resultDiv.style.borderColor = '#dc3545';
+                    }
+                });
+            }
+
+            // Expose a tiny API for the fetchers below
+            window.__DRAWER__ = {
+                mode,
+                setGivenFSM: (fsm) => { givenFSM = fsm; loadFSM(givenFSM); },
+                getGivenFSM: () => givenFSM
+            };
         })();
 
-        // Dynamic Regex Fetcher
+        // Dynamic Fetchers (Regex/FSM)
         document.addEventListener('DOMContentLoaded', () => {
+            const moduleElTop = document.querySelector('.module-container');
+            const PAGE_MODE = moduleElTop?.dataset?.mode || 'regex-to-fsm';
+
+            // Regex -> FSM mode: new regex
             const newRegexBtn = document.getElementById('new-regex-btn');
             const regexDisplay = document.getElementById('regex-display');
-            newRegexBtn.addEventListener('click', () => {
-                regexDisplay.textContent = 'Generating...';
-                fetch('/drawer?format=json')
-                    .then(response => {
-                        if (!response.ok) throw new Error('Network response was not ok');
-                        return response.json();
-                    })
-                    .then(data => { regexDisplay.textContent = data.regex; })
-                    .catch(error => {
-                        console.error('Error fetching new regex:', error);
-                        regexDisplay.textContent = 'Error!';
-                    });
-            });
+
+            if (newRegexBtn && regexDisplay) {
+                newRegexBtn.addEventListener('click', () => {
+                    regexDisplay.textContent = 'Generating...';
+                    fetch(`/drawer?format=json&mode=regex-to-fsm`)
+                        .then(response => {
+                            if (!response.ok) throw new Error('Network response was not ok');
+                            return response.json();
+                        })
+                        .then(data => { regexDisplay.textContent = data.regex; })
+                        .catch(error => {
+                            console.error('Error fetching new regex:', error);
+                            regexDisplay.textContent = 'Error!';
+                        });
+                });
+            }
+
+            // FSM -> Regex mode: new fsm
+            const newFsmBtn = document.getElementById('new-fsm-btn');
+            if (newFsmBtn) {
+                newFsmBtn.addEventListener('click', () => {
+                    const resultDiv = document.getElementById('gemini-result');
+                    if (resultDiv) {
+                        resultDiv.textContent = 'Generating a new FSM...';
+                        resultDiv.style.color = '#333';
+                        resultDiv.style.borderColor = '#ccc';
+                    }
+
+                    fetch(`/drawer?format=json&mode=fsm-to-regex`)
+                        .then(response => {
+                            if (!response.ok) throw new Error('Network response was not ok');
+                            return response.json();
+                        })
+                        .then(data => {
+                            if (!data.fsm) throw new Error('No FSM returned.');
+                            window.__DRAWER__?.setGivenFSM(data.fsm);
+                            const pre = document.getElementById('fsm-text');
+                            if (pre) pre.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                            if (resultDiv) resultDiv.textContent = 'New FSM generated. Enter a regex and check!';
+                        })
+                        .catch(error => {
+                            console.error('Error fetching new FSM:', error);
+                            if (resultDiv) {
+                                resultDiv.textContent = 'Error generating FSM.';
+                                resultDiv.style.color = '#dc3545';
+                                resultDiv.style.borderColor = '#dc3545';
+                            }
+                        });
+                });
+            }
         });
     </script>
 
