@@ -485,47 +485,186 @@ def _generate_regex():
         logging.error(f"Error generating regex programmatically: {e}")
         return "a*(b|a)b"
 
+
 @app.route("/drawer")
 def drawer():
-
+    mode = request.args.get('mode', 'regex-to-fsm')
+    
     if request.args.get('format') == 'json':
-        new_regex = _generate_regex()
-        return jsonify({"regex": new_regex})
+        if mode == 'regex-to-fsm':
+            new_regex = _generate_regex()
+            return jsonify({"regex": new_regex})
+        else:  # fsm-to-regex mode
+            new_fsm = _generate_fsm()
+            return jsonify({"fsm": new_fsm})
 
-    initial_regex = _generate_regex()
-    return render_template("drawer.html", regex=initial_regex)
+    if mode == 'fsm-to-regex':
+        initial_fsm = _generate_fsm()
+        return render_template("drawer.html", mode=mode, fsm=initial_fsm)
+    else:
+        initial_regex = _generate_regex()
+        return render_template("drawer.html", mode=mode, regex=initial_regex)
 
-@app.route('/api/check-fsm', methods=['POST'])
-def check_fsm():
-    if not request.json or 'regex' not in request.json or 'fsm_description' not in request.json:
-        return jsonify({"error": "Missing regex or FSM description"}), 400
+def _generate_fsm():
+    """Generate a random simple FSM that can be converted to regex"""
+    try:
+        # Define some simple FSM patterns
+        patterns = [
+            {
+                "states": ["q0", "q1"],
+                "start": "q0",
+                "final": ["q1"],
+                "transitions": [
+                    {"from": "q0", "to": "q1", "label": "a"},
+                    {"from": "q1", "to": "q1", "label": "b"}
+                ],
+                "description": "States accepting strings starting with 'a' followed by zero or more 'b's"
+            },
+            {
+                "states": ["q0", "q1", "q2"],
+                "start": "q0",
+                "final": ["q2"],
+                "transitions": [
+                    {"from": "q0", "to": "q0", "label": "a"},
+                    {"from": "q0", "to": "q1", "label": "b"},
+                    {"from": "q1", "to": "q2", "label": "a"}
+                ],
+                "description": "States accepting strings with zero or more 'a's, then 'b', then 'a'"
+            },
+            {
+                "states": ["q0", "q1"],
+                "start": "q0",
+                "final": ["q0", "q1"],
+                "transitions": [
+                    {"from": "q0", "to": "q1", "label": "a"},
+                    {"from": "q1", "to": "q0", "label": "b"}
+                ],
+                "description": "States accepting strings with alternating 'a's and 'b's"
+            },
+            {
+                "states": ["q0", "q1", "q2"],
+                "start": "q0",
+                "final": ["q1"],
+                "transitions": [
+                    {"from": "q0", "to": "q1", "label": "a"},
+                    {"from": "q1", "to": "q2", "label": "a"},
+                    {"from": "q2", "to": "q1", "label": "b"}
+                ],
+                "description": "States that accept at least one 'a' and then alternate between double 'a's and single 'b's"
+            },
+            {
+                "states": ["q0", "q1"],
+                "start": "q0",
+                "final": ["q1"],
+                "transitions": [
+                    {"from": "q0", "to": "q0", "label": "a"},
+                    {"from": "q0", "to": "q0", "label": "b"},
+                    {"from": "q0", "to": "q1", "label": "a"}
+                ],
+                "description": "States accepting strings of any 'a's and 'b's ending with 'a'"
+            }
+        ]
+        
+        selected = random.choice(patterns)
+        return selected
+        
+    except Exception as e:
+        logging.error(f"Error generating FSM: {e}")
+        # Return a simple default FSM
+        return {
+            "states": ["q0", "q1"],
+            "start": "q0",
+            "final": ["q1"],
+            "transitions": [
+                {"from": "q0", "to": "q1", "label": "a"}
+            ],
+            "description": "Simple FSM accepting only 'a'"
+        }
+
+@app.route('/api/check-regex', methods=['POST'])
+def check_regex():
+    """Check if a student's regex matches the given FSM"""
+    if not request.json or 'fsm' not in request.json or 'student_regex' not in request.json:
+        return jsonify({"error": "Missing FSM or regex"}), 400
 
     data = request.get_json()
-    regex = data['regex']
-    fsm_description = data['fsm_description']
+    fsm = data['fsm']
+    student_regex = data['student_regex']
+
+    # Format the FSM for the prompt
+    fsm_description = f"""
+States: {{{', '.join(fsm['states'])}}}
+Start State: {fsm['start']}
+Final States: {{{', '.join(fsm['final'])}}}
+Transitions:
+"""
+    for trans in fsm['transitions']:
+        fsm_description += f"- from {trans['from']} to {trans['to']} on '{trans['label']}'\n"
 
     prompt = f"""
 You are an expert in automata theory and formal languages.
-Your task is to determine if a given Finite State Machine (FSM) correctly accepts the language described by a given regular expression over the alphabet {{a, b}}.
-
-**Regular Expression:**
-`{regex}`
+Your task is to determine if a given regular expression correctly describes the language accepted by a given Finite State Machine (FSM) over the alphabet {{a, b}}.
 
 **FSM Description:**
 {fsm_description}
 
+**Student's Regular Expression:**
+`{student_regex}`
+
 **Instructions:**
-1. Analyze the FSM and the regular expression.
-2. On the very first line, respond with a single word: "Correct" or "Incorrect".
-3. On a new line, provide a brief and clear explanation for your reasoning.
-   - If incorrect, specify a simple string that is either wrongly accepted or wrongly rejected by the FSM. For example: "The FSM incorrectly accepts the string 'b'" or "The FSM fails to accept the valid string 'aba'".
-   - If correct, briefly explain why it correctly models the regex.
+1. Analyze the FSM to determine what language it accepts.
+2. Analyze the student's regular expression to determine what language it describes.
+3. On the very first line, respond with a single word: "Correct" or "Incorrect".
+4. On a new line, provide a brief and clear explanation for your reasoning.
+   - If incorrect, provide a counterexample string that is either:
+     * Accepted by the FSM but not matched by the regex, OR
+     * Matched by the regex but not accepted by the FSM
+   - If correct, briefly explain why the regex correctly describes the FSM's language.
+5. After your explanation, on a new line starting with "Expected regex:", provide one possible correct regular expression for this FSM.
+"""
+
+    try:
+        logging.info("Sending regex check request to Gemini.")
+        response = model.generate_content(prompt)
+        return jsonify({"result": response.text})
+    except Exception as e:
+        logging.error(f"Error calling Gemini API for regex check: {e}")
+        return jsonify({"error": "Failed to get analysis from the AI model."}), 500
+
+@app.route('/api/check-fsm', methods=['POST'])
+def check_fsm():
+    """Check if a student's drawn FSM matches the given regex (Regex -> FSM mode)."""
+    if not request.is_json:
+        return jsonify({"error": "Expected JSON body"}), 400
+
+    data = request.get_json()
+    regex = data.get('regex')
+    fsm_description = data.get('fsm_description')
+
+    if not regex or not fsm_description:
+        return jsonify({"error": "Missing regex or fsm_description"}), 400
+
+    prompt = f"""
+You are an expert in automata theory and formal languages.
+A student was given a regular expression over the alphabet {{a, b}} and drew a finite state machine (FSM).
+Your task is to determine if the student's FSM accepts exactly the same language as the regular expression.
+
+**Given Regular Expression:**
+`{regex}`
+
+**Student's FSM Description:**
+{fsm_description}
+
+**Instructions:**
+1. Decide if the FSM and the regex describe the same language.
+2. On the very first line respond with exactly one word: "Correct" or "Incorrect".
+3. On the next line give a brief explanation.
+4. If incorrect, provide a counterexample string and explain why it fails.
 """
 
     try:
         logging.info("Sending FSM check request to Gemini.")
         response = model.generate_content(prompt)
-        # send the raw text back, the frontend will format it.
         return jsonify({"result": response.text})
     except Exception as e:
         logging.error(f"Error calling Gemini API for FSM check: {e}")
