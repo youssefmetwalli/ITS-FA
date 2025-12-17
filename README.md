@@ -8,8 +8,8 @@
 ![Status](https://img.shields.io/badge/Status-Active-success)
 ![License](https://img.shields.io/badge/License-Educational-lightgrey)
 
-ITS-FA is a backend system for an **Intelligent Tutoring System (ITS)** focused on **Formal Automata and Formal Languages**.  
-The system automatically extracts structured learning content from academic PDFs and generates **AI-powered assessment questions** using **Google Gemini**, storing results in **Firebase Firestore** and a **vector database** for intelligent retrieval and future personalization.
+ITS-FA is an **Intelligent Tutoring System (ITS)** focused on **Formal Automata and Formal Languages**.  
+The system automatically extracts structured learning content from academic PDFs and generates **AI-powered contents** using **Google Gemini**, storing results in **Firebase Firestore** and a **vector database** for intelligent retrieval and future personalization.
 
 ---
 
