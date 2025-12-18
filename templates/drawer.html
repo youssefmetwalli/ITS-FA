@@ -10,42 +10,114 @@
         integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
         crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: #333;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f6f9;
+        }
+
+        .header-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #2c3e50;
+        }
+
         #canvas-container {
             background: #fafafa;
             border: 1px solid #ddd;
-            border-radius: 4px;
+            border-radius: 12px;
             height: 500px;
             margin: 1em 0;
             position: relative;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
         }
 
         svg#canvas {
             width: 100%;
             height: 100%;
             cursor: crosshair;
+            border-radius: 12px;
         }
 
+        /* --- Modern Mode Toggle Styles --- */
+        .mode-toggle-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 2em 0;
+            background: transparent;
+            border: none;
+            padding: 0;
+        }
+
+        .segmented-control {
+            background-color: #e9ecef;
+            padding: 4px;
+            border-radius: 50px;
+            display: inline-flex;
+            position: relative;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+        }
+
+        .segmented-control a {
+            text-decoration: none;
+            color: #6c757d;
+            font-weight: 600;
+            font-size: 0.95rem;
+            padding: 10px 30px;
+            border-radius: 46px;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid transparent;
+        }
+
+        .segmented-control a:hover:not(.active) {
+            color: #495057;
+            background-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .segmented-control a.active {
+            background-color: #ffffff;
+            color: #007bff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            border-color: rgba(0, 0, 0, 0.04);
+            cursor: default;
+        }
+
+        /* -------------------------------- */
+
         .instructions-container {
-            background-color: #e0faf7;
-            border: 1px solid #e9ecef;
+            background-color: #fff;
+            border: 1px solid #e1e4e8;
+            border-left: 5px solid #007bff;
             border-radius: 8px;
             padding: 1.5em;
             margin-top: 1.5em;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
         }
 
         .instructions-container h3 {
             margin-top: 0;
             color: #343a40;
-            border-bottom: 1px solid #dee2e6;
+            border-bottom: 1px solid #f1f1f1;
             padding-bottom: 0.5em;
             margin-bottom: 1em;
+            font-size: 1.1em;
         }
 
         .instructions-container ul {
             list-style-type: none;
             padding: 0;
             margin: 0;
-            color: #495057;
+            color: #555;
         }
 
         .instructions-container li {
@@ -63,14 +135,14 @@
         }
 
         .instructions-container kbd {
-            background-color: #e9ecef;
-            border: 1px solid #ccc;
-            border-radius: 3px;
+            background-color: #f8f9fa;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
             padding: 2px 6px;
             font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
-            font-size: 0.9em;
+            font-size: 0.85em;
             color: #212529;
-            box-shadow: 1px 1px 1px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
         }
 
         #gemini-result {
@@ -78,62 +150,53 @@
             padding: 1em;
             border: 1px solid #ccc;
             border-radius: 4px;
-            background-color: #f9f9f9;
+            background-color: #fff;
             white-space: pre-wrap;
             min-height: 50px;
             transition: all 0.3s;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         }
 
         .regex-button {
             display: inline-block;
-            padding: 12px 24px;
-            margin: 10px 5px;
+            padding: 8px 16px;
+            margin: 0 10px;
             text-decoration: none;
-            font-weight: bold;
-            background: linear-gradient(45deg, #84fab0, #8fd3f4);
-            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9em;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
             border: none;
-            color: #464040;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-            transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+            color: #fff;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
             cursor: pointer;
+            vertical-align: middle;
         }
 
         .regex-button:hover {
-            background: linear-gradient(45deg, #9fdfff, #beb9f0);
-            transform: translateY(-3px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+            color: #fff;
         }
 
         .button {
             border: none;
             border: 1px solid #ccc;
-            background-color: #f0f0f0;
+            background-color: #fff;
             padding: 8px 16px;
             border-radius: 5px;
             cursor: pointer;
-            transition: background-color 0.2s, border-color 0.2s;
+            transition: all 0.2s;
+            text-decoration: none;
+            color: #333;
+            display: inline-block;
         }
 
         .button:hover {
-            background-color: #e0e0e0;
-            border-color: #999;
-        }
-
-        .mode-toggle {
-            display: inline-flex;
-            gap: 8px;
-            align-items: center;
-            margin-left: 8px;
-            flex-wrap: wrap;
-        }
-
-        .mode-pill {
-            padding: 6px 10px;
-            border-radius: 999px;
-            border: 1px solid #ddd;
-            background: #fff;
-            font-size: 0.9em;
+            background-color: #f8f9fa;
+            border-color: #b1b7bc;
+            transform: translateY(-1px);
         }
 
         .row {
@@ -141,19 +204,27 @@
             gap: 12px;
             align-items: center;
             flex-wrap: wrap;
+            margin: 10px 0;
         }
 
         .input {
             padding: 10px 12px;
-            border: 1px solid #ccc;
+            border: 1px solid #ced4da;
             border-radius: 6px;
             min-width: 260px;
             font-family: monospace;
+            font-size: 1rem;
+        }
+
+        .input:focus {
+            outline: none;
+            border-color: #80bdff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25);
         }
 
         .hint {
             color: #6c757d;
-            font-size: 0.95em;
+            font-size: 0.9em;
             margin-top: 6px;
         }
 
@@ -164,16 +235,30 @@
             border-radius: 8px;
             padding: 10px 12px;
             margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         pre#fsm-text {
-            background: #f6f8fa;
-            border: 1px solid #ddd;
+            background: #fff;
+            border: 1px solid #e1e4e8;
             border-radius: 8px;
-            padding: 12px;
+            padding: 15px;
             overflow: auto;
             white-space: pre-wrap;
-            margin-top: 10px;
+            margin-top: 15px;
+            font-size: 0.9em;
+            color: #24292e;
+        }
+
+        #regex-display {
+            font-family: 'SFMono-Regular', Consolas, monospace;
+            background: #e9ecef;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 1.1em;
+            color: #c0392b;
         }
     </style>
 </head>
@@ -185,19 +270,19 @@
         <a class="button" href="{{ url_for('index') }}">Home</a>
         <a class="button" href="{{ url_for('course_page') }}">Course</a>
         <a class="button" href="/chat">Chat</a>
+    </div>
 
-        <span class="mode-toggle">
-            <span class="mode-pill">
-                Mode:
-                {% if mode == 'fsm-to-regex' %}
-                <strong>FSM → Regex</strong>
-                {% else %}
-                <strong>Regex → FSM</strong>
-                {% endif %}
-            </span>
-            <a class="button" href="/drawer?mode=regex-to-fsm">Regex → FSM</a>
-            <a class="button" href="/drawer?mode=fsm-to-regex">FSM → Regex</a>
-        </span>
+    <!-- MODERN TOGGLE CONTAINER -->
+    <div class="mode-toggle-container">
+        <div class="segmented-control">
+            <!-- Active class is conditionally applied via Jinja -->
+            <a href="/drawer?mode=regex-to-fsm" class="{% if mode != 'fsm-to-regex' %}active{% endif %}">
+                Regex → FSM
+            </a>
+            <a href="/drawer?mode=fsm-to-regex" class="{% if mode == 'fsm-to-regex' %}active{% endif %}">
+                FSM → Regex
+            </a>
+        </div>
     </div>
 
     <div class="module-container" data-mode="{{ mode|default('regex-to-fsm') }}"
@@ -207,25 +292,10 @@
         <h2>Find the Regular Expression for the Given FSM</h2>
         <p>
             <strong>Given FSM:</strong> Drawn on the canvas below.
-            <button class="regex-button" id="new-fsm-btn">Generate New FSM</button>
-        </p>
-
-        <div class="row">
-            <label for="student-regex"><strong>Your Regular Expression:</strong></label>
-            <input id="student-regex" class="input" placeholder="e.g., ab* | (a|b)*a" />
-            <button class="button" id="check-regex-btn">Check Regex</button>
-        </div>
-        <div class="hint">Alphabet is assumed to be <strong>{a, b}</strong>. Use <strong>|</strong>, concatenation,
-            <strong>*</strong>, and parentheses.
-        </div>
-
         <div class="readonly-banner">
             <i class="fas fa-lock"></i>
-            This FSM is <strong>read-only</strong> in FSM → Regex mode (you only submit a regex).
+            <div>This FSM is <strong>read-only</strong> in FSM → Regex mode (you only submit a regex).</div>
         </div>
-
-        <pre id="fsm-text">Loading FSM...</pre>
-
         <div class="instructions-container">
             <h3>Instructions (FSM → Regex)</h3>
             <ul>
@@ -236,13 +306,16 @@
                     counterexample if incorrect.</li>
             </ul>
         </div>
+        <pre id="fsm-text">Loading FSM...</pre>
+        <button class="regex-button" id="new-fsm-btn"><i class="fas fa-sync-alt"></i> Generate New FSM</button>
+        </p>
 
         {% else %}
         <h2>Practice Drawing a FSM</h2>
         <p>
             <strong>Given Regular Expression:</strong>
             <span id="regex-display">{{ regex }}</span>
-            <button class="regex-button" id="new-regex-btn">Generate New Regex</button>
+            <button class="regex-button" id="new-regex-btn"><i class="fas fa-sync-alt"></i> Generate New Regex</button>
         </p>
 
         <div class="instructions-container">
@@ -285,6 +358,7 @@
                         fill: none;
                         stroke: #333;
                         stroke-width: 2px;
+                        pointer-events: none;
                     }
 
                     .state:hover circle.outer {
@@ -310,6 +384,9 @@
                         user-select: none;
                         font-family: monospace;
                         cursor: pointer;
+                        fill: #000;
+                        font-weight: bold;
+                        text-shadow: 1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff;
                     }
                 </style>
                 <defs>
@@ -320,14 +397,26 @@
             </svg>
         </div>
 
-        <div>
-            <button class="button" id="export-btn">Export as PNG</button>
+        {% if mode == 'fsm-to-regex' %}
+        <!-- Moved Input Field to HERE (Below Canvas) -->
+        <div class="row">
+            <label for="student-regex"><strong>Your Regular Expression:</strong></label>
+            <input id="student-regex" class="input" placeholder="e.g., ab* | (a|b)*a" />
+            <button class="button" id="check-regex-btn">Check Regex</button>
+        </div>
+        <div class="hint">Alphabet is assumed to be <strong>{a, b}</strong>. Use <strong>|</strong>, concatenation,
+            <strong>*</strong>, and parentheses.
+        </div>
+        {% endif %}
 
-            {% if mode == 'fsm-to-regex' %}
-            <button class="button" id="clear-btn" title="Re-center/reload current FSM">Reload FSM</button>
-            {% else %}
-            <button class="button" id="check-fsm-btn">Check with AI</button>
-            <button class="button" id="clear-btn">Clear Canvas</button>
+        <div>
+            <!-- Buttons are only shown for Regex -> FSM mode -->
+            {% if mode != 'fsm-to-regex' %}
+            <button class="button" id="export-btn"><i class="fas fa-file-image"></i> Export as PNG</button>
+            <button class="button" id="check-fsm-btn"
+                style="background-color: #28a745; color: white; border-color: #218838;"><i class="fas fa-robot"></i>
+                Check with AI</button>
+            <button class="button" id="clear-btn"><i class="fas fa-trash-alt"></i> Clear Canvas</button>
             {% endif %}
         </div>
 
@@ -760,27 +849,30 @@
             }
 
             // --- Buttons ---
-            document.getElementById('export-btn').addEventListener('click', () => {
-                const clone = svg.cloneNode(true);
-                if (!clone.getAttribute('xmlns')) clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-                const str = new XMLSerializer().serializeToString(clone);
-                const blob = new Blob([str], { type: 'image/svg+xml;charset=utf-8' });
-                const url = URL.createObjectURL(blob);
-                const img = new Image();
-                img.onload = () => {
-                    const c = document.createElement('canvas');
-                    c.width = svg.clientWidth; c.height = svg.clientHeight;
-                    const ctx = c.getContext('2d');
-                    ctx.fillStyle = '#fafafa'; ctx.fillRect(0, 0, c.width, c.height);
-                    ctx.drawImage(img, 0, 0);
-                    URL.revokeObjectURL(url);
-                    const png = c.toDataURL('image/png');
-                    const a = document.createElement('a');
-                    a.href = png; a.download = 'fsm.png';
-                    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-                };
-                img.src = url;
-            });
+            const exportBtn = document.getElementById('export-btn');
+            if (exportBtn) {
+                exportBtn.addEventListener('click', () => {
+                    const clone = svg.cloneNode(true);
+                    if (!clone.getAttribute('xmlns')) clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+                    const str = new XMLSerializer().serializeToString(clone);
+                    const blob = new Blob([str], { type: 'image/svg+xml;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+                    const img = new Image();
+                    img.onload = () => {
+                        const c = document.createElement('canvas');
+                        c.width = svg.clientWidth; c.height = svg.clientHeight;
+                        const ctx = c.getContext('2d');
+                        ctx.fillStyle = '#fafafa'; ctx.fillRect(0, 0, c.width, c.height);
+                        ctx.drawImage(img, 0, 0);
+                        URL.revokeObjectURL(url);
+                        const png = c.toDataURL('image/png');
+                        const a = document.createElement('a');
+                        a.href = png; a.download = 'fsm.png';
+                        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                    };
+                    img.src = url;
+                });
+            }
 
             const clearBtn = document.getElementById('clear-btn');
             if (clearBtn) {
