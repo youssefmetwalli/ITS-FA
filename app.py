@@ -506,62 +506,165 @@ def drawer():
         return render_template("drawer.html", mode=mode, regex=initial_regex)
 
 def _generate_fsm():
-    """Generate a random simple FSM that can be converted to regex"""
+    """Generate a random simple FSM that can be converted to regex, with varied logic and states."""
     try:
-        # Define some simple FSM patterns
+        # Randomly map logical placeholders to actual alphabet to increase variety
+        # e.g., sometimes L1 is 'a', sometimes 'b'
+        l1, l2 = random.sample(['a', 'b'], 2)
+        
         patterns = [
+            # 1. Exact Sequence (Linear) - 4 States
+            # Regex: L1 L2 L1
             {
-                "states": ["q0", "q1"],
+                "states": ["q0", "q1", "q2", "q3"],
                 "start": "q0",
-                "final": ["q1"],
+                "final": ["q3"],
                 "transitions": [
-                    {"from": "q0", "to": "q1", "label": "a"},
-                    {"from": "q1", "to": "q1", "label": "b"}
+                    {"from": "q0", "to": "q1", "label": l1},
+                    {"from": "q1", "to": "q2", "label": l2},
+                    {"from": "q2", "to": "q3", "label": l1}
                 ],
-                "description": "States accepting strings starting with 'a' followed by zero or more 'b's"
+                "description": f"Accepts exactly the string '{l1}{l2}{l1}'"
             },
+            # 2. One or more L1, then one or more L2 - 3 States
+            # Regex: L1 L1* L2 L2* (or L1+ L2+)
             {
                 "states": ["q0", "q1", "q2"],
                 "start": "q0",
                 "final": ["q2"],
                 "transitions": [
-                    {"from": "q0", "to": "q0", "label": "a"},
-                    {"from": "q0", "to": "q1", "label": "b"},
-                    {"from": "q1", "to": "q2", "label": "a"}
+                    {"from": "q0", "to": "q1", "label": l1},
+                    {"from": "q1", "to": "q1", "label": l1},
+                    {"from": "q1", "to": "q2", "label": l2},
+                    {"from": "q2", "to": "q2", "label": l2}
                 ],
-                "description": "States accepting strings with zero or more 'a's, then 'b', then 'a'"
+                "description": f"Accepts one or more '{l1}'s followed by one or more '{l2}'s"
             },
+            # 3. Ends with L1 L2 - 3 States
+            # Regex: (a|b)* L1 L2
             {
-                "states": ["q0", "q1"],
+                "states": ["q0", "q1", "q2"],
                 "start": "q0",
-                "final": ["q0", "q1"],
+                "final": ["q2"],
                 "transitions": [
-                    {"from": "q0", "to": "q1", "label": "a"},
-                    {"from": "q1", "to": "q0", "label": "b"}
+                    {"from": "q0", "to": "q0", "label": l2},
+                    {"from": "q0", "to": "q1", "label": l1},
+                    {"from": "q1", "to": "q1", "label": l1}, # Stay if we get L1 again
+                    {"from": "q1", "to": "q2", "label": l2},
+                    {"from": "q2", "to": "q0", "label": l2}, # Reset
+                    {"from": "q2", "to": "q1", "label": l1}  # Overlap
                 ],
-                "description": "States accepting strings with alternating 'a's and 'b's"
+                "description": f"Accepts strings ending in '{l1}{l2}'"
             },
+            # 4. Exactly one L1, any number of L2s - 3 States
+            # Regex: L2* L1 L2*
             {
                 "states": ["q0", "q1", "q2"],
                 "start": "q0",
                 "final": ["q1"],
                 "transitions": [
-                    {"from": "q0", "to": "q1", "label": "a"},
-                    {"from": "q1", "to": "q2", "label": "a"},
-                    {"from": "q2", "to": "q1", "label": "b"}
+                    {"from": "q0", "to": "q0", "label": l2},
+                    {"from": "q0", "to": "q1", "label": l1},
+                    {"from": "q1", "to": "q1", "label": l2},
+                    {"from": "q1", "to": "q2", "label": l1}, # Trap state logic
+                    {"from": "q2", "to": "q2", "label": l1},
+                    {"from": "q2", "to": "q2", "label": l2}
                 ],
-                "description": "States that accept at least one 'a' and then alternate between double 'a's and single 'b's"
+                "description": f"Accepts strings containing exactly one '{l1}'"
             },
+            # 5. Even Length Strings - 2 States
+            # Regex: ((a|b)(a|b))*
             {
                 "states": ["q0", "q1"],
                 "start": "q0",
-                "final": ["q1"],
+                "final": ["q0"],
                 "transitions": [
-                    {"from": "q0", "to": "q0", "label": "a"},
-                    {"from": "q0", "to": "q0", "label": "b"},
-                    {"from": "q0", "to": "q1", "label": "a"}
+                    {"from": "q0", "to": "q1", "label": l1},
+                    {"from": "q0", "to": "q1", "label": l2},
+                    {"from": "q1", "to": "q0", "label": l1},
+                    {"from": "q1", "to": "q0", "label": l2}
                 ],
-                "description": "States accepting strings of any 'a's and 'b's ending with 'a'"
+                "description": "Accepts strings of even length"
+            },
+            # 6. Starts with L1, Ends with L2, anything in middle - 4 States
+            # Regex: L1 (a|b)* L2
+            {
+                "states": ["q0", "q1", "q2", "q3"],
+                "start": "q0",
+                "final": ["q3"],
+                "transitions": [
+                    {"from": "q0", "to": "q1", "label": l1},
+                    # q1 is the middle state
+                    {"from": "q1", "to": "q1", "label": l1},
+                    {"from": "q1", "to": "q3", "label": l2},
+                    # q3 is final, but if we get another symbol we might have to go back
+                    {"from": "q3", "to": "q1", "label": l1},
+                    {"from": "q3", "to": "q3", "label": l2} 
+                ],
+                "description": f"Accepts strings starting with '{l1}' and ending with '{l2}'"
+            },
+            # 7. Divisible by 3 (Length) - 3 States
+            # Regex: ((a|b)(a|b)(a|b))*
+            {
+                "states": ["q0", "q1", "q2"],
+                "start": "q0",
+                "final": ["q0"],
+                "transitions": [
+                    {"from": "q0", "to": "q1", "label": l1}, {"from": "q0", "to": "q1", "label": l2},
+                    {"from": "q1", "to": "q2", "label": l1}, {"from": "q1", "to": "q2", "label": l2},
+                    {"from": "q2", "to": "q0", "label": l1}, {"from": "q2", "to": "q0", "label": l2}
+                ],
+                "description": "Accepts strings with length divisible by 3"
+            },
+            # 8. Contains substring 'L1 L1' - 3 States
+            # Regex: (a|b)* L1 L1 (a|b)*
+            {
+                "states": ["q0", "q1", "q2"],
+                "start": "q0",
+                "final": ["q2"],
+                "transitions": [
+                    {"from": "q0", "to": "q1", "label": l1},
+                    {"from": "q0", "to": "q0", "label": l2},
+                    {"from": "q1", "to": "q2", "label": l1},
+                    {"from": "q1", "to": "q0", "label": l2},
+                    {"from": "q2", "to": "q2", "label": l1},
+                    {"from": "q2", "to": "q2", "label": l2}
+                ],
+                "description": f"Accepts strings containing the substring '{l1}{l1}'"
+            },
+            # 9. Simple Branching (Union) - 4 States
+            # Regex: L1 L1* | L2 L2*
+            {
+                "states": ["q0", "q1", "q2", "q_trap"],
+                "start": "q0",
+                "final": ["q1", "q2"],
+                "transitions": [
+                    {"from": "q0", "to": "q1", "label": l1},
+                    {"from": "q0", "to": "q2", "label": l2},
+                    {"from": "q1", "to": "q1", "label": l1},
+                    {"from": "q1", "to": "q_trap", "label": l2},
+                    {"from": "q2", "to": "q2", "label": l2},
+                    {"from": "q2", "to": "q_trap", "label": l1},
+                    {"from": "q_trap", "to": "q_trap", "label": l1},
+                    {"from": "q_trap", "to": "q_trap", "label": l2}
+                ],
+                "description": f"Accepts either all '{l1}'s or all '{l2}'s (min length 1)"
+            },
+             # 10. The "Sandwich" with loops - 4 States
+            # Regex: L1 (L2)* L1
+            {
+                "states": ["q0", "q1", "q2", "q_trap"],
+                "start": "q0",
+                "final": ["q2"],
+                "transitions": [
+                    {"from": "q0", "to": "q1", "label": l1},
+                    {"from": "q0", "to": "q_trap", "label": l2},
+                    {"from": "q1", "to": "q1", "label": l2},
+                    {"from": "q1", "to": "q2", "label": l1},
+                    {"from": "q2", "to": "q_trap", "label": l1},
+                    {"from": "q2", "to": "q_trap", "label": l2},
+                ],
+                "description": f"Accepts '{l1}', followed by any '{l2}'s, followed by '{l1}'"
             }
         ]
         
@@ -570,7 +673,7 @@ def _generate_fsm():
         
     except Exception as e:
         logging.error(f"Error generating FSM: {e}")
-        # Return a simple default FSM
+        # Default fallback
         return {
             "states": ["q0", "q1"],
             "start": "q0",
