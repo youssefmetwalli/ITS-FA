@@ -68,92 +68,141 @@ def index():
         quizzes_completed=quizzes_completed
     )
 
-
-@app.route("/signup", methods=["GET", "POST"])
-def signup():
-    firebase_config = {
-        "firebase_api_key": os.getenv("FIREBASE_API_KEY"),
-        "firebase_auth_domain": os.getenv("FIREBASE_AUTH_DOMAIN"),
-        "firebase_project_id": os.getenv("FIREBASE_PROJECT_ID"),
-        "firebase_storage_bucket": os.getenv("FIREBASE_STORAGE_BUCKET"),
-        "firebase_app_id": os.getenv("FIREBASE_APP_ID")
-    }
-    if request.method == "POST":
-        email = request.form.get("email")
-        password = request.form.get("password")
-
-        try:
-            user = auth.get_user_by_email(email)
-            return render_template("signup.html", error="This email is already in use", **firebase_config)
-        except auth.UserNotFoundError:
-            pass
-        password_pattern = r"^(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$"
-        if not re.match(password_pattern, password):
-            return render_template("signup.html", error="Password must be at least 8 characters long, contain at least one number, one uppercase letter, and one symbol. ", **firebase_config)
-
-        try:
-            # Create user with Firebase Authentication
-            user = auth.create_user(email=email, password=password)
-            session["user_id"] = user.uid  # Store user session
-
-            # Store user in Firestore
-            user_data = {
-                "email": email,
-                "uid": user.uid,
-                "created_at": firestore.SERVER_TIMESTAMP,  # Adds timestamp
-                "chapters_read": 0,
-                "read_chapters": [],
-                "quizzes_attempted": 0,
-                "quizzes_completed": 0
-            }
-            db.collection("Users").document(user.uid).set(user_data)
-
-            return redirect(url_for("index"))  # Redirect to index on successful signup
-
-        except Exception as e:
-            logging.error(f"Error signing up: {e}, traceback: {traceback.format_exc()}")
-            return render_template("signup.html", error="Unable to signup, please make sure you have a valid email and password.", **firebase_config)
-
-    return render_template("signup.html", **firebase_config)
-
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    firebase_config = {
-        'firebase_api_key': os.getenv('FIREBASE_API_KEY'),
-        'firebase_auth_domain': os.getenv('FIREBASE_AUTH_DOMAIN'),
-        'firebase_project_id': os.getenv('FIREBASE_PROJECT_ID'),
-        'firebase_storage_bucket': os.getenv('FIREBASE_STORAGE_BUCKET'),
-        'firebase_app_id': os.getenv('FIREBASE_APP_ID'),
-    }
-    return render_template("login.html", **firebase_config)
+    # If user is already logged in, send them home
+    if session.get("user_id"):
+        return redirect(url_for("index"))
 
+    if request.method == "POST":
+        # Get the password typed by the user
+        input_passcode = request.form.get("password", "").strip()
+        
+        # Query the 'passwords' collection 
+        # We look for any document where the field 'passcode' matches input
+        docs_stream = db.collection("passwords").where("password", "==", input_passcode).limit(1).stream()
+        docs = list(docs_stream)
 
-@app.route('/logout', methods=['POST'])
+        if docs:
+            # Login Successful!
+            found_doc = docs[0]
+            
+            # We use the document ID (e.g., "group1") as the User ID
+            # This allows multiple people to share the "group1" login and progress
+            user_id = found_doc.id 
+            session["user_id"] = user_id
+            
+            # Ensure a User document exists in 'Users' collection so progress can be saved
+            user_ref = db.collection("Users").document(user_id)
+            if not user_ref.get().exists:
+                user_ref.set({
+                    "uid": user_id,
+                    "email": "passcode_user", # Placeholder
+                    "created_at": firestore.SERVER_TIMESTAMP,
+                    "chapters_read": 0,
+                    "read_chapters": [],
+                    "quizzes_attempted": 0,
+                    "quizzes_completed": 0,
+                    "answers": {}
+                })
+            
+            return redirect(url_for("index"))
+        else:
+            # Login Failed
+            return render_template("login_simple.html", error="Invalid Passcode. Please try again.")
+
+    return render_template("login_simple.html")
+
+@app.route('/logout', methods=['GET', 'POST']) 
 def logout():
-    session.pop('user_id', None) 
-    return redirect(url_for('index'))
+    session.pop('user_id', None)
+    return redirect(url_for('login'))
 
-@app.route("/validate_token", methods=["POST"])
-def validate_token():
-    # Get the ID token from the request
-    data = request.get_json()
-    id_token = data.get('idToken')
+# @app.route("/signup", methods=["GET", "POST"])
+# def signup():
+#     firebase_config = {
+#         "firebase_api_key": os.getenv("FIREBASE_API_KEY"),
+#         "firebase_auth_domain": os.getenv("FIREBASE_AUTH_DOMAIN"),
+#         "firebase_project_id": os.getenv("FIREBASE_PROJECT_ID"),
+#         "firebase_storage_bucket": os.getenv("FIREBASE_STORAGE_BUCKET"),
+#         "firebase_app_id": os.getenv("FIREBASE_APP_ID")
+#     }
+#     if request.method == "POST":
+#         email = request.form.get("email")
+#         password = request.form.get("password")
 
-    if not id_token:
-        return jsonify({"error": "No token provided"}), 400
+#         try:
+#             user = auth.get_user_by_email(email)
+#             return render_template("signup.html", error="This email is already in use", **firebase_config)
+#         except auth.UserNotFoundError:
+#             pass
+#         password_pattern = r"^(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$"
+#         if not re.match(password_pattern, password):
+#             return render_template("signup.html", error="Password must be at least 8 characters long, contain at least one number, one uppercase letter, and one symbol. ", **firebase_config)
 
-    try:
-        # Verify the ID token
-        decoded_token = auth.verify_id_token(id_token)
-        uid = decoded_token['uid']
+#         try:
+#             # Create user with Firebase Authentication
+#             user = auth.create_user(email=email, password=password)
+#             session["user_id"] = user.uid  # Store user session
 
-        # Store user session after verifying token
-        session["user_id"] = uid
-        return jsonify({"success": True})  # User authenticated successfully
+#             # Store user in Firestore
+#             user_data = {
+#                 "email": email,
+#                 "uid": user.uid,
+#                 "created_at": firestore.SERVER_TIMESTAMP,  # Adds timestamp
+#                 "chapters_read": 0,
+#                 "read_chapters": [],
+#                 "quizzes_attempted": 0,
+#                 "quizzes_completed": 0
+#             }
+#             db.collection("Users").document(user.uid).set(user_data)
 
-    except Exception as e:
-        logging.error(f"Error verifying token: {e}")
-        return jsonify({"error": "Invalid token or session expired"}), 401
+#             return redirect(url_for("index"))  # Redirect to index on successful signup
+
+#         except Exception as e:
+#             logging.error(f"Error signing up: {e}, traceback: {traceback.format_exc()}")
+#             return render_template("signup.html", error="Unable to signup, please make sure you have a valid email and password.", **firebase_config)
+
+#     return render_template("signup.html", **firebase_config)
+
+# @app.route("/login", methods=["GET", "POST"])
+# def login():
+#     firebase_config = {
+#         'firebase_api_key': os.getenv('FIREBASE_API_KEY'),
+#         'firebase_auth_domain': os.getenv('FIREBASE_AUTH_DOMAIN'),
+#         'firebase_project_id': os.getenv('FIREBASE_PROJECT_ID'),
+#         'firebase_storage_bucket': os.getenv('FIREBASE_STORAGE_BUCKET'),
+#         'firebase_app_id': os.getenv('FIREBASE_APP_ID'),
+#     }
+#     return render_template("login.html", **firebase_config)
+
+
+# @app.route('/logout', methods=['POST'])
+# def logout():
+#     session.pop('user_id', None) 
+#     return redirect(url_for('index'))
+
+# @app.route("/validate_token", methods=["POST"])
+# def validate_token():
+#     # Get the ID token from the request
+#     data = request.get_json()
+#     id_token = data.get('idToken')
+
+#     if not id_token:
+#         return jsonify({"error": "No token provided"}), 400
+
+#     try:
+#         # Verify the ID token
+#         decoded_token = auth.verify_id_token(id_token)
+#         uid = decoded_token['uid']
+
+#         # Store user session after verifying token
+#         session["user_id"] = uid
+#         return jsonify({"success": True})  # User authenticated successfully
+
+#     except Exception as e:
+#         logging.error(f"Error verifying token: {e}")
+#         return jsonify({"error": "Invalid token or session expired"}), 401
 
 @app.before_request
 def before_request():
