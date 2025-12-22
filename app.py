@@ -52,7 +52,7 @@ app.jinja_env.filters['shuffle'] = shuffle_list
 @app.route("/")
 def index():
     if not session.get('user_id'):
-         return redirect(url_for("signup"))
+         return redirect(url_for("login"))
     user_id = session['user_id']
     user_doc = db.collection("Users").document(user_id).get()
     user_data = user_doc.to_dict() if user_doc.exists else {}
@@ -206,7 +206,7 @@ def logout():
 
 @app.before_request
 def before_request():
-  if not session.get('user_id') and request.endpoint not in ['login', 'static', 'index','signup', 'validate_token']:
+  if not session.get('user_id') and request.endpoint not in ['login', 'static', 'index', 'validate_token']:
         return redirect(url_for('login'))
 
 @app.route('/save_answer', methods=['POST'])
