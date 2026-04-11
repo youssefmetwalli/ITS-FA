@@ -45,8 +45,8 @@ class DiagnoserAgent:
 
     def _diagnose_mcq(self, question: QuestionObject, user_answer: str) -> DiagnoserResult:
         normalized_answer = self._normalize_mcq_answer(user_answer, question)
-        correct_answer = self._normalize_text(question.correct_answer)
-        is_correct = normalized_answer == correct_answer
+        accepted_correct_answers = self._accepted_mcq_answers(question)
+        is_correct = normalized_answer in accepted_correct_answers
         score = 1.0 if is_correct else 0.0
         feedback = (
             f"Correct. {question.explanation}"
@@ -115,4 +115,32 @@ class DiagnoserAgent:
             index = ord(answer.upper()) - ord("A")
             if 0 <= index < len(question.options):
                 return self._normalize_text(question.options[index])
-        return answer
+        return self._strip_option_prefix(answer)
+
+    def _accepted_mcq_answers(self, question: QuestionObject) -> set[str]:
+        accepted: set[str] = set()
+        correct_answer = self._normalize_text(question.correct_answer)
+        stripped_correct_answer = self._strip_option_prefix(correct_answer)
+
+        if correct_answer:
+            accepted.add(correct_answer)
+        if stripped_correct_answer:
+            accepted.add(stripped_correct_answer)
+
+        label_match = re.match(r"^([a-d])(?:[\).:\s]|$)", correct_answer)
+        if label_match and question.options:
+            index = ord(label_match.group(1).upper()) - ord("A")
+            if 0 <= index < len(question.options):
+                accepted.add(self._normalize_text(question.options[index]))
+
+        for index, option in enumerate(question.options):
+            normalized_option = self._normalize_text(option)
+            option_label = chr(ord("a") + index)
+            if correct_answer == option_label or stripped_correct_answer == normalized_option:
+                accepted.add(normalized_option)
+
+        return accepted
+
+    @staticmethod
+    def _strip_option_prefix(text: str) -> str:
+        return re.sub(r"^[a-d](?:[\).:\s-]+)", "", text).strip()
