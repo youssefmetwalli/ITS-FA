@@ -8,9 +8,15 @@ import firebase_admin
 from firebase_admin import credentials, firestore, auth, initialize_app
 from whitenoise import WhiteNoise
 from chatbot import create_chain
+from agents.diagnoser_agent import DiagnoserAgent
+from agents.examiner_agent import ExaminerAgent
+from agents.explainer_agent import ExplainerAgent
+from agents.orchestrator import ChatOrchestrator
 import random 
 import traceback
 import google.generativeai as genai
+from services.chat_state_service import ChatStateService
+from services.retrieval_service import RetrievalService
 
 load_dotenv()
 b64 = os.environ.get("GOOGLE_CREDS_B64")
@@ -40,6 +46,18 @@ try:
 except Exception as e:
     logging.error(f"Chain initialization error: {e}")
     chain = None 
+
+retrieval_service = RetrievalService()
+chat_state_service = ChatStateService()
+explainer_agent = ExplainerAgent(retrieval_service)
+examiner_agent = ExaminerAgent()
+diagnoser_agent = DiagnoserAgent(retrieval_service)
+chat_orchestrator = ChatOrchestrator(
+    explainer_agent=explainer_agent,
+    examiner_agent=examiner_agent,
+    diagnoser_agent=diagnoser_agent,
+    chat_state_service=chat_state_service,
+)
 
 def shuffle_list(seq):
     shuffled = list(seq)
@@ -437,25 +455,66 @@ def chat():
 
 @app.route("/chat_api", methods=["POST"])
 def chat_api():
-    user_message = request.json.get("message")
+    request_data = request.get_json(silent=True) or {}
+    user_message = request_data.get("message", "").strip()
     if not user_message:
         return jsonify({"error": "No message provided"}), 400
 
-    global chain
-    if chain is None:
-        chain = create_chain()
+    try:
+        chat_state = chat_state_service.load_state()
+        logging.info(
+            "Chat request received: message='%s' active_question=%s recent_agent=%s",
+            user_message,
+            bool(chat_state.active_question),
+            chat_state.recent_agent_used,
+        )
+
+        payload, updated_state = chat_orchestrator.handle_message(user_message, chat_state)
+        chat_state_service.save_state(updated_state)
+
+        logging.info("Received message: %s", user_message)
+        logging.info(
+            "Agent selected=%s concepts=%s has_active_question=%s",
+            payload.get("agent_used"),
+            payload.get("concepts_touched"),
+            payload.get("has_active_question"),
+        )
+        return jsonify(payload)
+    except Exception:
+        logging.error("Multi-agent chat error:\n%s", traceback.format_exc())
+        global chain
+        if chain is None:
+            chain = create_chain()
         if chain is None:
             return jsonify({"error": "Assistant initialisation failed"}), 500
+        try:
+            response = chain.invoke(user_message)
+            return jsonify(
+                {
+                    "message": response,
+                    "response_text": response,
+                    "agent_used": "explainer",
+                    "has_active_question": False,
+                    "question_metadata": None,
+                    "concepts_touched": [],
+                    "suggested_next_action": "You can ask for a quiz if you want practice.",
+                    "routing_reason": "legacy_chain_fallback",
+                }
+            )
+        except Exception:
+            logging.error("Legacy fallback error:\n%s", traceback.format_exc())
+            return jsonify({"error": "Internal server error"}), 500
 
-    try:
-        logging.info("Received message: %s", user_message)
-        response = chain.invoke(user_message)       
-        logging.info("Assistant message: %s", response)
 
-        return jsonify({"message": response})
-    except Exception:
-        logging.error("Error:\n%s", traceback.format_exc())
-        return jsonify({"error": "Internal server error"}), 500
+@app.route("/chat_api/reset", methods=["POST"])
+def chat_api_reset():
+    state = chat_state_service.load_state()
+    state = chat_state_service.clear_active_question(state)
+    state = chat_state_service.set_recent_agent(state, "explainer")
+    state.concept_tags = []
+    state.difficulty = None
+    chat_state_service.save_state(state)
+    return jsonify({"message": "Chat state reset"})
 
 
 
