@@ -14,7 +14,11 @@ load_dotenv()
 
 # Gemini API setup
 genai.configure(api_key=os.environ.get("GOOGLE_API_KEY"))
-model = genai.GenerativeModel('gemini-1.5-flash-001')
+GENERATION_MODEL_NAME = os.environ.get(
+    "GENERATION_MODEL_NAME",
+    os.environ.get("CHAT_MODEL_NAME", "gemini-2.5-flash-lite"),
+)
+model = genai.GenerativeModel(GENERATION_MODEL_NAME)
 
 # Firebase setup
 cred = credentials.Certificate("firebase.json")
