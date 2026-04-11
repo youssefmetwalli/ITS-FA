@@ -3,3 +3,4 @@ venv/
 service-account.json
 .DS_Store
 __pycache__/
+firebase.json
