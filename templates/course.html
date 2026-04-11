@@ -18,6 +18,14 @@
             counter-reset: chapter-counter;
         }
 
+        .section-title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+        }
+
         ol {
             list-style: none;
             padding-left: 0;
@@ -60,6 +68,36 @@
         .quiz-button:hover {
             color: #0f100b;
             background: linear-gradient(to right, #7abb7a, #3cac5e);
+        }
+
+        .flashcard-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 18px;
+            min-width: 122px;
+            text-decoration: none;
+            color: #503113;
+            background: linear-gradient(135deg, #ffe1b9, #ffc476);
+            border: 1px solid rgba(189, 121, 40, 0.28);
+            border-radius: 999px;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+            box-shadow: 0 8px 18px rgba(196, 136, 63, 0.16);
+            transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+        }
+
+        .flashcard-button:hover {
+            color: #3f250a;
+            background: linear-gradient(135deg, #ffd59a, #ffb25e);
+            border-color: rgba(189, 121, 40, 0.42);
+            box-shadow: 0 12px 24px rgba(196, 136, 63, 0.22);
+            transform: translateY(-1px);
+        }
+
+        .flashcard-button:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(255, 194, 102, 0.28), 0 12px 24px rgba(196, 136, 63, 0.18);
         }
 
         h3 {
@@ -152,7 +190,16 @@
     <div class="module-container">
         <h2>Chapters</h2>
         <ol>
-            <li class="section-title">Introduction</li>
+            <li class="section-title">
+                <div class="section-title-row">
+                    <span>Introduction</span>
+                    {% if section_flashcard_meta.introduction.available %}
+                    <a class="flashcard-button" href="{{ url_for('adaptive_flashcards_section_page', section_key='introduction') }}">
+                        Flashcards
+                    </a>
+                    {% endif %}
+                </div>
+            </li>
             {% for chapter in chapters if chapter.id <= 4 %} <li class="chapter-item">
                 <!-- Left side: chapter link -->
                 <a class="chapter-link {% if chapter.id in read_chapters %}highlight-green{% endif %}"
@@ -175,7 +222,16 @@
                 {% endfor %}
 
                 <!-- FINITE STATE MACHINES -->
-                <li class="section-title">Finite State Machines &amp; Regular Languages</li>
+                <li class="section-title">
+                    <div class="section-title-row">
+                        <span>Finite State Machines &amp; Regular Languages</span>
+                        {% if section_flashcard_meta.fsm_regular.available %}
+                        <a class="flashcard-button" href="{{ url_for('adaptive_flashcards_section_page', section_key='fsm_regular') }}">
+                            Flashcards
+                        </a>
+                        {% endif %}
+                    </div>
+                </li>
                 {% for chapter in chapters if chapter.id >= 5 and chapter.id <= 9 %} <li class="chapter-item">
                     <a class="chapter-link {% if chapter.id in read_chapters %}highlight-green{% endif %}"
                         href="{{ url_for('module_detail', module_id=chapter.id) }}">
@@ -196,7 +252,16 @@
                     {% endfor %}
 
                     <!-- CONTEXT-FREE LANGUAGES / PUSHDOWN AUTOMATA -->
-                    <li class="section-title">Context-Free Languages and Pushdown Automata</li>
+                    <li class="section-title">
+                        <div class="section-title-row">
+                            <span>Context-Free Languages and Pushdown Automata</span>
+                            {% if section_flashcard_meta.cfl_pda.available %}
+                            <a class="flashcard-button" href="{{ url_for('adaptive_flashcards_section_page', section_key='cfl_pda') }}">
+                                Flashcards
+                            </a>
+                            {% endif %}
+                        </div>
+                    </li>
                     {% for chapter in chapters if chapter.id >= 10 and chapter.id <= 14 %} <li class="chapter-item">
                         <a class="chapter-link {% if chapter.id in read_chapters %}highlight-green{% endif %}"
                             href="{{ url_for('module_detail', module_id=chapter.id) }}">
@@ -217,7 +282,16 @@
                         {% endfor %}
 
                         <!-- TURING MACHINES AND UNDECIDABILITY -->
-                        <li class="section-title">Turing Machines and Undecidability</li>
+                        <li class="section-title">
+                            <div class="section-title-row">
+                                <span>Turing Machines and Undecidability</span>
+                                {% if section_flashcard_meta.tm_undecidability.available %}
+                                <a class="flashcard-button" href="{{ url_for('adaptive_flashcards_section_page', section_key='tm_undecidability') }}">
+                                    Flashcards
+                                </a>
+                                {% endif %}
+                            </div>
+                        </li>
                         {% for chapter in chapters if chapter.id >= 16 and chapter.id <= 25 %} <li class="chapter-item">
                             <a class="chapter-link {% if chapter.id in read_chapters %}highlight-green{% endif %}"
                                 href="{{ url_for('module_detail', module_id=chapter.id) }}">
@@ -238,7 +312,16 @@
                             {% endfor %}
 
                             <!-- COMPLEXITY -->
-                            <li class="section-title">Complexity</li>
+                            <li class="section-title">
+                                <div class="section-title-row">
+                                    <span>Complexity</span>
+                                    {% if section_flashcard_meta.complexity.available %}
+                                    <a class="flashcard-button" href="{{ url_for('adaptive_flashcards_section_page', section_key='complexity') }}">
+                                        Flashcards
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </li>
                             {% for chapter in chapters if chapter.id >= 27 and chapter.id <= 30 %} <li
                                 class="chapter-item">
                                 <a class="chapter-link {% if chapter.id in read_chapters %}highlight-green{% endif %}"
@@ -260,7 +343,16 @@
                                 {% endfor %}
 
                                 <!-- LOGICS, THEORIES, AND PROOFS -->
-                                <li class="section-title">Logics, Theories, and Proofs</li>
+                                <li class="section-title">
+                                    <div class="section-title-row">
+                                        <span>Logics, Theories, and Proofs</span>
+                                        {% if section_flashcard_meta.logic_proofs.available %}
+                                        <a class="flashcard-button" href="{{ url_for('adaptive_flashcards_section_page', section_key='logic_proofs') }}">
+                                            Flashcards
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </li>
                                 {% for chapter in chapters if chapter.id >= 33 and chapter.id <= 37 %} <li
                                     class="chapter-item">
                                     <a class="chapter-link {% if chapter.id in read_chapters %}highlight-green{% endif %}"
@@ -282,7 +374,16 @@
                                     {% endfor %}
 
                                     <!-- APPLICATIONS THROUGHOUT THE WORLD -->
-                                    <li class="section-title">Applications Throughout the World</li>
+                                    <li class="section-title">
+                                        <div class="section-title-row">
+                                            <span>Applications Throughout the World</span>
+                                            {% if section_flashcard_meta.applications.available %}
+                                            <a class="flashcard-button" href="{{ url_for('adaptive_flashcards_section_page', section_key='applications') }}">
+                                                Flashcards
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </li>
                                     {% for chapter in chapters if chapter.id >= 38 and chapter.id <= 48 %} <li
                                         class="chapter-item">
                                         <a class="chapter-link {% if chapter.id in read_chapters %}highlight-green{% endif %}"
