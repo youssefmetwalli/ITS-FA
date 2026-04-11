@@ -16,7 +16,31 @@ import random
 import traceback
 import google.generativeai as genai
 from services.chat_state_service import ChatStateService
+from services.adaptive_flashcard_service import (
+    LEVELS,
+    answer_flashcard,
+    build_progress_update_payload,
+    choose_next_flashcard,
+    default_progress_state,
+    get_level_statuses,
+    get_user_flashcard_progress,
+    normalize_progress_state,
+    sync_progress_with_flashcards,
+    validate_adaptive_flashcards,
+)
 from services.retrieval_service import RetrievalService
+
+
+SECTION_CONFIGS = [
+    {"key": "introduction", "title": "Introduction", "chapter_ids": list(range(1, 5))},
+    {"key": "fsm_regular", "title": "Finite State Machines & Regular Languages", "chapter_ids": list(range(5, 10))},
+    {"key": "cfl_pda", "title": "Context-Free Languages and Pushdown Automata", "chapter_ids": list(range(10, 15))},
+    {"key": "tm_undecidability", "title": "Turing Machines and Undecidability", "chapter_ids": list(range(16, 26))},
+    {"key": "complexity", "title": "Complexity", "chapter_ids": list(range(27, 31))},
+    {"key": "logic_proofs", "title": "Logics, Theories, and Proofs", "chapter_ids": list(range(33, 38))},
+    {"key": "applications", "title": "Applications Throughout the World", "chapter_ids": list(range(38, 49))},
+]
+SECTION_LEVEL_CARD_COUNT = 10
 
 load_dotenv()
 b64 = os.environ.get("GOOGLE_CREDS_B64")
@@ -342,6 +366,8 @@ def course_page():
     user_data = user_doc.to_dict() if user_doc.exists else {}
     user_answers = user_data.get("answers", {})
     read_chapters = user_data.get("read_chapters", [])
+    adaptive_progress = user_data.get("adaptive_flashcard_progress", {})
+    adaptive_section_progress = user_data.get("adaptive_flashcard_section_progress", {})
     chapters_ref = db.collection("chapters")
     chapters = []
 
@@ -350,14 +376,28 @@ def course_page():
         chapter = doc.to_dict()
         # Convert document ID to integer for easier sorting
         chapter["id"] = int(doc.id)
+        chapter_progress = adaptive_progress.get(str(chapter["id"]), {})
+        chapter["flashcard_path_completed"] = bool(chapter_progress.get("path_completed", False))
         chapters.append(chapter)
     chapters.sort(key=lambda x: x["id"])
+
+    section_flashcard_meta = {}
+    for config in SECTION_CONFIGS:
+        section_key = config["key"]
+        section_chapters = [chapter for chapter in chapters if chapter["id"] in config["chapter_ids"]]
+        section_has_flashcards = any(chapter.get("adaptive_flashcards") for chapter in section_chapters)
+        section_progress = adaptive_section_progress.get(section_key, {})
+        section_flashcard_meta[section_key] = {
+            "available": section_has_flashcards,
+            "completed": bool(section_progress.get("path_completed", False)),
+        }
 
     return render_template(
         "course.html",
         chapters=chapters,
         user_answers=user_answers,
-        read_chapters=read_chapters
+        read_chapters=read_chapters,
+        section_flashcard_meta=section_flashcard_meta,
     )
 
 
@@ -446,6 +486,370 @@ def quiz_result():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+def _get_current_user_ref():
+    user_id = session.get("user_id")
+    if not user_id:
+        return None, None, (jsonify({"error": "Unauthorized"}), 401)
+    user_ref = db.collection("Users").document(user_id)
+    return user_id, user_ref, None
+
+
+def _load_adaptive_flashcard_context(chapter_id: int):
+    chapter_ref = db.collection("chapters").document(str(chapter_id))
+    chapter_doc = chapter_ref.get()
+    if not chapter_doc.exists:
+        abort(404)
+
+    chapter_data = chapter_doc.to_dict() or {}
+    adaptive_flashcards = chapter_data.get("adaptive_flashcards")
+    if not adaptive_flashcards:
+        return chapter_data, None, None, "Adaptive flashcards have not been generated for this chapter yet."
+
+    flashcards_by_level = validate_adaptive_flashcards(adaptive_flashcards)
+    _, user_ref, error_response = _get_current_user_ref()
+    if error_response:
+        return chapter_data, None, None, error_response
+
+    user_doc = user_ref.get()
+    user_data = user_doc.to_dict() if user_doc.exists else {}
+    chapter_progress = get_user_flashcard_progress(user_data, chapter_id)
+    chapter_progress = sync_progress_with_flashcards(chapter_progress, flashcards_by_level)
+    user_ref.set(build_progress_update_payload(user_data, chapter_id, chapter_progress), merge=True)
+
+    return chapter_data, flashcards_by_level, chapter_progress, None
+
+
+def _get_section_config(section_key: str):
+    return next((config for config in SECTION_CONFIGS if config["key"] == section_key), None)
+
+
+def _aggregate_section_flashcards(section_key: str):
+    section_config = _get_section_config(section_key)
+    if not section_config:
+        abort(404)
+
+    section_chapter_docs = []
+    aggregated_flashcards = {level: [] for level in LEVELS}
+
+    for chapter_id in section_config["chapter_ids"]:
+        chapter_doc = db.collection("chapters").document(str(chapter_id)).get()
+        if not chapter_doc.exists:
+            continue
+        chapter_data = chapter_doc.to_dict() or {}
+        section_chapter_docs.append({"id": chapter_id, **chapter_data})
+        chapter_flashcards = chapter_data.get("adaptive_flashcards")
+        if not chapter_flashcards:
+            continue
+
+        validated_flashcards = validate_adaptive_flashcards(chapter_flashcards)
+        chapter_title = chapter_data.get("title", f"Chapter {chapter_id}")
+        for level, cards in validated_flashcards.items():
+            for card in cards:
+                section_card = dict(card)
+                section_card["id"] = f"{chapter_id}:{card['id']}"
+                section_card["concept"] = f"{chapter_title} - {card.get('concept', '')}".strip(" -")
+                aggregated_flashcards[level].append(section_card)
+
+    if not any(aggregated_flashcards[level] for level in LEVELS):
+        return section_config, section_chapter_docs, None
+
+    return section_config, section_chapter_docs, aggregated_flashcards
+
+
+def _select_section_flashcard_subset(
+    aggregated_flashcards: dict[str, list[dict]],
+    section_progress: dict,
+) -> tuple[dict[str, list[dict]], dict]:
+    selected_flashcards = {level: [] for level in LEVELS}
+
+    for level in LEVELS:
+        level_cards = aggregated_flashcards.get(level, [])
+        if not level_cards:
+            section_progress["levels"][level]["selected_ids"] = []
+            continue
+
+        target_count = min(SECTION_LEVEL_CARD_COUNT, len(level_cards))
+        level_state = section_progress["levels"][level]
+        card_by_id = {card["id"]: card for card in level_cards}
+
+        selected_ids = [card_id for card_id in level_state.get("selected_ids", []) if card_id in card_by_id]
+        if len(selected_ids) > target_count:
+            selected_ids = selected_ids[:target_count]
+
+        if len(selected_ids) < target_count:
+            remaining_cards = [card for card in level_cards if card["id"] not in selected_ids]
+            random.shuffle(remaining_cards)
+            selected_ids.extend(card["id"] for card in remaining_cards[: target_count - len(selected_ids)])
+
+        level_state["selected_ids"] = selected_ids
+        selected_flashcards[level] = [card_by_id[card_id] for card_id in selected_ids if card_id in card_by_id]
+
+    return selected_flashcards, section_progress
+
+
+def _load_adaptive_flashcard_section_context(section_key: str):
+    section_config, section_chapter_docs, flashcards_by_level = _aggregate_section_flashcards(section_key)
+    if flashcards_by_level is None:
+        return section_config, None, None, "Adaptive flashcards have not been generated for this section yet."
+
+    _, user_ref, error_response = _get_current_user_ref()
+    if error_response:
+        return section_config, None, None, error_response
+
+    user_doc = user_ref.get()
+    user_data = user_doc.to_dict() if user_doc.exists else {}
+    adaptive_section_progress = user_data.get("adaptive_flashcard_section_progress", {})
+    section_progress = normalize_progress_state(adaptive_section_progress.get(section_key))
+    flashcards_by_level, section_progress = _select_section_flashcard_subset(flashcards_by_level, section_progress)
+    section_progress = sync_progress_with_flashcards(section_progress, flashcards_by_level)
+
+    adaptive_section_progress[section_key] = section_progress
+    user_ref.set({"adaptive_flashcard_section_progress": adaptive_section_progress}, merge=True)
+
+    return section_config, flashcards_by_level, section_progress, None
+
+
+def _build_flashcard_page_context(chapter_id: int):
+    chapter_data, flashcards_by_level, chapter_progress, error_state = _load_adaptive_flashcard_context(chapter_id)
+    if isinstance(error_state, tuple):
+        return error_state
+
+    if flashcards_by_level is None or chapter_progress is None:
+        return {
+            "chapter_id": chapter_id,
+            "chapter_title": chapter_data.get("title", f"Chapter {chapter_id}"),
+            "entity_label": "Chapter",
+            "current_level": "easy",
+            "level_statuses": get_level_statuses(default_progress_state(), {level: [] for level in LEVELS}),
+            "current_flashcard": None,
+            "level_progress_text": "0/5 completed",
+            "path_completed": False,
+            "error_message": error_state,
+            "route_base": url_for("adaptive_flashcards_page", chapter_id=chapter_id),
+            "reset_endpoint": url_for("adaptive_flashcards_reset", chapter_id=chapter_id),
+            "answer_endpoint": url_for("adaptive_flashcards_answer", chapter_id=chapter_id),
+        }
+
+    current_level = chapter_progress["current_level"]
+    current_flashcard = choose_next_flashcard(flashcards_by_level, chapter_progress)
+    completed_count = len(chapter_progress["levels"][current_level]["completed_ids"])
+    total_count = len(flashcards_by_level.get(current_level, []))
+    return {
+        "chapter_id": chapter_id,
+        "chapter_title": chapter_data.get("title", f"Chapter {chapter_id}"),
+        "entity_label": "Chapter",
+        "current_level": current_level,
+        "level_statuses": get_level_statuses(chapter_progress, flashcards_by_level),
+        "current_flashcard": current_flashcard,
+        "level_progress_text": f"{completed_count}/{total_count} completed",
+        "path_completed": chapter_progress.get("path_completed", False),
+        "error_message": None,
+        "route_base": url_for("adaptive_flashcards_page", chapter_id=chapter_id),
+        "reset_endpoint": url_for("adaptive_flashcards_reset", chapter_id=chapter_id),
+        "answer_endpoint": url_for("adaptive_flashcards_answer", chapter_id=chapter_id),
+    }
+
+
+def _build_flashcard_section_page_context(section_key: str):
+    section_config, flashcards_by_level, section_progress, error_state = _load_adaptive_flashcard_section_context(section_key)
+    if isinstance(error_state, tuple):
+        return error_state
+
+    if flashcards_by_level is None or section_progress is None:
+        return {
+            "chapter_id": section_key,
+            "chapter_title": section_config["title"],
+            "entity_label": "Section",
+            "current_level": "easy",
+            "level_statuses": get_level_statuses(default_progress_state(), {level: [] for level in LEVELS}),
+            "current_flashcard": None,
+            "level_progress_text": "0/0 completed",
+            "path_completed": False,
+            "error_message": error_state,
+            "route_base": url_for("adaptive_flashcards_section_page", section_key=section_key),
+            "reset_endpoint": url_for("adaptive_flashcards_section_reset", section_key=section_key),
+            "answer_endpoint": url_for("adaptive_flashcards_section_answer", section_key=section_key),
+        }
+
+    current_level = section_progress["current_level"]
+    current_flashcard = choose_next_flashcard(flashcards_by_level, section_progress)
+    completed_count = len(section_progress["levels"][current_level]["completed_ids"])
+    total_count = len(flashcards_by_level.get(current_level, []))
+    return {
+        "chapter_id": section_key,
+        "chapter_title": section_config["title"],
+        "entity_label": "Section",
+        "current_level": current_level,
+        "level_statuses": get_level_statuses(section_progress, flashcards_by_level),
+        "current_flashcard": current_flashcard,
+        "level_progress_text": f"{completed_count}/{total_count} completed",
+        "path_completed": section_progress.get("path_completed", False),
+        "error_message": None,
+        "route_base": url_for("adaptive_flashcards_section_page", section_key=section_key),
+        "reset_endpoint": url_for("adaptive_flashcards_section_reset", section_key=section_key),
+        "answer_endpoint": url_for("adaptive_flashcards_section_answer", section_key=section_key),
+    }
+
+
+@app.route("/adaptive_flashcards/<int:chapter_id>")
+def adaptive_flashcards_page(chapter_id):
+    page_context = _build_flashcard_page_context(chapter_id)
+    if isinstance(page_context, tuple):
+        return page_context
+    return render_template("adaptive_flashcards.html", **page_context)
+
+
+@app.route("/adaptive_flashcards/section/<section_key>")
+def adaptive_flashcards_section_page(section_key):
+    page_context = _build_flashcard_section_page_context(section_key)
+    if isinstance(page_context, tuple):
+        return page_context
+    return render_template("adaptive_flashcards.html", **page_context)
+
+
+@app.route("/adaptive_flashcards/<int:chapter_id>/answer", methods=["POST"])
+def adaptive_flashcards_answer(chapter_id):
+    _, user_ref, error_response = _get_current_user_ref()
+    if error_response:
+        return error_response
+
+    request_data = request.get_json(silent=True) or request.form
+    flashcard_id = str(request_data.get("flashcard_id", "")).strip()
+    selected_answer = str(request_data.get("selected_answer", "")).strip()
+
+    if not flashcard_id or not selected_answer:
+        return jsonify({"error": "flashcard_id and selected_answer are required"}), 400
+
+    chapter_data, flashcards_by_level, chapter_progress, error_state = _load_adaptive_flashcard_context(chapter_id)
+    if isinstance(error_state, tuple):
+        return error_state
+    if flashcards_by_level is None or chapter_progress is None:
+        return jsonify({"error": error_state or "Flashcards unavailable"}), 400
+
+    try:
+        updated_progress, answer_result = answer_flashcard(
+            flashcards_by_level,
+            chapter_progress,
+            flashcard_id,
+            selected_answer,
+        )
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    user_doc = user_ref.get()
+    user_data = user_doc.to_dict() if user_doc.exists else {}
+    user_ref.set(build_progress_update_payload(user_data, chapter_id, updated_progress), merge=True)
+
+    current_level = updated_progress["current_level"]
+    next_flashcard = choose_next_flashcard(flashcards_by_level, updated_progress)
+    completed_count = len(updated_progress["levels"][current_level]["completed_ids"])
+
+    return jsonify(
+        {
+            "is_correct": answer_result.is_correct,
+            "selected_answer": answer_result.selected_answer,
+            "correct_answer": answer_result.correct_answer,
+            "hint": answer_result.hint,
+            "explanation": answer_result.explanation,
+            "level_completed": answer_result.level_completed,
+            "path_completed": answer_result.path_completed,
+            "current_level": current_level,
+            "level_progress_text": f"{completed_count}/{len(flashcards_by_level.get(current_level, []))} completed",
+            "level_statuses": get_level_statuses(updated_progress, flashcards_by_level),
+            "next_flashcard": next_flashcard,
+            "chapter_title": chapter_data.get("title", f"Chapter {chapter_id}"),
+            "chapter_id": chapter_id,
+        }
+    )
+
+
+@app.route("/adaptive_flashcards/section/<section_key>/answer", methods=["POST"])
+def adaptive_flashcards_section_answer(section_key):
+    _, user_ref, error_response = _get_current_user_ref()
+    if error_response:
+        return error_response
+
+    request_data = request.get_json(silent=True) or request.form
+    flashcard_id = str(request_data.get("flashcard_id", "")).strip()
+    selected_answer = str(request_data.get("selected_answer", "")).strip()
+
+    if not flashcard_id or not selected_answer:
+        return jsonify({"error": "flashcard_id and selected_answer are required"}), 400
+
+    section_config, flashcards_by_level, section_progress, error_state = _load_adaptive_flashcard_section_context(section_key)
+    if isinstance(error_state, tuple):
+        return error_state
+    if flashcards_by_level is None or section_progress is None:
+        return jsonify({"error": error_state or "Section flashcards unavailable"}), 400
+
+    try:
+        updated_progress, answer_result = answer_flashcard(
+            flashcards_by_level,
+            section_progress,
+            flashcard_id,
+            selected_answer,
+        )
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    user_doc = user_ref.get()
+    user_data = user_doc.to_dict() if user_doc.exists else {}
+    adaptive_section_progress = user_data.get("adaptive_flashcard_section_progress", {})
+    adaptive_section_progress[section_key] = updated_progress
+    user_ref.set({"adaptive_flashcard_section_progress": adaptive_section_progress}, merge=True)
+
+    current_level = updated_progress["current_level"]
+    next_flashcard = choose_next_flashcard(flashcards_by_level, updated_progress)
+    completed_count = len(updated_progress["levels"][current_level]["completed_ids"])
+
+    return jsonify(
+        {
+            "is_correct": answer_result.is_correct,
+            "selected_answer": answer_result.selected_answer,
+            "correct_answer": answer_result.correct_answer,
+            "hint": answer_result.hint,
+            "explanation": answer_result.explanation,
+            "level_completed": answer_result.level_completed,
+            "path_completed": answer_result.path_completed,
+            "current_level": current_level,
+            "level_progress_text": f"{completed_count}/{len(flashcards_by_level.get(current_level, []))} completed",
+            "level_statuses": get_level_statuses(updated_progress, flashcards_by_level),
+            "next_flashcard": next_flashcard,
+            "chapter_title": section_config["title"],
+            "chapter_id": section_key,
+        }
+    )
+
+
+@app.route("/adaptive_flashcards/<int:chapter_id>/reset", methods=["POST"])
+def adaptive_flashcards_reset(chapter_id):
+    _, user_ref, error_response = _get_current_user_ref()
+    if error_response:
+        return error_response
+
+    user_doc = user_ref.get()
+    user_data = user_doc.to_dict() if user_doc.exists else {}
+    reset_progress = default_progress_state()
+    user_ref.set(build_progress_update_payload(user_data, chapter_id, reset_progress), merge=True)
+
+    return jsonify({"message": "Adaptive flashcard progress reset successfully."})
+
+
+@app.route("/adaptive_flashcards/section/<section_key>/reset", methods=["POST"])
+def adaptive_flashcards_section_reset(section_key):
+    _, user_ref, error_response = _get_current_user_ref()
+    if error_response:
+        return error_response
+
+    user_doc = user_ref.get()
+    user_data = user_doc.to_dict() if user_doc.exists else {}
+    adaptive_section_progress = user_data.get("adaptive_flashcard_section_progress", {})
+    adaptive_section_progress[section_key] = default_progress_state()
+    user_ref.set({"adaptive_flashcard_section_progress": adaptive_section_progress}, merge=True)
+
+    return jsonify({"message": "Adaptive flashcard section progress reset successfully."})
 
 
 @app.route("/chat")
