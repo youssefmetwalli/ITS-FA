@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adaptive Flashcards</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <style>
+        .flashcards-shell {
+            max-width: 1100px;
+            margin: 0 auto 28px auto;
+        }
+
+        .flashcards-overview {
+            display: grid;
+            grid-template-columns: 1.6fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .flashcards-panel,
+        .flashcards-sidebar {
+            background: rgba(255, 255, 255, 0.92);
+            border-radius: 16px;
+            padding: 22px;
+            box-shadow: 0 10px 30px rgba(17, 34, 68, 0.12);
+        }
+
+        .flashcards-panel h2,
+        .flashcards-sidebar h3 {
+            margin-top: 0;
+            color: #16324f;
+        }
+
+        .flashcards-subtitle {
+            margin: 0 0 8px 0;
+            color: #476178;
+            font-weight: 600;
+        }
+
+        .flashcards-progress {
+            margin-top: 10px;
+            color: #32546d;
+            font-weight: 600;
+        }
+
+        .level-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .level-pill {
+            border-radius: 14px;
+            padding: 14px 16px;
+            border: 1px solid rgba(47, 98, 142, 0.14);
+            background: #eef5fb;
+        }
+
+        .level-pill strong {
+            display: block;
+            margin-bottom: 4px;
+            text-transform: capitalize;
+            color: #193f61;
+        }
+
+        .level-pill.locked {
+            opacity: 0.55;
+            background: #f1f3f5;
+        }
+
+        .level-pill.unlocked {
+            background: linear-gradient(135deg, #eff8ff, #e8f5ef);
+        }
+
+        .level-pill.completed {
+            background: linear-gradient(135deg, #e6f8eb, #dff5e6);
+            border-color: rgba(53, 144, 88, 0.24);
+        }
+
+        .flashcard-stage {
+            background: rgba(255, 255, 255, 0.96);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(12, 43, 63, 0.14);
+        }
+
+        .flashcard-stage-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+
+        .flashcard-stage-header h2 {
+            margin: 0;
+            color: #173552;
+        }
+
+        .flashcard-stage-badge {
+            display: inline-flex;
+            padding: 7px 14px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #1b6ea4, #3a93c8);
+            color: #fff;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.03em;
+        }
+
+        .flashcard-box {
+            border-radius: 20px;
+            overflow: hidden;
+            background: linear-gradient(160deg, #f9fff4, #eef9ff);
+            border: 1px solid rgba(58, 113, 143, 0.18);
+        }
+
+        .flashcard-box-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 18px;
+            color: white;
+            background: linear-gradient(135deg, #1c6ea4, #3c8dbc);
+        }
+
+        .flashcard-box-header strong {
+            font-size: 1.05rem;
+        }
+
+        .flashcard-concept {
+            margin: 0 0 10px 0;
+            color: #45627a;
+            font-weight: 700;
+        }
+
+        .flashcard-body {
+            padding: 22px;
+        }
+
+        .flashcard-question {
+            margin: 0 0 20px 0;
+            font-size: 1.2rem;
+            line-height: 1.6;
+            color: #122d42;
+        }
+
+        .flashcard-options {
+            display: grid;
+            gap: 12px;
+        }
+
+        .flashcard-option {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            width: 100%;
+            text-align: left;
+            border-radius: 14px;
+            border: 1px solid rgba(53, 102, 142, 0.16);
+            background: rgba(255, 255, 255, 0.92);
+            padding: 15px 16px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+        }
+
+        .flashcard-option:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 20px rgba(30, 74, 106, 0.1);
+            border-color: rgba(28, 110, 164, 0.26);
+        }
+
+        .flashcard-option:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(28, 110, 164, 0.12);
+        }
+
+        .flashcard-option.selected {
+            border-color: rgba(28, 110, 164, 0.46);
+            background: linear-gradient(135deg, #edf8ff, #e3f2ff);
+        }
+
+        .flashcard-option.correct {
+            border-color: rgba(44, 140, 88, 0.48);
+            background: linear-gradient(135deg, #eafbf0, #ddf6e6);
+        }
+
+        .flashcard-option.incorrect {
+            border-color: rgba(194, 67, 52, 0.42);
+            background: linear-gradient(135deg, #fff2ef, #ffe4de);
+        }
+
+        .flashcard-option-label {
+            flex: 0 0 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #dbeaf7;
+            color: #11537c;
+            font-weight: 800;
+        }
+
+        .flashcard-feedback {
+            display: none;
+            margin-top: 20px;
+            border-radius: 16px;
+            padding: 18px;
+        }
+
+        .flashcard-feedback.show {
+            display: block;
+        }
+
+        .flashcard-feedback.correct {
+            background: linear-gradient(135deg, #e7f8ec, #def3e5);
+            border: 1px solid rgba(53, 144, 88, 0.22);
+            color: #215d3b;
+        }
+
+        .flashcard-feedback.incorrect {
+            background: linear-gradient(135deg, #fff2ef, #ffe6df);
+            border: 1px solid rgba(194, 67, 52, 0.18);
+            color: #863a2b;
+        }
+
+        .flashcard-feedback p {
+            margin: 0 0 10px 0;
+        }
+
+        .flashcard-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-top: 18px;
+            flex-wrap: wrap;
+        }
+
+        .button-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .action-button,
+        .secondary-button {
+            border: none;
+            border-radius: 10px;
+            padding: 12px 18px;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.2s ease;
+        }
+
+        .action-button {
+            background: linear-gradient(135deg, #1b6ea4, #3695d0);
+            color: #fff;
+            box-shadow: 0 8px 18px rgba(26, 108, 163, 0.18);
+        }
+
+        .secondary-button {
+            background: #edf2f7;
+            color: #24445d;
+        }
+
+        .action-button:hover,
+        .secondary-button:hover {
+            transform: translateY(-1px);
+        }
+
+        .flashcard-empty {
+            padding: 28px;
+            border-radius: 18px;
+            background: linear-gradient(135deg, #eef8ff, #f6fbff);
+            color: #27455c;
+        }
+
+        @media (max-width: 900px) {
+            .flashcards-overview {
+                grid-template-columns: 1fr;
+            }
+
+            .flashcard-stage-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .level-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header-container">
+        <h1>Adaptive Flashcards</h1>
+        <a class="button" href="{{ url_for('index') }}">Home</a>
+        <a class="button" href="{{ url_for('course_page') }}">Course</a>
+        <a class="button" href="{{ url_for('chat') }}">Chat</a>
+    </div>
+
+    <div class="flashcards-shell">
+        <div class="flashcards-overview">
+            <div class="flashcards-panel">
+                <h2>{{ chapter_title }}</h2>
+                <p class="flashcards-subtitle">Adaptive {{ entity_label|lower }} flashcards with gated difficulty progression.</p>
+                <p class="flashcards-progress">Current level: <strong id="current-level-label">{{ current_level|capitalize }}</strong></p>
+                <p class="flashcards-progress" id="current-progress-label">{{ level_progress_text }}</p>
+            </div>
+            <div class="flashcards-sidebar">
+                <h3>Level Status</h3>
+                <div class="level-grid" id="level-status-grid">
+                    {% for status in level_statuses %}
+                    <div class="level-pill {% if status.completed %}completed{% elif status.unlocked %}unlocked{% else %}locked{% endif %}"
+                        data-level="{{ status.name }}">
+                        <strong>{{ status.name }}</strong>
+                        <span>
+                            {% if status.completed %}
+                            Completed
+                            {% elif status.unlocked %}
+                            Unlocked
+                            {% else %}
+                            Locked
+                            {% endif %}
+                        </span>
+                        <div>{{ status.completed_count }}/{{ status.total_count }} complete</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="flashcard-stage">
+            <div class="flashcard-stage-header">
+                <h2>Flashcard Mode</h2>
+                <span class="flashcard-stage-badge" id="level-badge">{{ current_level|upper }}</span>
+            </div>
+
+            {% if error_message %}
+            <div class="flashcard-empty">{{ error_message }}</div>
+            {% else %}
+            <div id="flashcard-root"></div>
+            {% endif %}
+
+            <div class="flashcard-actions">
+                <div class="button-row">
+                    <button type="button" class="action-button" id="next-button" style="display:none;">Next Flashcard</button>
+                    <button type="button" class="secondary-button" id="reset-button">Reset Progress</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if not error_message %}
+    <script>
+        const flashcardEntityId = {{ chapter_id | tojson }};
+        const answerEndpoint = {{ answer_endpoint | tojson }};
+        const resetEndpoint = {{ reset_endpoint | tojson }};
+        const entityLabel = {{ entity_label | tojson }};
+        let currentFlashcard = {{ current_flashcard | tojson }};
+        let chapterCompleted = {{ path_completed | tojson }};
+        let pendingNextFlashcard = null;
+        let levelStatuses = {{ level_statuses | tojson }};
+
+        const flashcardRoot = document.getElementById('flashcard-root');
+        const nextButton = document.getElementById('next-button');
+        const resetButton = document.getElementById('reset-button');
+        const currentLevelLabel = document.getElementById('current-level-label');
+        const currentProgressLabel = document.getElementById('current-progress-label');
+        const levelBadge = document.getElementById('level-badge');
+        const levelStatusGrid = document.getElementById('level-status-grid');
+
+        function escapeHtml(text) {
+            return String(text ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function capitalize(text) {
+            return text ? text.charAt(0).toUpperCase() + text.slice(1) : '';
+        }
+
+        function renderLevelStatuses(statuses) {
+            levelStatusGrid.innerHTML = statuses.map(status => {
+                const stateClass = status.completed ? 'completed' : (status.unlocked ? 'unlocked' : 'locked');
+                const stateText = status.completed ? 'Completed' : (status.unlocked ? 'Unlocked' : 'Locked');
+                return `
+                    <div class="level-pill ${stateClass}" data-level="${escapeHtml(status.name)}">
+                        <strong>${escapeHtml(status.name)}</strong>
+                        <span>${stateText}</span>
+                        <div>${status.completed_count}/${status.total_count} complete</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderEmptyState(message) {
+            flashcardRoot.innerHTML = `<div class="flashcard-empty">${escapeHtml(message)}</div>`;
+        }
+
+        function renderFlashcard(card) {
+            if (!card) {
+                if (chapterCompleted) {
+                    renderEmptyState(`You completed all adaptive flashcard levels for this ${entityLabel.toLowerCase()}.`);
+                } else {
+                    renderEmptyState('No flashcards are currently available for this level.');
+                }
+                return;
+            }
+
+            const optionsMarkup = card.options.map((option, index) => {
+                const label = String.fromCharCode(65 + index);
+                return `
+                    <button type="button" class="flashcard-option" data-answer="${escapeHtml(option)}">
+                        <span class="flashcard-option-label">${label}</span>
+                        <span>${escapeHtml(option)}</span>
+                    </button>
+                `;
+            }).join('');
+
+            flashcardRoot.innerHTML = `
+                <div class="flashcard-box" data-flashcard-id="${escapeHtml(card.id)}">
+                    <div class="flashcard-box-header">
+                        <strong>Adaptive Flashcard</strong>
+                        <span>${escapeHtml(card.difficulty.toUpperCase())}</span>
+                    </div>
+                    <div class="flashcard-body">
+                        <p class="flashcard-concept">Concept: ${escapeHtml(card.concept)}</p>
+                        <p class="flashcard-question">${escapeHtml(card.question)}</p>
+                        <div class="flashcard-options">
+                            ${optionsMarkup}
+                        </div>
+                        <div class="flashcard-feedback" id="flashcard-feedback"></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateOverview(payload) {
+            currentLevelLabel.textContent = capitalize(payload.current_level);
+            currentProgressLabel.textContent = payload.level_progress_text;
+            levelBadge.textContent = payload.current_level.toUpperCase();
+            levelStatuses = payload.level_statuses;
+            renderLevelStatuses(levelStatuses);
+        }
+
+        async function submitAnswer(selectedAnswer, clickedButton) {
+            const flashcardContainer = flashcardRoot.querySelector('[data-flashcard-id]');
+            if (!flashcardContainer) {
+                return;
+            }
+
+            const flashcardId = flashcardContainer.getAttribute('data-flashcard-id');
+            const optionButtons = flashcardRoot.querySelectorAll('.flashcard-option');
+            optionButtons.forEach(button => {
+                button.disabled = true;
+                button.classList.remove('selected');
+            });
+            clickedButton.classList.add('selected');
+
+            const response = await fetch(answerEndpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    flashcard_id: flashcardId,
+                    selected_answer: selectedAnswer
+                })
+            });
+
+            const payload = await response.json();
+            if (!response.ok) {
+                alert(payload.error || 'Failed to submit flashcard answer.');
+                optionButtons.forEach(button => {
+                    button.disabled = false;
+                });
+                return;
+            }
+
+            const feedbackBox = document.getElementById('flashcard-feedback');
+            const isCorrect = Boolean(payload.is_correct);
+            const correctAnswer = payload.correct_answer;
+
+            optionButtons.forEach(button => {
+                const answerValue = button.getAttribute('data-answer');
+                if (answerValue === selectedAnswer) {
+                    button.classList.add(isCorrect ? 'correct' : 'incorrect');
+                }
+                if (answerValue === correctAnswer) {
+                    button.classList.add('correct');
+                }
+            });
+
+            feedbackBox.className = `flashcard-feedback show ${isCorrect ? 'correct' : 'incorrect'}`;
+            feedbackBox.innerHTML = `
+                <p><strong>${isCorrect ? 'Correct' : 'Incorrect'}</strong></p>
+                <p><strong>Hint:</strong> ${escapeHtml(payload.hint)}</p>
+                <p><strong>Explanation:</strong> ${escapeHtml(payload.explanation)}</p>
+            `;
+
+            pendingNextFlashcard = payload.next_flashcard;
+            chapterCompleted = Boolean(payload.path_completed);
+            updateOverview(payload);
+            nextButton.style.display = 'inline-flex';
+        }
+
+        flashcardRoot.addEventListener('click', function (event) {
+            const optionButton = event.target.closest('.flashcard-option');
+            if (!optionButton) {
+                return;
+            }
+            submitAnswer(optionButton.getAttribute('data-answer'), optionButton);
+        });
+
+        nextButton.addEventListener('click', function () {
+            nextButton.style.display = 'none';
+            currentFlashcard = pendingNextFlashcard;
+            pendingNextFlashcard = null;
+            renderFlashcard(currentFlashcard);
+        });
+
+        resetButton.addEventListener('click', async function () {
+            const response = await fetch(resetEndpoint, {
+                method: 'POST'
+            });
+
+            if (!response.ok) {
+                alert('Failed to reset adaptive flashcard progress.');
+                return;
+            }
+
+            window.location.reload();
+        });
+
+        renderFlashcard(currentFlashcard);
+        renderLevelStatuses(levelStatuses);
+    </script>
+    {% endif %}
+</body>
+
+</html>
