@@ -23,6 +23,7 @@
             display: flex;
             flex-direction: column;
             height: 550px;
+            min-height: 0;
             background: rgba(255, 255, 255, 0.15);
             -webkit-backdrop-filter: blur(10px);
             backdrop-filter: blur(10px);
@@ -32,7 +33,11 @@
 
         .messages {
             flex: 1;
+            min-height: 0;
             overflow-y: auto;
+            overflow-x: hidden;
+            overscroll-behavior: contain;
+            scroll-behavior: smooth;
             border: 1px solid #ddd;
             padding: 10px;
             margin-bottom: 20px;
@@ -60,6 +65,175 @@
             background-color: #e0f7e9;
             color: #000;
             white-space: pre-wrap;
+        }
+
+        .question-card {
+            align-self: flex-start;
+            width: min(720px, 88%);
+            margin-bottom: 12px;
+            padding: 0;
+            border-radius: 18px;
+            overflow: hidden;
+            background: linear-gradient(160deg, #f9fff4, #eef9ff);
+            border: 1px solid rgba(58, 113, 143, 0.22);
+            box-shadow: 0 10px 24px rgba(15, 53, 79, 0.16);
+            color: #123;
+        }
+
+        .question-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: linear-gradient(135deg, #1c6ea4, #3c8dbc);
+            color: #fff;
+        }
+
+        .question-card-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+        }
+
+        .question-card-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.18);
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .question-card-body {
+            padding: 16px;
+        }
+
+        .question-card-topic {
+            margin-bottom: 10px;
+            color: #46606f;
+            font-size: 0.88rem;
+            font-weight: 600;
+        }
+
+        .question-card-prompt {
+            margin: 0 0 14px 0;
+            font-size: 1rem;
+            line-height: 1.55;
+            color: #0e2533;
+            white-space: normal;
+        }
+
+        .question-options {
+            display: grid;
+            gap: 10px;
+            margin: 0 0 14px 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .question-option {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            padding: 11px 12px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid rgba(63, 106, 130, 0.16);
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+            color: #123;
+        }
+
+        .question-option:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 14px rgba(18, 69, 108, 0.12);
+            border-color: rgba(28, 110, 164, 0.35);
+        }
+
+        .question-option:focus {
+            outline: none;
+            border-color: rgba(28, 110, 164, 0.55);
+            box-shadow: 0 0 0 3px rgba(28, 110, 164, 0.15);
+        }
+
+        .question-option.is-submitting {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .question-option.is-selected {
+            border-color: rgba(28, 110, 164, 0.55);
+            background: linear-gradient(135deg, #edf8ff, #dff0ff);
+            box-shadow: 0 0 0 3px rgba(28, 110, 164, 0.12);
+        }
+
+        .question-option.is-correct {
+            border-color: rgba(44, 140, 88, 0.55);
+            background: linear-gradient(135deg, #eafbf0, #dff7e7);
+            box-shadow: 0 0 0 3px rgba(44, 140, 88, 0.14);
+        }
+
+        .question-option.is-incorrect {
+            border-color: rgba(194, 67, 52, 0.5);
+            background: linear-gradient(135deg, #fff1ef, #ffe2dd);
+            box-shadow: 0 0 0 3px rgba(194, 67, 52, 0.12);
+        }
+
+        .question-card.is-resolved {
+            border-color: rgba(63, 106, 130, 0.28);
+        }
+
+        .question-result-banner {
+            margin-top: 14px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+
+        .question-result-banner.correct {
+            background: linear-gradient(135deg, #e6f8eb, #d8f1df);
+            color: #1f6a42;
+            border: 1px solid rgba(44, 140, 88, 0.25);
+        }
+
+        .question-result-banner.incorrect {
+            background: linear-gradient(135deg, #fff2ef, #ffe4de);
+            color: #8b3529;
+            border: 1px solid rgba(194, 67, 52, 0.22);
+        }
+
+        .question-option-label {
+            flex: 0 0 28px;
+            height: 28px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: #d7ebf7;
+            color: #0d4f74;
+            font-weight: 800;
+        }
+
+        .question-card-hint {
+            padding: 12px 14px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #fff6d7, #fff0b8);
+            border: 1px solid rgba(195, 155, 59, 0.2);
+            color: #5d4a12;
+            font-size: 0.92rem;
+        }
+
+        .question-card-footer {
+            margin-top: 14px;
+            color: #38576a;
+            font-size: 0.9rem;
+            font-weight: 600;
         }
 
         .input-container {
@@ -217,8 +391,10 @@
         <a class="button" href="/drawer">Practice</a>
     </div>
 
-    <div class="chat-container">
-        <div class="messages" id="messages"></div>
+        <div class="chat-container">
+            <div class="messages" id="messages"></div>
+            <div id="chatStatus" style="display:none; margin-bottom: 12px; padding: 10px 12px; border-radius: 8px; background: rgba(255,255,255,0.25); color: #123;">
+            </div>
 
         <div class="input-container">
             <button id="voiceButton" title="Speak">
@@ -283,6 +459,222 @@
                 return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
             }
 
+            function capitalize(value) {
+                if (!value) return '';
+                return value.charAt(0).toUpperCase() + value.slice(1);
+            }
+
+            function createQuestionCard(response) {
+                const question = resolveQuestionData(response);
+                if (!question) return null;
+
+                $('.question-card').removeClass('is-active-question');
+                const card = $('<div class="question-card is-active-question"></div>');
+                const conceptTags = Array.isArray(question.concept_tags) ? question.concept_tags.filter(Boolean) : [];
+                const topic = conceptTags.length ? conceptTags.join(', ') : 'Automata theory';
+                const typeLabel = question.type === 'mcq' ? 'MCQ' : 'Short Answer';
+                const normalizedCorrectAnswer = normalizeAnswerValue(question.correct_answer || '');
+                card.attr('data-question-id', question.question_id || '');
+                card.attr('data-question-type', question.type || '');
+                card.attr('data-correct-answer', normalizedCorrectAnswer);
+
+                const header = $(`
+                    <div class="question-card-header">
+                        <div class="question-card-title">Practice Question</div>
+                        <div class="question-card-pill">${escapeHtml(typeLabel)} · ${escapeHtml(capitalize(question.difficulty || 'medium'))}</div>
+                    </div>
+                `);
+
+                const body = $('<div class="question-card-body"></div>');
+                body.append(`<div class="question-card-topic">Topic: ${escapeHtml(topic)}</div>`);
+                body.append(`<p class="question-card-prompt">${escapeHtml(question.prompt || '')}</p>`);
+
+                if (Array.isArray(question.options) && question.options.length) {
+                    const options = $('<ul class="question-options"></ul>');
+                    question.options.forEach((option, index) => {
+                        const label = String.fromCharCode(65 + index);
+                        options.append(`
+                            <li>
+                                <button
+                                    type="button"
+                                    class="question-option"
+                                    data-answer-label="${escapeHtml(label)}"
+                                    data-answer-text="${escapeHtml(option)}"
+                                    data-answer-normalized="${escapeHtml(normalizeAnswerValue(option))}"
+                                >
+                                    <span class="question-option-label">${label}</span>
+                                    <span>${escapeHtml(option)}</span>
+                                </button>
+                            </li>
+                        `);
+                    });
+                    body.append(options);
+                }
+
+                if (question.hint) {
+                    body.append(`<div class="question-card-hint"><strong>Hint:</strong> ${escapeHtml(question.hint)}</div>`);
+                }
+
+                body.append('<div class="question-card-footer">Reply with your answer in the chat and I will evaluate it.</div>');
+                card.append(header, body);
+
+                return card;
+            }
+
+            function resolveQuestionData(response) {
+                if (response.question_metadata) {
+                    return response.question_metadata;
+                }
+
+                if (
+                    response.agent_payload &&
+                    Array.isArray(response.agent_payload.questions) &&
+                    response.agent_payload.questions.length > 0
+                ) {
+                    return response.agent_payload.questions[0];
+                }
+
+                return null;
+            }
+
+            function normalizeAnswerValue(value) {
+                return String(value || '')
+                    .trim()
+                    .toLowerCase()
+                    .replace(/\s+/g, ' ');
+            }
+
+            function appendBotTextMessage(text) {
+                const botContainer = $('<div class="message bot-message"></div>');
+                $('#messages').append(botContainer);
+                typeMessage(botContainer, renderBoldText(text), function () {
+                    $('#messages').scrollTop($('#messages')[0].scrollHeight);
+                });
+            }
+
+            function getActiveQuestionCard() {
+                const activeCard = $('#messages .question-card.is-active-question').last();
+                if (activeCard.length) {
+                    return activeCard;
+                }
+                return $('#messages .question-card').last();
+            }
+
+            function updateQuestionCardWithDiagnosis(response) {
+                const card = getActiveQuestionCard();
+                if (!card.length) {
+                    return;
+                }
+
+                const diagnosis = response.agent_payload || {};
+                const isCorrect = Boolean(diagnosis.is_correct);
+                const selectedAnswer = normalizeAnswerValue(card.attr('data-selected-answer'));
+                const correctAnswer = normalizeAnswerValue(card.attr('data-correct-answer'));
+                const optionButtons = card.find('.question-option');
+
+                optionButtons.each(function () {
+                    const button = $(this);
+                    const answerLabel = normalizeAnswerValue(button.data('answer-label'));
+                    const answerText = normalizeAnswerValue(button.data('answer-normalized') || button.data('answer-text'));
+                    const matchesSelection = selectedAnswer && (selectedAnswer === answerLabel || selectedAnswer === answerText);
+                    const matchesCorrect = correctAnswer && (correctAnswer === answerLabel || correctAnswer === answerText);
+
+                    button.removeClass('is-submitting');
+
+                    if (matchesSelection) {
+                        button.addClass('is-selected');
+                    }
+                    if (matchesCorrect) {
+                        button.addClass('is-correct');
+                    }
+                    if (matchesSelection && !isCorrect) {
+                        button.addClass('is-incorrect');
+                    }
+                    button.prop('disabled', true);
+                });
+
+                card.removeClass('is-active-question').addClass('is-resolved');
+                card.find('.question-result-banner').remove();
+
+                const bannerClass = isCorrect ? 'correct' : 'incorrect';
+                const bannerText = isCorrect ? 'Correct choice recorded.' : 'Your selected option was incorrect. The correct option is highlighted.';
+                card.find('.question-card-body').append(
+                    `<div class="question-result-banner ${bannerClass}">${escapeHtml(bannerText)}</div>`
+                );
+            }
+
+            function appendExaminerMessage(response) {
+                const question = resolveQuestionData(response);
+                const introText = extractExaminerIntro(response, question);
+
+                if (!question) {
+                    appendBotTextMessage(introText);
+                    return;
+                }
+
+                const introContainer = $('<div class="message bot-message"></div>');
+                $('#messages').append(introContainer);
+                typeMessage(introContainer, renderBoldText(introText), function () {
+                    try {
+                        const questionCard = createQuestionCard(response);
+                        if (questionCard) {
+                            $('#messages').append(questionCard);
+                        } else {
+                            appendBotTextMessage('I prepared a question, but the card view could not be displayed.');
+                        }
+                    } catch (error) {
+                        console.error('Question card render failed:', error);
+                        appendBotTextMessage('I prepared a question, but the card view failed, so answer using the prompt above.');
+                    }
+                    $('#messages').scrollTop($('#messages')[0].scrollHeight);
+                });
+            }
+
+            function extractExaminerIntro(response, question) {
+                const fallbackIntro = 'Here is a practice question.';
+                const fullText = response.response_text || response.message || fallbackIntro;
+                if (!question) {
+                    return fullText;
+                }
+
+                const markers = [
+                    '**Question',
+                    'Question 1 (',
+                    question.prompt || ''
+                ].filter(Boolean);
+
+                let cutIndex = fullText.length;
+                markers.forEach(marker => {
+                    const index = fullText.indexOf(marker);
+                    if (index !== -1 && index < cutIndex) {
+                        cutIndex = index;
+                    }
+                });
+
+                const intro = fullText.slice(0, cutIndex).trim();
+                return intro || fallbackIntro;
+            }
+
+            function renderResponseMeta(response) {
+                const metaLines = [];
+                if (response.agent_used) {
+                    metaLines.push(`<strong>Agent:</strong> ${escapeHtml(response.agent_used)}`);
+                }
+                if (response.has_active_question && response.question_metadata) {
+                    metaLines.push(`<strong>Active question:</strong> ${escapeHtml(response.question_metadata.type)} • ${escapeHtml(response.question_metadata.difficulty)}`);
+                }
+                if (response.suggested_next_action) {
+                    metaLines.push(`<strong>Next:</strong> ${escapeHtml(response.suggested_next_action)}`);
+                }
+
+                if (metaLines.length === 0) {
+                    $('#chatStatus').hide().empty();
+                    return;
+                }
+
+                $('#chatStatus').html(metaLines.join('<br>')).show();
+            }
+
             function typeMessage(element, message, callback) {
                 let idx = 0;
                 const iv = setInterval(() => {
@@ -296,14 +688,18 @@
                 }, 20);
             }
 
-            function sendMessage() {
-                const userInput = $('#userInput').val().trim();
+            function sendMessage(prefilledMessage = null) {
+                const userInput = prefilledMessage !== null ? String(prefilledMessage).trim() : $('#userInput').val().trim();
                 if (!userInput) return;
                 $('#messages').append(
                     `<div class="message user-message">${escapeHtml(userInput)}</div>`
                 );
                 messages.push({ role: 'user', content: userInput });
-                $('#userInput').val('');
+                if (prefilledMessage === null) {
+                    $('#userInput').val('');
+                } else {
+                    $('#userInput').val('');
+                }
 
                 $.ajax({
                     url: '/chat_api',
@@ -318,12 +714,16 @@
                             alert(response.error);
                             return;
                         }
-                        const botContainer = $('<div class="message bot-message"></div>');
-                        $('#messages').append(botContainer);
-                        typeMessage(botContainer, renderBoldText(response.message), function () {
-                            $('#messages').scrollTop($('#messages')[0].scrollHeight);
-                        });
-                        messages.push({ role: 'bot', content: response.message });
+                        renderResponseMeta(response);
+                        if (response.agent_used === 'examiner') {
+                            appendExaminerMessage(response);
+                        } else {
+                            appendBotTextMessage(response.response_text || response.message);
+                            if (response.agent_used === 'diagnoser') {
+                                updateQuestionCardWithDiagnosis(response);
+                            }
+                        }
+                        messages.push({ role: 'bot', content: response.response_text || response.message });
 
                     },
                     error: function (xhr, status, err) {
@@ -338,6 +738,22 @@
                     e.preventDefault();
                     sendMessage();
                 }
+            });
+
+            $('#messages').on('click', '.question-option', function () {
+                const optionButton = $(this);
+                const answerLabel = optionButton.data('answer-label');
+                const questionCard = optionButton.closest('.question-card');
+
+                if (!answerLabel) {
+                    return;
+                }
+
+                questionCard.find('.question-option').removeClass('is-selected is-submitting');
+                optionButton.addClass('is-selected is-submitting');
+                questionCard.attr('data-selected-answer', normalizeAnswerValue(answerLabel));
+                questionCard.find('.question-option').prop('disabled', true);
+                sendMessage(answerLabel);
             });
 
             // Function to check if a Q&A pair is related to automata theory
@@ -597,6 +1013,11 @@
             $('#clearButton').click(() => {
                 messages = [];
                 $('#messages').empty();
+                $('#chatStatus').hide().empty();
+                $.ajax({
+                    url: '/chat_api/reset',
+                    method: 'POST'
+                });
             });
 
             function escapeHtml(txt) {
