@@ -23,8 +23,7 @@ PERSONA = "You are an AI assistant specialized in Automata Theory. Be kind, conv
 # Configure API key from environment variable
 load_dotenv()
 genai.configure(api_key=os.environ.get("GOOGLE_API_KEY"))
-print(os.environ.get("GOOGLE_API_KEY"))
-model = genai.GenerativeModel('gemini-2.0-flash')
+model = genai.GenerativeModel(os.environ.get("CHAT_MODEL_NAME", "gemini-2.5-flash-lite"))
 
 
 def load_and_chunk_pdf(pdf_path):
@@ -56,7 +55,7 @@ def load_and_chunk_pdf(pdf_path):
 
 def create_embedding_index(chunks):
     """Creates a FAISS embedding index from the text chunks."""
-    embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+    embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001")
     vector_store = FAISS.from_texts(texts=chunks, embedding=embeddings)
     logging.info("Embedding index created.")
     return vector_store
@@ -67,7 +66,7 @@ def load_or_create_vector_db(overwrite=False):
     full_vector_path = os.path.join(VECTOR_DB_PATH,VECTOR_STORE_FILE)
     if os.path.exists(full_vector_path) and not overwrite:
         logging.info("Loading existing vector database.")
-        embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+        embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001")
         try:
              vector_store = FAISS.load_local(VECTOR_DB_PATH, embeddings, allow_dangerous_deserialization=True)
              return vector_store
