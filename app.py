@@ -29,6 +29,7 @@ from services.adaptive_flashcard_service import (
     validate_adaptive_flashcards,
 )
 from services.retrieval_service import RetrievalService
+from services.video_recommendation_service import get_recommended_videos
 
 
 SECTION_CONFIGS = [
@@ -439,6 +440,7 @@ def quiz_page(chapter_id):
     correct_answers = chapter_data.get("correct_answers", [])
     incorrect_answers = chapter_data.get("incorrect_answers", [])
     hints = chapter_data.get("hints", [])
+    question_concepts = chapter_data.get("question_concepts", [])
 
     return render_template(
         'quiz.html',
@@ -447,6 +449,7 @@ def quiz_page(chapter_id):
         correct_answers=correct_answers,
         incorrect_answers=incorrect_answers,
         hints=hints,
+        question_concepts=question_concepts,
         zip=zip 
     )
 
@@ -458,11 +461,44 @@ def quiz_result():
 
     user_id = session['user_id']
     user_ref = db.collection("Users").document(user_id)
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
     score = data.get('score', 0)
     total = data.get('total', 0)
+    chapter_id = data.get('chapter_id')
+    wrong_questions = data.get('wrong_questions', [])
 
     try:
+        logging.info(
+            "Quiz submitted by user=%s chapter=%s score=%s/%s",
+            user_id,
+            chapter_id,
+            score,
+            total,
+        )
+
+        recommended_videos = []
+        normalized_chapter_id = None
+        if chapter_id is not None:
+            try:
+                normalized_chapter_id = int(chapter_id)
+            except (TypeError, ValueError):
+                logging.warning("Quiz result received invalid chapter_id=%s", chapter_id)
+
+        if normalized_chapter_id is not None and score < total:
+            chapter_ref = db.collection("chapters").document(str(normalized_chapter_id))
+            chapter_doc = chapter_ref.get()
+            chapter_data = chapter_doc.to_dict() if chapter_doc.exists else {}
+            recommended_videos = get_recommended_videos(
+                chapter_data=chapter_data or {},
+                chapter_id=normalized_chapter_id,
+                wrong_questions=wrong_questions if isinstance(wrong_questions, list) else [],
+            )
+        logging.info(
+            "Recommended videos returned for chapter=%s: %s",
+            chapter_id,
+            len(recommended_videos),
+        )
+
         user_doc = user_ref.get()
         if user_doc.exists:
             user_data = user_doc.to_dict()
@@ -473,7 +509,14 @@ def quiz_result():
                 current_completed = user_data.get('quizzes_completed', 0)
                 user_ref.update({'quizzes_completed': current_completed + 1})
 
-            return jsonify({"message": "Quiz result recorded"}), 200
+            return jsonify(
+                {
+                    "message": "Quiz result recorded",
+                    "score": score,
+                    "total": total,
+                    "recommended_videos": recommended_videos,
+                }
+            ), 200
         else:
             # If user doc doesn't exist, create it with default fields
             # e.g. if user somehow wasn't created in signup
@@ -482,9 +525,17 @@ def quiz_result():
                 'quizzes_completed': 1 if score == total else 0
             }
             user_ref.set(new_data, merge=True)
-            return jsonify({"message": "User doc created and quiz result recorded"}), 200
+            return jsonify(
+                {
+                    "message": "User doc created and quiz result recorded",
+                    "score": score,
+                    "total": total,
+                    "recommended_videos": recommended_videos,
+                }
+            ), 200
 
     except Exception as e:
+        logging.error("Quiz result handling failed: %s", e)
         return jsonify({"error": str(e)}), 500
 
 
