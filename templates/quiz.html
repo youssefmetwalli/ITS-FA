@@ -146,6 +146,79 @@
             border: 4px solid rgb(82, 213, 82);
         }
 
+        .result-panel {
+            display: none;
+            margin: 24px auto 32px auto;
+            max-width: 900px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+
+        .result-panel.show {
+            display: block;
+        }
+
+        .result-heading {
+            margin: 0 0 12px 0;
+            color: #1f2f4f;
+        }
+
+        .result-summary {
+            margin: 0 0 18px 0;
+            font-size: 1.05rem;
+            color: #334;
+        }
+
+        .result-summary strong {
+            color: #0f4f74;
+        }
+
+        .recommendation-heading {
+            margin: 20px 0 12px 0;
+            color: #1f2f4f;
+        }
+
+        .recommendation-list {
+            display: grid;
+            gap: 14px;
+        }
+
+        .video-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 16px;
+            background: #f9fbff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+        }
+
+        .video-card h3 {
+            margin: 0 0 8px 0;
+            color: #214267;
+        }
+
+        .video-card p {
+            margin: 6px 0;
+            color: #45556c;
+            line-height: 1.5;
+        }
+
+        .video-card a {
+            font-weight: bold;
+            color: #0b5e8b;
+            text-decoration: none;
+        }
+
+        .video-card a:hover {
+            text-decoration: underline;
+        }
+
+        .fallback-message {
+            margin: 0;
+            color: #5d6678;
+        }
+
         @keyframes pulse {
             0% {
                 transform: scale(1);
@@ -166,6 +239,55 @@
     </style>
 
     <script>
+        const quizChapterId = {{ chapter_id | tojson }};
+
+        function renderQuizResult(score, total, recommendedVideos) {
+            const resultPanel = document.getElementById('quiz-result-panel');
+            const scoreSummary = document.getElementById('score-summary');
+            const recommendationsSection = document.getElementById('recommendations-section');
+            const recommendationList = document.getElementById('recommendation-list');
+            const fallbackMessage = document.getElementById('recommendation-fallback');
+
+            scoreSummary.innerHTML = `You scored <strong>${score}</strong> out of <strong>${total}</strong>.`;
+            resultPanel.classList.add('show');
+
+            if (score === total) {
+                recommendationsSection.style.display = 'none';
+                recommendationList.innerHTML = '';
+                fallbackMessage.style.display = 'none';
+                return;
+            }
+
+            recommendationsSection.style.display = 'block';
+            recommendationList.innerHTML = '';
+            fallbackMessage.style.display = 'none';
+
+            if (!Array.isArray(recommendedVideos) || recommendedVideos.length === 0) {
+                fallbackMessage.style.display = 'block';
+                return;
+            }
+
+            recommendedVideos.forEach((video) => {
+                const card = document.createElement('article');
+                card.className = 'video-card';
+
+                const conceptHtml = video.concept
+                    ? `<p><strong>Concept:</strong> ${video.concept}</p>`
+                    : '';
+                const descriptionHtml = video.description
+                    ? `<p>${video.description}</p>`
+                    : '';
+
+                card.innerHTML = `
+                    <h3>${video.title}</h3>
+                    ${conceptHtml}
+                    ${descriptionHtml}
+                    <p><a href="${video.url}" target="_blank" rel="noopener noreferrer">Watch video</a></p>
+                `;
+                recommendationList.appendChild(card);
+            });
+        }
+
         // Toggle visibility of hint and change button text
         function toggleHint(questionId) {
             const hintDiv = document.getElementById(`hint-${questionId}`);
@@ -216,6 +338,7 @@
         function submitQuiz() {
             const questionItems = document.querySelectorAll('.question-item');
             let score = 0;
+            const wrongQuestions = [];
 
             questionItems.forEach((item) => {
                 // Clear any previous styling for both correct and incorrect answers
@@ -223,6 +346,9 @@
 
                 const selected = item.querySelector(`input[name="answer-${item.dataset.questionid}"]:checked`);
                 const correctAnswer = item.dataset.correctAnswer.trim().toLowerCase();
+                const questionIndex = Number(item.dataset.questionIndex);
+                const questionText = item.dataset.questionText || '';
+                const questionConcept = item.dataset.questionConcept || '';
 
                 if (selected) {
                     const userAnswer = selected.value.trim().toLowerCase();
@@ -233,10 +359,20 @@
                     } else {
                         // Highlight incorrect answers in red
                         item.classList.add('incorrect-answer');
+                        wrongQuestions.push({
+                            question_index: questionIndex,
+                            question_text: questionText,
+                            concept: questionConcept
+                        });
                     }
                 } else {
                     // If no answer is selected, mark it as incorrect too
                     item.classList.add('incorrect-answer');
+                    wrongQuestions.push({
+                        question_index: questionIndex,
+                        question_text: questionText,
+                        concept: questionConcept
+                    });
                 }
             });
 
@@ -251,8 +387,10 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+                    chapter_id: quizChapterId,
                     score: score,
-                    total: questionItems.length
+                    total: questionItems.length,
+                    wrong_questions: wrongQuestions
                 })
             })
                 .then(response => {
@@ -263,10 +401,11 @@
                 })
                 .then(data => {
                     console.log('Quiz result saved:', data);
-                    // Optionally redirect or do something else here
+                    renderQuizResult(score, questionItems.length, data.recommended_videos || []);
                 })
                 .catch(error => {
                     console.error('Error sending quiz result:', error);
+                    renderQuizResult(score, questionItems.length, []);
                 });
         }
 
@@ -307,8 +446,13 @@
     <div class="quiz-container">
         {% for question, correct_answer, hint in zip(questions, correct_answers, hints) %}
         {% set question_id = loop.index0 %}
+        {% set question_index = loop.index0 %}
+        {% set question_concept = question_concepts[question_index] if question_concepts|length > question_index else '' %}
         <div class="question-item" data-correct-answer="{{ correct_answer }}"
-            data-questionid="question-{{ question_id }}">
+            data-questionid="question-{{ question_id }}"
+            data-question-index="{{ question_index }}"
+            data-question-text="{{ question|e }}"
+            data-question-concept="{{ question_concept|e }}">
             <div class="question-header">
                 <p class="question-text">
                     <strong>Question {{ loop.index }}:</strong> {{ question }}
@@ -319,7 +463,6 @@
                 </button>
             </div>
             <div class="options-container">
-                {% set question_index = loop.index0 %}
                 {% set all_options = [
                 incorrect_answers[question_index * 3],
                 incorrect_answers[question_index * 3 + 1],
@@ -341,6 +484,19 @@
         </div>
         {% endfor %}
     </div>
+
+    <section id="quiz-result-panel" class="result-panel">
+        <h2 class="result-heading">Quiz Result</h2>
+        <p id="score-summary" class="result-summary"></p>
+
+        <div id="recommendations-section" style="display: none;">
+            <h3 class="recommendation-heading">Recommended Videos for Further Study</h3>
+            <div id="recommendation-list" class="recommendation-list"></div>
+            <p id="recommendation-fallback" class="fallback-message" style="display: none;">
+                No matching study videos are available yet for the concepts you missed.
+            </p>
+        </div>
+    </section>
 </body>
 
 </html>
