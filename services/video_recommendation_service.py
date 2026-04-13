@@ -2,45 +2,8 @@
 
 from __future__ import annotations
 
-import logging
 import re
 from typing import Any
-
-
-MOCK_VIDEO_CATALOG: dict[int, list[dict[str, Any]]] = {
-    5: [
-        {
-            "title": "DFA Basics and State Transitions",
-            "url": "https://example.com/videos/dfa-basics",
-            "concept": "deterministic finite automata",
-            "description": "TODO: Replace this placeholder with your real DFA introduction video.",
-            "concept_tags": ["dfa", "finite automata", "state transitions"],
-        },
-        {
-            "title": "Regular Languages Worked Examples",
-            "url": "https://example.com/videos/regular-languages",
-            "concept": "regular languages",
-            "description": "TODO: Replace this placeholder with a regular languages review video.",
-            "concept_tags": ["regular languages", "regular expressions", "regex"],
-        },
-    ],
-    10: [
-        {
-            "title": "CFG Foundations",
-            "url": "https://example.com/videos/cfg-foundations",
-            "concept": "context-free grammars",
-            "description": "TODO: Replace this placeholder with your CFG lesson.",
-            "concept_tags": ["cfg", "context-free grammar", "grammar"],
-        },
-        {
-            "title": "Pushdown Automata Intuition",
-            "url": "https://example.com/videos/pda-intuition",
-            "concept": "pushdown automata",
-            "description": "TODO: Replace this placeholder with your PDA lesson.",
-            "concept_tags": ["pda", "pushdown automata", "stack automata"],
-        },
-    ],
-}
 
 
 def _normalize_token(value: Any) -> str:
@@ -62,16 +25,11 @@ def _extract_match_terms(item: dict[str, Any]) -> set[str]:
 
 
 def load_video_catalog(chapter_data: dict[str, Any], chapter_id: int) -> list[dict[str, Any]]:
-    """Load a chapter video catalog from Firestore or a local fallback."""
+    """Load a chapter video catalog from Firestore."""
     catalog = chapter_data.get("study_videos")
     if isinstance(catalog, list):
-        logging.info("Loaded %s study videos from chapter %s.", len(catalog), chapter_id)
         return catalog
-
-    fallback_catalog = MOCK_VIDEO_CATALOG.get(chapter_id, [])
-    if fallback_catalog:
-        logging.info("Using %s fallback study videos for chapter %s.", len(fallback_catalog), chapter_id)
-    return fallback_catalog
+    return []
 
 
 def get_recommended_videos(
@@ -156,11 +114,6 @@ def get_recommended_videos(
         scored_videos.sort(reverse=True)
         return [video for _, _, video in scored_videos[:max_results]]
 
-    logging.info(
-        "No direct concept matches found for chapter %s. Returning up to %s fallback videos.",
-        chapter_id,
-        max_results,
-    )
     return [
         {
             "title": str(video.get("title", "")).strip(),
