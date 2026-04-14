@@ -26,6 +26,13 @@
             width: 100%;
         }
 
+        .section-action-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
         ol {
             list-style: none;
             padding-left: 0;
@@ -98,6 +105,31 @@
         .flashcard-button:focus-visible {
             outline: none;
             box-shadow: 0 0 0 3px rgba(255, 194, 102, 0.28), 0 12px 24px rgba(196, 136, 63, 0.18);
+        }
+
+        .video-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 18px;
+            min-width: 108px;
+            text-decoration: none;
+            color: #143652;
+            background: linear-gradient(135deg, #d5f0ff, #98d7ff);
+            border: 1px solid rgba(49, 121, 170, 0.26);
+            border-radius: 999px;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+            box-shadow: 0 8px 18px rgba(46, 115, 162, 0.14);
+            transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+        }
+
+        .video-button:hover {
+            color: #0d2d48;
+            background: linear-gradient(135deg, #bde6ff, #7cc8f7);
+            border-color: rgba(49, 121, 170, 0.42);
+            box-shadow: 0 12px 24px rgba(46, 115, 162, 0.22);
+            transform: translateY(-1px);
         }
 
         h3 {
@@ -193,11 +225,18 @@
             <li class="section-title">
                 <div class="section-title-row">
                     <span>Introduction</span>
-                    {% if section_flashcard_meta.introduction.available %}
-                    <a class="flashcard-button" href="{{ url_for('adaptive_flashcards_section_page', section_key='introduction') }}">
-                        Flashcards
-                    </a>
-                    {% endif %}
+                    <div class="section-action-group">
+                        {% if section_video_meta.introduction.available %}
+                        <a class="video-button" href="{{ url_for('section_video_page', section_key='introduction') }}">
+                            Videos
+                        </a>
+                        {% endif %}
+                        {% if section_flashcard_meta.introduction.available %}
+                        <a class="flashcard-button" href="{{ url_for('adaptive_flashcards_section_page', section_key='introduction') }}">
+                            Flashcards
+                        </a>
+                        {% endif %}
+                    </div>
                 </div>
             </li>
             {% for chapter in chapters if chapter.id <= 4 %} <li class="chapter-item">
@@ -225,11 +264,18 @@
                 <li class="section-title">
                     <div class="section-title-row">
                         <span>Finite State Machines &amp; Regular Languages</span>
-                        {% if section_flashcard_meta.fsm_regular.available %}
-                        <a class="flashcard-button" href="{{ url_for('adaptive_flashcards_section_page', section_key='fsm_regular') }}">
-                            Flashcards
-                        </a>
-                        {% endif %}
+                        <div class="section-action-group">
+                            {% if section_video_meta.fsm_regular.available %}
+                            <a class="video-button" href="{{ url_for('section_video_page', section_key='fsm_regular') }}">
+                                Videos
+                            </a>
+                            {% endif %}
+                            {% if section_flashcard_meta.fsm_regular.available %}
+                            <a class="flashcard-button" href="{{ url_for('adaptive_flashcards_section_page', section_key='fsm_regular') }}">
+                                Flashcards
+                            </a>
+                            {% endif %}
+                        </div>
                     </div>
                 </li>
                 {% for chapter in chapters if chapter.id >= 5 and chapter.id <= 9 %} <li class="chapter-item">
@@ -255,11 +301,18 @@
                     <li class="section-title">
                         <div class="section-title-row">
                             <span>Context-Free Languages and Pushdown Automata</span>
-                            {% if section_flashcard_meta.cfl_pda.available %}
-                            <a class="flashcard-button" href="{{ url_for('adaptive_flashcards_section_page', section_key='cfl_pda') }}">
-                                Flashcards
-                            </a>
-                            {% endif %}
+                            <div class="section-action-group">
+                                {% if section_video_meta.cfl_pda.available %}
+                                <a class="video-button" href="{{ url_for('section_video_page', section_key='cfl_pda') }}">
+                                    Videos
+                                </a>
+                                {% endif %}
+                                {% if section_flashcard_meta.cfl_pda.available %}
+                                <a class="flashcard-button" href="{{ url_for('adaptive_flashcards_section_page', section_key='cfl_pda') }}">
+                                    Flashcards
+                                </a>
+                                {% endif %}
+                            </div>
                         </div>
                     </li>
                     {% for chapter in chapters if chapter.id >= 10 and chapter.id <= 14 %} <li class="chapter-item">
@@ -285,11 +338,18 @@
                         <li class="section-title">
                             <div class="section-title-row">
                                 <span>Turing Machines and Undecidability</span>
-                                {% if section_flashcard_meta.tm_undecidability.available %}
-                                <a class="flashcard-button" href="{{ url_for('adaptive_flashcards_section_page', section_key='tm_undecidability') }}">
-                                    Flashcards
-                                </a>
-                                {% endif %}
+                                <div class="section-action-group">
+                                    {% if section_video_meta.tm_undecidability.available %}
+                                    <a class="video-button" href="{{ url_for('section_video_page', section_key='tm_undecidability') }}">
+                                        Videos
+                                    </a>
+                                    {% endif %}
+                                    {% if section_flashcard_meta.tm_undecidability.available %}
+                                    <a class="flashcard-button" href="{{ url_for('adaptive_flashcards_section_page', section_key='tm_undecidability') }}">
+                                        Flashcards
+                                    </a>
+                                    {% endif %}
+                                </div>
                             </div>
                         </li>
                         {% for chapter in chapters if chapter.id >= 16 and chapter.id <= 25 %} <li class="chapter-item">
@@ -315,11 +375,18 @@
                             <li class="section-title">
                                 <div class="section-title-row">
                                     <span>Complexity</span>
-                                    {% if section_flashcard_meta.complexity.available %}
-                                    <a class="flashcard-button" href="{{ url_for('adaptive_flashcards_section_page', section_key='complexity') }}">
-                                        Flashcards
-                                    </a>
-                                    {% endif %}
+                                    <div class="section-action-group">
+                                        {% if section_video_meta.complexity.available %}
+                                        <a class="video-button" href="{{ url_for('section_video_page', section_key='complexity') }}">
+                                            Videos
+                                        </a>
+                                        {% endif %}
+                                        {% if section_flashcard_meta.complexity.available %}
+                                        <a class="flashcard-button" href="{{ url_for('adaptive_flashcards_section_page', section_key='complexity') }}">
+                                            Flashcards
+                                        </a>
+                                        {% endif %}
+                                    </div>
                                 </div>
                             </li>
                             {% for chapter in chapters if chapter.id >= 27 and chapter.id <= 30 %} <li
@@ -346,11 +413,18 @@
                                 <li class="section-title">
                                     <div class="section-title-row">
                                         <span>Logics, Theories, and Proofs</span>
-                                        {% if section_flashcard_meta.logic_proofs.available %}
-                                        <a class="flashcard-button" href="{{ url_for('adaptive_flashcards_section_page', section_key='logic_proofs') }}">
-                                            Flashcards
-                                        </a>
-                                        {% endif %}
+                                        <div class="section-action-group">
+                                            {% if section_video_meta.logic_proofs.available %}
+                                            <a class="video-button" href="{{ url_for('section_video_page', section_key='logic_proofs') }}">
+                                                Videos
+                                            </a>
+                                            {% endif %}
+                                            {% if section_flashcard_meta.logic_proofs.available %}
+                                            <a class="flashcard-button" href="{{ url_for('adaptive_flashcards_section_page', section_key='logic_proofs') }}">
+                                                Flashcards
+                                            </a>
+                                            {% endif %}
+                                        </div>
                                     </div>
                                 </li>
                                 {% for chapter in chapters if chapter.id >= 33 and chapter.id <= 37 %} <li
@@ -377,11 +451,18 @@
                                     <li class="section-title">
                                         <div class="section-title-row">
                                             <span>Applications Throughout the World</span>
-                                            {% if section_flashcard_meta.applications.available %}
-                                            <a class="flashcard-button" href="{{ url_for('adaptive_flashcards_section_page', section_key='applications') }}">
-                                                Flashcards
-                                            </a>
-                                            {% endif %}
+                                            <div class="section-action-group">
+                                                {% if section_video_meta.applications.available %}
+                                                <a class="video-button" href="{{ url_for('section_video_page', section_key='applications') }}">
+                                                    Videos
+                                                </a>
+                                                {% endif %}
+                                                {% if section_flashcard_meta.applications.available %}
+                                                <a class="flashcard-button" href="{{ url_for('adaptive_flashcards_section_page', section_key='applications') }}">
+                                                    Flashcards
+                                                </a>
+                                                {% endif %}
+                                            </div>
                                         </div>
                                     </li>
                                     {% for chapter in chapters if chapter.id >= 38 and chapter.id <= 48 %} <li
