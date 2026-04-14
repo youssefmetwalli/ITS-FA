@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ video.title }} | Video Learning</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <style>
+        .video-page-shell {
+            width: min(95vw, 1480px);
+            margin: 0 auto 30px auto;
+        }
+
+        .video-layout {
+            display: grid;
+            grid-template-columns: 300px minmax(0, 1fr);
+            gap: 20px;
+            align-items: start;
+        }
+
+        .playlist-panel,
+        .video-main-card,
+        .video-meta-card,
+        .transcript-card,
+        .summary-card {
+            background: rgba(255, 255, 255, 0.94);
+            border-radius: 18px;
+            padding: 20px;
+            box-shadow: 0 12px 28px rgba(11, 39, 66, 0.14);
+        }
+
+        .playlist-panel h2,
+        .video-main-card h2,
+        .video-meta-card h3,
+        .transcript-card h3,
+        .summary-card h3 {
+            margin-top: 0;
+            color: #16324f;
+        }
+
+        .playlist-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .playlist-item {
+            display: block;
+            padding: 14px 16px;
+            border-radius: 14px;
+            text-decoration: none;
+            background: #eef5fb;
+            border: 1px solid rgba(52, 104, 145, 0.14);
+            color: #173654;
+            transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+        }
+
+        .playlist-item strong {
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .playlist-item.active {
+            background: linear-gradient(135deg, #dcefff, #d7f5ef);
+            border-color: rgba(46, 118, 159, 0.26);
+        }
+
+        .playlist-item:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 18px rgba(30, 75, 108, 0.12);
+        }
+
+        .video-chat-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.9fr);
+            gap: 18px;
+        }
+
+        .video-frame-shell {
+            border-radius: 18px;
+            overflow: hidden;
+            background: linear-gradient(160deg, #0c1f33, #143a58);
+            min-height: 440px;
+            position: relative;
+        }
+
+        #video-player {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            min-height: 440px;
+        }
+
+        .video-placeholder {
+            min-height: 440px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            text-align: center;
+            color: #e6f1f8;
+            font-size: 1.05rem;
+            line-height: 1.6;
+        }
+
+        .video-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin: 14px 0 0 0;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: #edf5fb;
+            color: #264861;
+            font-weight: 700;
+        }
+
+        .action-button {
+            border: none;
+            border-radius: 12px;
+            padding: 11px 16px;
+            cursor: pointer;
+            font-weight: 700;
+            color: #14324c;
+            background: linear-gradient(135deg, #d8efff, #aee0ff);
+            box-shadow: 0 8px 18px rgba(43, 113, 160, 0.14);
+        }
+
+        .action-button:hover {
+            background: linear-gradient(135deg, #c6e8ff, #95d8ff);
+        }
+
+        .chat-card {
+            background: rgba(255, 255, 255, 0.92);
+            border-radius: 18px;
+            padding: 18px;
+            box-shadow: 0 12px 28px rgba(11, 39, 66, 0.12);
+            min-height: 560px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-card h3 {
+            margin: 0 0 12px 0;
+            color: #16324f;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding-right: 4px;
+            min-height: 220px;
+        }
+
+        .chat-message {
+            border-radius: 14px;
+            padding: 12px 14px;
+            line-height: 1.55;
+            white-space: pre-wrap;
+        }
+
+        .chat-message.user {
+            background: #dff2ff;
+            color: #173451;
+            align-self: flex-end;
+        }
+
+        .chat-message.assistant {
+            background: #eef7ef;
+            color: #1f3e2d;
+            align-self: flex-start;
+        }
+
+        .chat-source {
+            display: block;
+            margin-top: 8px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            opacity: 0.76;
+        }
+
+        .chat-form {
+            display: grid;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .chat-form textarea {
+            min-height: 96px;
+            resize: vertical;
+            border-radius: 14px;
+            border: 1px solid rgba(60, 111, 149, 0.2);
+            padding: 12px 14px;
+            font: inherit;
+        }
+
+        .summary-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .summary-list {
+            margin: 0;
+            padding-left: 20px;
+            color: #36526a;
+        }
+
+        .summary-placeholder,
+        .transcript-status-text,
+        .video-description-text,
+        .transcript-preview {
+            color: #425970;
+            line-height: 1.65;
+        }
+
+        .transcript-preview {
+            white-space: pre-wrap;
+        }
+
+        .checkpoint-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(7, 18, 31, 0.72);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1200;
+            padding: 20px;
+        }
+
+        .checkpoint-modal.show {
+            display: flex;
+        }
+
+        .checkpoint-card {
+            width: min(94vw, 680px);
+            background: white;
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+        }
+
+        .checkpoint-options {
+            display: grid;
+            gap: 10px;
+            margin: 18px 0;
+        }
+
+        .checkpoint-option {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            border-radius: 14px;
+            border: 1px solid rgba(56, 107, 147, 0.16);
+            padding: 12px 14px;
+            background: #f8fbfd;
+        }
+
+        .checkpoint-feedback {
+            display: none;
+            margin-top: 12px;
+            padding: 14px;
+            border-radius: 14px;
+        }
+
+        .checkpoint-feedback.show {
+            display: block;
+        }
+
+        .checkpoint-feedback.correct {
+            background: #e7f7ec;
+            color: #23553a;
+        }
+
+        .checkpoint-feedback.incorrect {
+            background: #fff2ef;
+            color: #8f352a;
+        }
+
+        @media (max-width: 1120px) {
+            .video-layout,
+            .video-chat-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header-container">
+        <h1>Video Learning</h1>
+        <a class="button" href="{{ url_for('index') }}">Home</a>
+        <a class="button" href="{{ url_for('course_page') }}">Course</a>
+    </div>
+
+    <div class="video-page-shell">
+        <div class="video-layout">
+            <aside class="playlist-panel">
+                <h2>{{ section_title }}</h2>
+                <p class="video-description-text">Section videos stay separate from textbook chat and use transcript-grounded Q&amp;A.</p>
+                <div class="playlist-list">
+                    {% for section_video in section_videos %}
+                    <a class="playlist-item {% if section_video.id == video.id %}active{% endif %}"
+                        href="{{ url_for('video_learning_page', video_id=section_video.id) }}">
+                        <strong>{{ section_video.title }}</strong>
+                        <span>{{ section_video.description or 'Video learning entry for this section.' }}</span>
+                    </a>
+                    {% endfor %}
+                </div>
+            </aside>
+
+            <main class="video-main-column">
+                <section class="video-main-card">
+                    <div class="video-chat-grid">
+                        <div>
+                            <h2>{{ video.title }}</h2>
+                            <p class="video-description-text">{{ video.description or 'Video description coming soon.' }}</p>
+                            <div class="video-frame-shell">
+                                {% if youtube_video_id %}
+                                <div id="video-player"></div>
+                                {% else %}
+                                <div class="video-placeholder">
+                                    <div>
+                                        <strong>Video link pending.</strong><br>
+                                        Add a valid `youtube_video_id` or YouTube `url` for this video to enable playback.
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="video-toolbar">
+                                <span id="transcript-status-pill" class="status-pill">
+                                    {% if transcript_available %}
+                                    Transcript ready
+                                    {% else %}
+                                    Transcript pending
+                                    {% endif %}
+                                </span>
+                                <button id="refresh-transcript-button" class="action-button" type="button">
+                                    Refresh Transcript
+                                </button>
+                            </div>
+                        </div>
+
+                        <aside class="chat-card">
+                            <h3>Ask About This Video</h3>
+                            <div id="video-chat-messages" class="chat-messages">
+                                <div class="chat-message assistant">
+                                    Ask a question about the current video. Answers are grounded in the selected video's transcript.
+                                    <span class="chat-source">Source: video transcript</span>
+                                </div>
+                            </div>
+                            <form id="video-chat-form" class="chat-form">
+                                <textarea id="video-chat-input" placeholder="Ask about something explained in this video..."></textarea>
+                                <button class="action-button" type="submit">Send</button>
+                            </form>
+                        </aside>
+                    </div>
+                </section>
+
+                <section class="video-meta-card">
+                    <h3>Transcript Status</h3>
+                    <p id="transcript-status-text" class="transcript-status-text">
+                        {% if transcript_status %}
+                        {{ transcript_status }}
+                        {% elif transcript_available %}
+                        Transcript is available and can be used for grounded Q&amp;A.
+                        {% else %}
+                        Transcript is not available yet. The system can fetch it later if the video has a valid YouTube transcript.
+                        {% endif %}
+                    </p>
+                </section>
+
+                <section class="summary-card">
+                    <h3>Study Summary</h3>
+                    <div id="video-summary-content">
+                        {% if summary_payload %}
+                        <div class="summary-grid">
+                            <p>{{ summary_payload.narrative_summary }}</p>
+                            {% if summary_payload.key_concepts %}
+                            <div>
+                                <strong>Key Concepts</strong>
+                                <ul class="summary-list">
+                                    {% for item in summary_payload.key_concepts %}
+                                    <li>{{ item }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            {% endif %}
+                            {% if summary_payload.important_takeaways %}
+                            <div>
+                                <strong>Important Takeaways</strong>
+                                <ul class="summary-list">
+                                    {% for item in summary_payload.important_takeaways %}
+                                    <li>{{ item }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% else %}
+                        <p class="summary-placeholder">Watch most of the video or finish it to generate a reusable study summary.</p>
+                        {% endif %}
+                    </div>
+                </section>
+
+                <section class="transcript-card">
+                    <h3>Transcript Preview</h3>
+                    <p id="transcript-preview" class="transcript-preview">
+                        {% if transcript_preview %}
+                        {{ transcript_preview }}
+                        {% else %}
+                        Transcript preview is not available yet.
+                        {% endif %}
+                    </p>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <div id="checkpoint-modal" class="checkpoint-modal" aria-hidden="true">
+        <div class="checkpoint-card">
+            <h3 id="checkpoint-title">Checkpoint Question</h3>
+            <p id="checkpoint-question-text"></p>
+            <div id="checkpoint-options" class="checkpoint-options"></div>
+            <div id="checkpoint-feedback" class="checkpoint-feedback"></div>
+            <div class="video-toolbar">
+                <button id="checkpoint-submit-button" class="action-button" type="button">Check Answer</button>
+                <button id="checkpoint-resume-button" class="action-button" type="button" disabled>Resume Video</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.videoLearningConfig = {{ {
+            "videoId": video.id,
+            "youtubeVideoId": youtube_video_id,
+            "checkpointQuestions": video.checkpoint_questions,
+            "progress": video_progress,
+            "askEndpoint": ask_endpoint,
+            "progressEndpoint": progress_endpoint,
+            "summaryEndpoint": summary_endpoint,
+            "transcriptRefreshEndpoint": transcript_refresh_endpoint,
+        } | tojson }};
+    </script>
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script src="{{ url_for('static', filename='js/video_player.js') }}"></script>
+</body>
+
+</html>
