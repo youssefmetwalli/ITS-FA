@@ -29,7 +29,11 @@ from services.adaptive_flashcard_service import (
     validate_adaptive_flashcards,
 )
 from services.retrieval_service import RetrievalService
+from services.video_catalog import build_section_video_meta, get_video_by_id, list_section_videos
+from services.video_retrieval_service import VideoRetrievalService
 from services.video_recommendation_service import get_recommended_videos
+from services.video_summary_service import VideoSummaryService
+from services.video_transcript_service import ensure_video_transcript, extract_youtube_video_id
 
 
 SECTION_CONFIGS = [
@@ -41,6 +45,7 @@ SECTION_CONFIGS = [
     {"key": "logic_proofs", "title": "Logics, Theories, and Proofs", "chapter_ids": list(range(33, 38))},
     {"key": "applications", "title": "Applications Throughout the World", "chapter_ids": list(range(38, 49))},
 ]
+SECTION_LOOKUP = {config["key"]: config for config in SECTION_CONFIGS}
 SECTION_LEVEL_CARD_COUNT = 10
 
 load_dotenv()
@@ -73,6 +78,8 @@ except Exception as e:
     chain = None 
 
 retrieval_service = RetrievalService()
+video_retrieval_service = VideoRetrievalService()
+video_summary_service = VideoSummaryService()
 chat_state_service = ChatStateService()
 explainer_agent = ExplainerAgent(retrieval_service)
 examiner_agent = ExaminerAgent()
@@ -90,6 +97,46 @@ def shuffle_list(seq):
     return shuffled
 
 app.jinja_env.filters['shuffle'] = shuffle_list
+
+
+def _load_video_learning_progress() -> dict:
+    progress = session.get("video_learning_progress", {})
+    if not isinstance(progress, dict):
+        progress = {}
+    return progress
+
+
+def _save_video_learning_progress(progress: dict) -> None:
+    session["video_learning_progress"] = progress
+    session.modified = True
+
+
+def _get_video_progress(video_id: str) -> dict:
+    progress = _load_video_learning_progress()
+    current = progress.get(video_id, {})
+    if not isinstance(current, dict):
+        current = {}
+    return {
+        "selected_video_id": progress.get("selected_video_id"),
+        "answered_checkpoint_ids": list(current.get("answered_checkpoint_ids", [])),
+        "summary_shown": bool(current.get("summary_shown", False)),
+        "completed": bool(current.get("completed", False)),
+        "watched_seconds": float(current.get("watched_seconds", 0.0) or 0.0),
+        "duration_seconds": float(current.get("duration_seconds", 0.0) or 0.0),
+        "watched_percentage": float(current.get("watched_percentage", 0.0) or 0.0),
+    }
+
+
+def _merge_video_progress(video_id: str, updates: dict) -> dict:
+    progress = _load_video_learning_progress()
+    current = _get_video_progress(video_id)
+    current.update(updates)
+    answered_ids = current.get("answered_checkpoint_ids", [])
+    current["answered_checkpoint_ids"] = list(dict.fromkeys(str(item) for item in answered_ids if str(item)))
+    progress[video_id] = current
+    progress["selected_video_id"] = video_id
+    _save_video_learning_progress(progress)
+    return current
 
 # Routes
 @app.route("/")
@@ -392,6 +439,7 @@ def course_page():
             "available": section_has_flashcards,
             "completed": bool(section_progress.get("path_completed", False)),
         }
+    section_video_meta = build_section_video_meta(db, SECTION_CONFIGS)
 
     return render_template(
         "course.html",
@@ -399,6 +447,7 @@ def course_page():
         user_answers=user_answers,
         read_chapters=read_chapters,
         section_flashcard_meta=section_flashcard_meta,
+        section_video_meta=section_video_meta,
     )
 
 
@@ -425,6 +474,206 @@ def module_detail(module_id):
     return render_template(
         "module_detail.html", module=chapter_data, subchapters=subchapters
     )
+
+
+@app.route("/videos/section/<section_key>")
+def section_video_page(section_key):
+    section_config = SECTION_LOOKUP.get(section_key)
+    if not section_config:
+        abort(404)
+
+    section_videos = list_section_videos(db, section_key)
+    if not section_videos:
+        abort(404)
+
+    selected_video_id = request.args.get("video_id", "").strip()
+    if selected_video_id and any(video["id"] == selected_video_id for video in section_videos):
+        return redirect(url_for("video_learning_page", video_id=selected_video_id))
+    return redirect(url_for("video_learning_page", video_id=section_videos[0]["id"]))
+
+
+@app.route("/video/<video_id>")
+def video_learning_page(video_id):
+    video_record = get_video_by_id(db, video_id)
+    if not video_record:
+        abort(404)
+
+    section_key = str(video_record.get("section_key", "")).strip()
+    section_config = SECTION_LOOKUP.get(section_key)
+    section_videos = list_section_videos(db, section_key) if section_key else []
+
+    transcript_status = None
+    try:
+        video_record, transcript_status = ensure_video_transcript(db, video_record)
+    except Exception as exc:
+        logging.warning("Video transcript bootstrap failed for %s: %s", video_id, exc)
+        transcript_status = "The transcript could not be loaded automatically."
+
+    if video_record.get("transcript_text"):
+        try:
+            video_retrieval_service.ensure_vector_store(video_record)
+        except Exception as exc:
+            logging.warning("Video vector store bootstrap failed for %s: %s", video_id, exc)
+
+    progress = _merge_video_progress(video_id, {})
+    summary_payload = video_record.get("generated_summary")
+    transcript_preview = str(video_record.get("transcript_text", "")).strip()[:1400]
+    transcript_available = bool(str(video_record.get("transcript_text", "")).strip())
+    youtube_video_id = str(video_record.get("youtube_video_id", "")).strip()
+    if not youtube_video_id:
+        youtube_video_id = extract_youtube_video_id(str(video_record.get("url", "")).strip()) or ""
+    summary_visible = transcript_available or (
+        isinstance(summary_payload, dict) and bool(summary_payload.get("narrative_summary"))
+    )
+
+    return render_template(
+        "video_page.html",
+        video=video_record,
+        section_title=section_config["title"] if section_config else "Video Learning",
+        section_key=section_key,
+        section_videos=section_videos,
+        transcript_available=transcript_available,
+        transcript_status=transcript_status,
+        transcript_preview=transcript_preview,
+        summary_payload=summary_payload if isinstance(summary_payload, dict) else None,
+        summary_visible=summary_visible,
+        video_progress=progress,
+        youtube_video_id=youtube_video_id,
+        ask_endpoint=url_for("video_question_api", video_id=video_id),
+        progress_endpoint=url_for("video_progress_api", video_id=video_id),
+        summary_endpoint=url_for("video_summary_api", video_id=video_id),
+        transcript_refresh_endpoint=url_for("video_transcript_refresh_api", video_id=video_id),
+    )
+
+
+@app.route("/video/<video_id>/transcript/refresh", methods=["POST"])
+def video_transcript_refresh_api(video_id):
+    video_record = get_video_by_id(db, video_id)
+    if not video_record:
+        return jsonify({"error": "Video not found"}), 404
+
+    try:
+        updated_record, transcript_status = ensure_video_transcript(db, video_record)
+    except Exception as exc:
+        logging.error("Manual transcript refresh failed for %s: %s", video_id, exc)
+        return jsonify(
+            {
+                "transcript_available": False,
+                "message": "Transcript retrieval failed.",
+                "selected_video_id": video_id,
+            }
+        ), 200
+
+    transcript_available = bool(str(updated_record.get("transcript_text", "")).strip())
+    if transcript_available:
+        try:
+            video_retrieval_service.ensure_vector_store(updated_record, force_rebuild=True)
+        except Exception as exc:
+            logging.warning("Video vector store rebuild failed for %s: %s", video_id, exc)
+
+    return jsonify(
+        {
+            "transcript_available": transcript_available,
+            "message": transcript_status or ("Transcript loaded successfully." if transcript_available else "Transcript is unavailable."),
+            "transcript_preview": str(updated_record.get("transcript_text", "")).strip()[:1400],
+            "selected_video_id": video_id,
+        }
+    )
+
+
+@app.route("/video/<video_id>/ask", methods=["POST"])
+def video_question_api(video_id):
+    request_data = request.get_json(silent=True) or {}
+    user_message = str(request_data.get("message", "")).strip()
+    if not user_message:
+        return jsonify({"error": "No message provided"}), 400
+
+    video_record = get_video_by_id(db, video_id)
+    if not video_record:
+        return jsonify({"error": "Video not found"}), 404
+
+    try:
+        video_record, transcript_status = ensure_video_transcript(db, video_record)
+    except Exception as exc:
+        logging.error("Video transcript ensure failed for %s: %s", video_id, exc)
+        transcript_status = "The video transcript is currently unavailable."
+
+    payload = video_retrieval_service.answer_video_question(video_record, user_message)
+    if transcript_status and not str(video_record.get("transcript_text", "")).strip():
+        payload["response_text"] = transcript_status
+    return jsonify(payload)
+
+
+@app.route("/video/<video_id>/summary", methods=["POST"])
+def video_summary_api(video_id):
+    video_record = get_video_by_id(db, video_id)
+    if not video_record:
+        return jsonify({"error": "Video not found"}), 404
+
+    try:
+        video_record, transcript_status = ensure_video_transcript(db, video_record)
+    except Exception as exc:
+        logging.error("Summary transcript ensure failed for %s: %s", video_id, exc)
+        transcript_status = "The transcript is currently unavailable."
+
+    summary_payload, error_message = video_summary_service.load_or_generate_summary(db, video_record)
+    if summary_payload:
+        progress = _merge_video_progress(video_id, {"summary_shown": True})
+        return jsonify(
+            {
+                "summary": summary_payload,
+                "selected_video_id": video_id,
+                "summary_shown": progress["summary_shown"],
+                "message": "Summary ready.",
+            }
+        )
+
+    return jsonify(
+        {
+            "summary": None,
+            "selected_video_id": video_id,
+            "message": error_message or transcript_status or "Summary unavailable.",
+        }
+    )
+
+
+@app.route("/video/<video_id>/progress", methods=["POST"])
+def video_progress_api(video_id):
+    request_data = request.get_json(silent=True) or {}
+    current_progress = _get_video_progress(video_id)
+
+    checkpoint_id = str(request_data.get("answered_checkpoint_id", "")).strip()
+    answered_checkpoint_ids = current_progress["answered_checkpoint_ids"]
+    if checkpoint_id and checkpoint_id not in answered_checkpoint_ids:
+        answered_checkpoint_ids.append(checkpoint_id)
+
+    watched_seconds = request_data.get("watched_seconds", current_progress["watched_seconds"])
+    duration_seconds = request_data.get("duration_seconds", current_progress["duration_seconds"])
+    try:
+        watched_seconds = float(watched_seconds or 0.0)
+    except (TypeError, ValueError):
+        watched_seconds = current_progress["watched_seconds"]
+    try:
+        duration_seconds = float(duration_seconds or 0.0)
+    except (TypeError, ValueError):
+        duration_seconds = current_progress["duration_seconds"]
+
+    watched_percentage = 0.0
+    if duration_seconds > 0:
+        watched_percentage = min(100.0, max(0.0, (watched_seconds / duration_seconds) * 100))
+
+    updated_progress = _merge_video_progress(
+        video_id,
+        {
+            "answered_checkpoint_ids": answered_checkpoint_ids,
+            "watched_seconds": watched_seconds,
+            "duration_seconds": duration_seconds,
+            "watched_percentage": watched_percentage,
+            "completed": bool(request_data.get("completed", current_progress["completed"])),
+            "summary_shown": bool(request_data.get("summary_shown", current_progress["summary_shown"])),
+        },
+    )
+    return jsonify({"progress": updated_progress, "selected_video_id": video_id})
 
 
     
