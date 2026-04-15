@@ -1,9 +1,9 @@
-"""Transcript helpers for section video learning."""
-
 from __future__ import annotations
 
+import json
 import re
 from typing import Any
+from urllib.error import URLError
 
 from firebase_admin import firestore
 
@@ -11,6 +11,15 @@ try:
     from youtube_transcript_api import YouTubeTranscriptApi
 except ImportError:  # pragma: no cover - optional dependency
     YouTubeTranscriptApi = None
+
+try:  # pragma: no cover - optional dependency details vary by installed version
+    from youtube_transcript_api._errors import (
+        NoTranscriptAvailable,
+        TranscriptsDisabled,
+        VideoUnavailable,
+    )
+except ImportError:  # pragma: no cover - fallback if internals move
+    NoTranscriptAvailable = TranscriptsDisabled = VideoUnavailable = tuple()  # type: ignore[assignment]
 
 
 YOUTUBE_PATTERNS = [
@@ -58,9 +67,45 @@ def fetch_video_transcript(video_id: str) -> tuple[str, list[dict[str, Any]], st
         return "", [], "The youtube-transcript-api package is not installed."
 
     try:
-        raw_segments = YouTubeTranscriptApi.get_transcript(video_id, languages=["en"])
+        transcripts = YouTubeTranscriptApi.list_transcripts(video_id)
+        transcript = None
+
+        try:
+            transcript = transcripts.find_transcript(["en"])
+        except Exception:
+            transcript = None
+
+        if transcript is None:
+            try:
+                transcript = transcripts.find_generated_transcript(["en"])
+            except Exception:
+                transcript = None
+
+        if transcript is None:
+            available_transcripts = list(transcripts)
+            if available_transcripts:
+                transcript = available_transcripts[0]
+
+        if transcript is None:
+            return "", [], "No transcript is available for this video."
+
+        raw_segments = transcript.fetch()
+    except (NoTranscriptAvailable, TranscriptsDisabled, VideoUnavailable):
+        return "", [], "No transcript is available for this video."
+    except (ConnectionError, TimeoutError, URLError):
+        return "", [], "Network error while contacting YouTube for the transcript."
+    except json.JSONDecodeError:
+        return "", [], "Transcript API parsing failed."
     except Exception as exc:
-        return "", [], f"Transcript retrieval failed: {exc}"
+        message = str(exc).strip()
+        lowered = message.lower()
+        if "no element found" in lowered or "json" in lowered or "decode" in lowered:
+            return "", [], "Transcript API parsing failed."
+        if "failed to resolve" in lowered or "nameresolutionerror" in lowered or "httpsconnectionpool" in lowered:
+            return "", [], "Network error while contacting YouTube for the transcript."
+        if "transcript" in lowered and ("disabled" in lowered or "unavailable" in lowered or "could not retrieve" in lowered):
+            return "", [], "No transcript is available for this video."
+        return "", [], f"Transcript retrieval failed: {message or exc.__class__.__name__}"
 
     transcript_text, transcript_segments = normalize_transcript_segments(raw_segments)
     if not transcript_text:
