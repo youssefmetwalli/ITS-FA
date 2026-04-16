@@ -1,0 +1,436 @@
+1
+00:00:25,000 --> 00:02:16,000
+hi everybody um glad to have you all back for our next to last installment of theory of computation today um we are going to embark on the very last big topic for the semester and that is in some ways going to be following on what we started a couple of lectures back when we looked at probabilistic turing machines and probabilistic computation and its associated class bpp now what we're going to discuss is in some sense a probabilistic version of np and that's going to be a complexity class called ip
+
+2
+00:01:21,000 --> 00:02:43,000
+which stands for interactive proof systems um and so we're going to present that model and look at a couple of examples uh i would just like to say at the beginning that the this model is a very important one it's really uh has been the starting point for a great deal of research in complexity theory so we're just really going to be touching on it but there's a lot more that people have pursued with this model and it's also a connection in to the cryptography field which also makes use of the interactive
+
+3
+00:02:03,000 --> 00:03:42,000
+proof system model in fact some of the genesis of that model comes out of cryptography where you're having uh multiple parties either communicating or in some ways interacting uh to achieve certain uh goals of communication or signing or passwords or or or what have you so uh this is a both a an applied area and also one that has a lot of very interesting theory uh um associated to it so with that one we we're going to jump in um and uh start out by uh making myself smaller and just do a an introduction i'm going to
+
+4
+00:02:54,000 --> 00:04:22,000
+introduce the model or the the concept of an interactive proof with an example and that example involves the graph isomorphism problem that's the problem of testing whether two graphs are isomorphic what we mean by two graphs being isomorphic is that they're really just the same graph with one of them perhaps being re-labeled or permuted so that they may look superficially different they may appear with a different sequence of labels or the nodes are appearing in a different order but except for that it's really just the
+
+5
+00:03:39,000 --> 00:05:04,000
+same graph so i'm kind of illustrating that here if you can see those two graphs here which look different from each other both on eight notes they are in fact the same graph as i can illustrate by a little animation which will convert this one into that one so uh the um [Music] so the two graphs um these graphs being the same um they're we call that isomorphic so these are graphs g and h and they're really the same graph so we we um call them isomorphic graphs and we are have an associated computational problem
+
+6
+00:04:26,000 --> 00:05:43,000
+called iso which is given a pair of graphs we'd like to know are they isomorphic or not so the iso is the collection of pairs of graphs which are isomorphic and it's easy to see that this problem is an np problem because all you need to do in order to see or to give a certificate that the two graphs are isomorphic to each other is tell you it's just to say which nodes in the one graph correspond to which other nodes in the other graph um and then you all you need to check is that the edge relationships are
+
+7
+00:05:04,000 --> 00:06:22,000
+consistent with that mapping or that isomorphism as it's called um so it's easy to see that the iso problem is an np and if you're not getting that make sure you uh understand because this is the whole first part of the lecture will be lost if you don't understand this iso problem now the question of whether you can test two graphs being isomorphic in polynomial time is not clear and in fact that's an unsolved problem to this day uh and it's a problem that has generated an
+
+8
+00:05:44,000 --> 00:06:56,000
+enormous literature uh there are hundreds of papers on the graph isomorphism problem as it's called um to try to uh resolve um you know uh to try to see if one can find a polynomial time algorithm and in fact it was a very big result just in the last 10 years where there was a sub-exponential algorithm given so that was more than faster than the brute force search approach but didn't get it all the way down to polynomial now why is there so much attention just to this one particular np problem it's because
+
+9
+00:06:21,000 --> 00:07:48,000
+it's not known whether the graph isomorphism problem is np-complete iso is not known to be an np-complete problem and that puts it into a very very small class of problems in np which are no not known to be either in p or np-complete it's kind of a curiosity that for np problems almost all of them have ended up being in one side or the other and in fact um it's a uh um in fact the the um i i think it's the only problem that just involves graphs that's not known to be either in p or an
+
+10
+00:07:05,000 --> 00:08:23,000
+np um so so i got a question here what would be in between exponential and polynomial for example i don't remember what the the bound is but it's it's something in the uh in the range of n to the log n uh time complexity for the graphite some more i might be getting that wrong um i don't remember exactly what the bound is but um that's significantly better than two to the n or some some exponential amount of time but it it's more than enter any constant so it's more than any polynomial time
+
+11
+00:07:45,000 --> 00:08:53,000
+so um another question uh of the same sort is whether the complementary problem is in np or whether whether iso is in co-np or let's let's talk about it in terms of the complement whether the complement of iso which i'll refer to as the non-iso problem whether that's known to be in np so that's also not known um in other words if i give you two graphs and i ask you to show that they're not isomorphic suppose they aren't isomorphic and you go through the effort of you know determining that by a brute
+
+12
+00:08:21,000 --> 00:09:33,000
+force search and now you want to prove that they're not isomorphic well that's not it's not known to be an np either so there's no known short certificate certificate of two graphs not being isomorphic we don't know how to do that either but there's something that's very interesting nevertheless um and it has to do with the ability to for one party to prove to another that graphs are either isomorphic or not isomorphic so if you're just having like a prover we haven't really been necessarily
+
+13
+00:08:57,000 --> 00:10:03,000
+formulating that this way so much in this class but this is a completely equivalent way of formulating the notion of np whether you have a polynomial time verifier an approver who can produce certificates say it's a powerful prover so um if you have a problem that's in np approver can convince a polynomial time verifier that uh strings are in the language if in fact they are so in the case of the iso problem a prover can convince a polynomial time verifier the graphs are isomorphic just by exhibiting the
+
+14
+00:09:30,000 --> 00:10:57,000
+isomorphism now for the non-isomorphism case we don't know that that problem's in np but it's still possible for approver to convince a verifier that graphs are not isomorphic if you change the rules of the game slightly um so even though the non-iso problem is not known to be an np approver can still convince a polynomial time verifier that graphs are not isomorphic assuming they they are in fact not isomorphic um provided that um the prover and the verifier can interact with one another so the verifier can ask
+
+15
+00:10:16,000 --> 00:11:37,000
+questions of the prover and the verifier gets to be probabilistic so that's in this in that's in sense in which i mean that this notion is a kind of a probabilistic version of np okay so um let me show you how that's done so before we jump in to the uh to the method for approver to um show a verifier that graphs are not isomorphic um let me let let's try to get a little clearer on the model so i'm going to first show it to you informally and then we'll look at it formally
+
+16
+00:11:00,000 --> 00:12:23,000
+okay so in in interactive proofs there are two parties um and i'm going to think about them as one of them is going to be the professor okay so the professor is going to play the role of the verifier in a sense but it's like that the one who checks um and uh the professor being kind of old and tired he's been teaching too long maybe can only operate in probabilistic polynomial time so the professor if wants to tell whether two graphs are isomorphic or not probabilistic polynomial time doesn't
+
+17
+00:11:41,000 --> 00:13:15,000
+seem to be enough to tell whether two graphs are isomorphic or not because it seems to be a more than polynomial problem however the professor has um help it has an army of graduate students and the graduate students they're not limited uh in the same way the professor is the graduate students are young they are energetic they can stay up all night they know how to code so the graduate students have unlimited computational ability so that we're going to think of the graduate students playing the role of
+
+18
+00:12:29,000 --> 00:13:40,000
+the approver because they're not they're not limited in their capabilities we'll assume the professor on the other hand is limited so the professor wants to know if the two graphs are isomorphic let's say whatever they are um can't do it by himself so he's going to ask his students to figure out the answer and report back now there's only one problem the professor knows that students uh well in the old days they'd like to party i guess these days they like to play on uh
+
+19
+00:13:05,000 --> 00:14:10,000
+play computer games a lot and so they're not really that eager to spend all their time figuring out whether graphs are isomorphic so he's worried that the the students will just come up with some answer and figure that he won't be able to tell the difference so the professor does not trust the students it's not enough to he for the professor to give the problem to the students and just take any answer that they're going to give the professor wants wants to be convinced okay so
+
+20
+00:13:39,000 --> 00:14:47,000
+um now how could the students convince the professor of the answer that they've really done the work and figured out whether the graphs are isomorphic or not well if the graphs are isomorphic if it turns out that the graphs were isomorphic and the students figure that out then life is good because what are they going to do to convince the professor they're going to hand over the isomorphism and show yeah i mean they are you know those graphs really are isomorphic and here's how the correspondence works professor can check
+
+21
+00:14:17,000 --> 00:15:26,000
+oh yeah i i now not now i'm convinced but suppose the graphs were not isomorphic what are we going to do then um the students have figured out where after night else the professor wants wants to be convinced oh no what are we going to do well in fact we're going to engage the the professor and the students are going to engage in the following protocol dialogue what's going to happen is now you have to make sure you're you're this is critical to follow to understand this little
+
+22
+00:14:52,000 --> 00:16:05,000
+part of the story here because it's really going to set the pattern for everything in today's and tomorrow and to today's lecture and the and the next lecture okay so we're going to engage in a following interaction between the students and the professor which is going to enable the students to convince the professor that the two graphs really are not isomorphic so how is that going to work this is a beautiful little uh thing by the way so the professor is going to take the two graphs
+
+23
+00:15:28,000 --> 00:16:42,000
+and pick one of them at random because the two graphs g and h um let's say they're not they really are not isomorphic the professor doesn't know that for sure that's what the students claim the professor really wants to not be convinced that the students are right um so the professor's gonna pick one of the two at random randomly permute that uh that choice the one that he picked and hand it over to the students say okay here is one of those two graphs randomly scrambled then i'm going to ask the students
+
+24
+00:16:05,000 --> 00:17:30,000
+which one did i pick okay now if the graphs were really not isomorphic the students can check whether that randomly scrambled graph is isomorphic to either g or to h it's going to be isomorphic to one or the other and then they students can figure it out and they say oh you picked g or no you picked h as the case may be the students can figure that out but if the graphs were isomorphic then that scrambled version of g or h could equally well have come from either of them and the students would have no way of
+
+25
+00:16:53,000 --> 00:18:11,000
+knowing which one the professor picked so that there's nothing they could do which would be better than guessing so if we do that a bunch of times the professor picks at random sometimes secretly of course the picks the grip picks either g or picks h and the students get it right every time either the students are really doing the work and the graphs are really not isomorphic or the students are just incredibly lucky they're managing to guess right let's say a hundred times so how the
+
+26
+00:17:40,000 --> 00:18:49,000
+the the professor randomly and secretly picks grh uses this uses its probabilism flips a coin just a two-sided coin and says okay sometimes if we're going to do g sometimes they're going to do h just completely at random picks one or the other and then with some more randomness gets finds a random permutation of the one that he picked and then sends that over to the students and say which one did it come from um i'm not sure okay so let's pause here let's let's make sure we all understand
+
+27
+00:18:20,000 --> 00:19:11,000
+this because this is really important um so i'm getting a question here how do we i'm not sure what your question is um okay so let me just say yeah the professor's going to play the role the verifier the graduate students play they're all approver that's coming but i really want to understand this protocol here okay so how is the professor picking the graph skin if you're okay i don't you know picking the graphs at random you have just two graphs they're in part of the input uh the both
+
+28
+00:18:46,000 --> 00:19:42,000
+the students and the professor can see the graphs and the professors are just picking one of them at random using a coin so i'm not sure i understand the question there could p and v engage in a protocol where the secretary is on the prover side instead the question of revealing the isomorphism i there is no why so i'm not sure i understand this question either um maybe we'll make this clear you know if for for this little illustration the professor doesn't know the graphs could be
+
+29
+00:19:15,000 --> 00:20:27,000
+isomorphic or they could be not isomorphic and so uh the professor wants to be convinced either way whatever the students whatever answer the students come up with we're going to shift this into a problem about a um deciding a language next but right now i'm just trying to give a sense of the how the model works i want to move from this informal model and now i'm going to formalize that in terms of model which will be deciding a language okay so so the interactive proof system model
+
+30
+00:19:50,000 --> 00:21:04,000
+we have two interacting parties a verifier which is probabilistic polynomial time playing played by the professor in the previous slide and the prover which is unlimited computational power played by the students in the previous slide both of them get to see the input which in the previous case well it could be for example the pair of graphs they exchange a polynomial number of polynomial size messages so the whole exchange including the verifier's own computation is going to be polynomial the only thing
+
+31
+00:20:29,000 --> 00:21:48,000
+that's not not not included within the computational cost is the prover's work which is unlimited um after that the verifier after the interaction the verifier will accept or reject and we're going to define the probability that the verifier together with a particular approver ends up accepting as you look over the different possible coin tosses of the verifier which could lead to different behavior on the part of the verifier and therefore different behavior on the part of the approver
+
+32
+00:21:10,000 --> 00:22:24,000
+so over all the different possibility possibilities for the verifiers computation we're going to look at the probability that the verifier with this particular approver ends up accepting and i've written it this way this is the probability of the verifier interacting with the prover accepts the input is just simply that um and so we're going to work through an example we're going to work through the previous example more precisely in a second the class ip for interactive proofs stands for it's the class of languages
+
+33
+00:21:49,000 --> 00:23:04,000
+such that for some verifier and approver um for strings in the language the prover makes the verifier accept with high probability and here's the interesting part for strings not in the language the prover makes it except with low probability but every there's no prover which can make it except with high probability so there's no way to cheat if you think about it in the case of the graphic non-isomorphism there's nothing you know if if the graphs were really isomorphic and the students were trying to in a
+
+34
+00:22:29,000 --> 00:23:49,000
+devious way prove through that protocol that they're not isomorphic they would fail because there's nothing they can do if the graphs were isomorphic then um when the verifier the the professor picks one or the other at random um and scrambles it the students would have no way of telling which one the professor did so no matter what kind of scheme they try to come up with they're going to be out of luck so it's no mat for any strategy for strings that are not in the language for any s any prover calling that p with
+
+35
+00:23:08,000 --> 00:24:22,000
+a tilde to stand for a devious or crooked prover for any uh possibly crooked prover even that with working with the verifier is still going to end up accepting with low probability so strings in the language there's going to be an honest prover who just follows the protocol in the correct way which makes the verifier accept with high probability for strings not in the language every prover is going to fail to make it accept with high probability um okay so that i mean the way i like to think about it is that p tilde is
+
+36
+00:23:47,000 --> 00:24:50,000
+a possibly crooked proverb which is trying to make the verifier accept when it shouldn't because the string is not in the language it's like you know it's like even you can think of this in the case of um satisfiability um you know you a crooked prover might try to convince of the verifier that the formula is satisfiable when it isn't by by somehow trying to produce a satisfying assignment but that's going to be impossible there's nothing any strategy can possibly work when the formula is
+
+37
+00:24:19,000 --> 00:25:26,000
+not satisfiable if that's what the verifier is going to check it's going to be looking for that satisfying assignment okay and by the way this is we're not going to prove this but it's really going to be proved in the same way you can make that one third error that could that occurs here something very tiny by the same kind of repetition argument okay so let's see um so why can't the prover in the first case be crooked um the prover in the first case would could be crooked but that's not going to serve
+
+38
+00:24:53,000 --> 00:26:17,000
+the purposes um you know what what we want to show um you think about it like we think about np for strings in the language there exists a certificate there is a proof that you're in the language so if somebody is going to not produce the proof that's irrelevant the question is if you look at the best possible case the best possible prover um you know who's going to be able we're asking does there exist a way to convince the verifier that the um string is in the language so it doesn't matter that there might be
+
+39
+00:25:37,000 --> 00:26:30,000
+some other uh silly way that doesn't work we're just looking at the best possible way so the best possible way when you're in the language is going to end up with a verifier having high probability when you're not in the language the best possible way is still going to end up with low probability when when i talk about best possible i'm trying to maximize the probability that the verifier is going to end up accepting let's continue um not sure as clear as i would like but
+
+40
+00:26:04,000 --> 00:27:25,000
+um maybe again we're going to we're going to stick with that example because this is a very uh helpful example and to try to understand the setup and uh so we're gonna i'm gonna revisit that previous example about non-isomorphism but now in the context of this thinking about as a language so we're going to take this non-isomorphism um uh yeah we're going to take the non-isomorphism problem and show that it's an ip so there's going to be a verifier together with approver which are going to make the
+
+41
+00:26:47,000 --> 00:27:44,000
+verifier accept with high probability for strings in the language namely graphs not ice being isomorphic and nothing there's going to be no way to make the verifier except with high probability for strings out of the language therefore that's when the graphs are isomorphic okay um so the protocol is just gonna we're gonna repeat the following thing twice you know i said in the previous case do it a hundred times just to help us think about it but actually twice is gonna be enough to get the
+
+42
+00:27:16,000 --> 00:28:36,000
+bound we need so the verifier is going to operate like this in terms of this is the verifiers in first communicating sending messages to the approver it's going to randomly choose grh just like what the professor did last time randomly permute the result to get a new graph k which was going to be which was which is isomorphic either to grh depending upon the choice the verifier made and then send that graph k now the provers turn is going to respond by the proof is going to compare k with the two one of the both of the original
+
+43
+00:27:56,000 --> 00:29:14,000
+graphs it's got to be isomorphic to one or the other and it's going to report back which one just going to say well you pick g no or you picked h because the prover with its unlimited capabilities can determine that um and then v accepts if the approval was right both times um and if the approval was ever not right the verify says oh something's fishy here because we know that the prover has unlimited capability so could get it right if you know um if there was if this was an honest approver um and so um
+
+44
+00:28:35,000 --> 00:29:48,000
+if uh if it's not getting it right then the verify is going to reject so if the graphs are not isomorphic the proofer can tell which one it picked randomly so therefore if the graphs are not isomorphic the verifier with that that honest prover will accept with probability one because that honest proof is always going to get the right answer which is at least two-thirds is what the bound we need uh we don't care about the space used in answer to a question um if we were not in the language so g and i h
+
+45
+00:29:16,000 --> 00:30:27,000
+are not isomorphic then there's nothing any crooked pervert could possibly do because it gets a graph can't tell there's no way to tell whether it came from g or came from h um so that crooked proofer would have all it could the best thing you could do is guess sort of a 50 chance advancing correctly each time and only a 25 chance for doing it twice and that's why i did it twice in order to get that error um uh to be small so there's only a 25 chance of the approver getting lucky so that
+
+46
+00:29:52,000 --> 00:31:10,000
+would be an error case if the proof of just by chance picked the right answer twice even though the graphs were isomorphic so therefore for the isomorphic case the verifier interacting with any prover is going to accept that input with at most one quarter 25 of the time which is less than a third so those are that's just to achieve that bound okay so let's let's answer some questions first and then i'll try to um uh i'll ask you you understand this so this it's i think it's worth trying to understand this
+
+47
+00:30:35,000 --> 00:31:52,000
+model um of this interactive proof system it's a little little slippery i i realize but um if you just hold your hold on to your intuition of the prover trying to convince you know of uh you know a powerful prover trying to convince a limited verifier um of some string being in a language uh you want the proven to be able to succeed when the string is in the language but fail when the string is not in the language yes we are going to somebody's asking if the prover is identifying grh by brute
+
+48
+00:31:16,000 --> 00:32:25,000
+force yes the prover is going to use its unlimited capabilities to determine given k whether it came from g or h the um the computational cost of the approver is irrelevant for this it's just like when we think about a certificate um you know for satisfiability we don't talk about the cost of finding that certificate uh for np for ip again we don't talk about the cost of the prover running so somebody's asking does the crooked per prover answer just randomly or does uh can the cr quick approver has have a
+
+49
+00:31:54,000 --> 00:33:05,000
+strategy the crooked perimeter can have a strategy now we're not we're assuming the crooked approver is devious but it's still going to fail okay um let's do the check-in suppose we change the model so that the prover can watch the verifier picking its random choices so uh the verifier cannot act in secret anymore but the the prover can watch the verifier now let's suppose we had the same protocol that i just described what language do we end up with is it the same language different language and
+
+50
+00:32:30,000 --> 00:33:40,000
+what is that language okay so i want to hopefully um let's let's it'll give me some sense of how well you're following me by how well this uh this goes yeah someone's asking about how this connects up for example with np so we're going to look at that also in a second okay so this is reassuring that most of you i think are on the right track at least for this check-in uh do we assume p uses this access to guess right what access p is not really guessing the p is tr is actually i don't think a p is
+
+51
+00:33:11,000 --> 00:34:26,000
+non-deterministic or anything like that p is actually trying to get the right answer and using its computational ability to do that if it's possible may not be possible then there's nothing you can do okay so let's uh end this are you all in two seconds left please vote vote now or never okay ending um yeah so c is the correct answer here if the prover can watch what the verify is doing the prover can see what graph the verifier picked right from the beginning and so the prover without having to do
+
+52
+00:33:51,000 --> 00:35:05,000
+any work can say you know it proves looks over the verifier's shoulder and says oh you picked g and now you're randomly permitting it but i don't care about that i just i know you pick g uh so uh the proof is going to respond back uh g even if the graphs were isomorphic the proof is going to be able to get the right answer kind of interestingly um uh you can make a you can change the protocol somewhat um to make it uh that even if the prover has access to the verifier's randomness
+
+53
+00:34:28,000 --> 00:35:57,000
+you can still achieve this but not with the same protocol um so that's uh that's a separate question um okay so let's move on here i want to get too bogged down okay here's another check-in um uh okay so you have to tell me which of the following statements are true as far as you know now you have to think about a little bit how this these uh relate to um how np and ip or bpp and ip relate to one another okay how are we doing on this okay so we're gonna have to close this pretty soon too
+
+54
+00:35:28,000 --> 00:37:07,000
+do the best you can interesting okay closing up shop last last vote okay one two three there's one more person out there who hasn't voted who voted last time oh well uh all right in fact they're all true um let's see why is np contained with ip contained in ip uh well many of you have seen this already so let's just quickly go through it um [Music] if we just had a deterministic v um you know the uh you can uh maybe it's just that that can be enough of deterministic v i think it's just going to be equivalent
+
+55
+00:36:22,000 --> 00:37:22,000
+but actually just to be doubly sure the deterministic v and the approver just sends a message to the verifier and then checks it that's the way we normally think about a certificate for np uh i don't think it's going to change anything but should double check that if the verifier can still ask questions but i think as long as the verifier is deterministic you're going to get exactly np here um and um now how about bpp well there you don't even need approver because the verifier is already
+
+56
+00:36:54,000 --> 00:38:07,000
+probabilistic so verifier can ignore the approver and this one is a little tricky uh i p containing p space because we haven't covered that so there's no way for you to know that unless you happen to read ahead in the book but it's in fact true um in some ways it's a little bit like the proof that uh np is contained in p space ip is sort of an enhanced version of np and you and there's just a basically a uh a piece based brute force algorithm that goes through the entire tree of
+
+57
+00:37:30,000 --> 00:38:44,000
+possibilities um of the verifier exchange verifier with exchanges with approver and can uh determine that um the verifier is either going to accept for some approver or is going to end up projecting for every approver um so we're not going to prove this statement but something good for you to know anyway they're just a fact uh but we're going to do what the surprising thing in reference to part c is that the containment also goes the other way this is the amazing um uh was is an amazing result
+
+58
+00:38:10,000 --> 00:39:18,000
+that everything in p space you can do with in ip so this is ip is actually turns out to be incredibly powerful gives you everything up in p space you get i p equals p space so that says that any problem that you can solve in p space like any of the a game for example um if you can imagine you know formulating you know checkers or chess as a piece based problem which you know depending upon some details of the rules you can do because you know you have to generalize it to an end by end board but
+
+59
+00:38:43,000 --> 00:40:05,000
+okay let's not quibble um uh then uh um [Music] we don't know which side has a forced win in chess um and even if somebody goes through the effort of going through the game tree um and determines that let's say white has a forced win uh there's no way for them to there's no short certificate we don't know that that problem is not an np but by going through an interactive proof an all-powerful prover could still convince somebody that white had a force you know convince somebody in polynomial
+
+60
+00:39:26,000 --> 00:40:49,000
+time that a white has a forced wind let's say in um in chess again little uh stretching things because this is you know you really need to talk about this as an n by n not an eight by eight but i think in this the spirit is is uh fair so um okay uh so let's continue so wha when we're not going to quite prove that that p base is contained in ip we're going to prove a somewhat weaker statement but very similar um is that uh and historically came first that co-np is contained in ip
+
+61
+00:40:07,000 --> 00:41:18,000
+so not only is np contained in ip but we're going to prove that co np is contained in ip and this actually has most of the i most of the idea for the p space being contained in ip and itself it's just an amazing proof a little easier um okay and th this was done if i'm remembering somebody's asking me when how old is this it's something in the 19 i think late 90s but i'm not i don't remember but maybe early 90s i think it's late 90s when this was shown so it's been a while now
+
+62
+00:40:45,000 --> 00:42:09,000
+um okay so um yeah so in terms of the relationship with cryptography there were two parallel threads um that both independently came up with the notion of an interactive purge system uh i was a little bit personally involved with this in in a way as well but but mainly that the the there was one group in cryptography um working on this and there was another group who was actually coming out of the graph isomorphism world working on it and they they came up with two separate models one involving the
+
+63
+00:41:28,000 --> 00:42:46,000
+private randomness and one involving the public randomness um and it was turned out that was that they're actually equivalent um and uh it's an interesting story but unfortunately we don't have time for it uh so why don't we move on and i'm gonna start showing you how the proof that co-np is contained in ip goes and what we're going to do is work with a problem that's almost like co p complete but um going to be uh well it's going to be this number sat problem we'll see the
+
+64
+00:42:06,000 --> 00:43:39,000
+connection with co-np in a second uh so cohen p so it's supposed to be exactly k satisfying assignments fee comma k is the set of pairs where the formula fee has exactly k satisfying assignments so really that's a problem of counting how many satisfying assignments you have in a formula um so you know for np you have at least one um but i'm i want to know exactly how many uh so the numbers that problem is the pairs formula and the count so um and uh so if we define the count number fee is the number of satisfying
+
+65
+00:42:55,000 --> 00:44:14,000
+assignments of a fee then another way of writing this uh number stat problem is uh the pairs phi k where k is the number of satisfying assignments of fee so we're going to be using this notation number fee a lot so just make sure you get you got that notation this is the number of satisfying assignments of that formula okay and here's a definition i probably should have given you earlier in the term but better late than never um uh so the notion that a language is np hard it's like np complete
+
+66
+00:43:37,000 --> 00:44:55,000
+except without being necessarily being in np so this is just the reduction part a language is np-hard or co-np-hard or p-space hard or any of those other classes that we looked at if every problem in the class is reducible to that language but you don't know whether this that that language is in the class so we just call it np hard instead of mp complete so you could say the language is np complete if it's hard and it's in np okay and so we're going to show that this number set problem is co np hard
+
+67
+00:44:19,000 --> 00:45:34,000
+so everything in cohen p is polynomial time reducible to number set that's easy because what we're going to do is take a co np complete problem which is the unsatisfiability problem the complement of satisfiability and sure that reduces to the numbers that problem and that's easy because a formula is unsatisfiable exactly when it has zero satisfying assignments so if you can tell how many satisfying assignments something has exactly or you can answer the question you know does a formula have exactly
+
+68
+00:45:01,000 --> 00:46:14,000
+a thousand satisfying assignments if you can do that in general then you can solve co and p uh you can solve the unsatisfiability problem by asking with zero satisfying assignments and that allows you to solve anything in cohen p okay so we're gonna just work with this one problem the number set problem and show that that problem's in ip okay let's take a quick break um okay feel free to send me let me see if i can catch up with some of the questions that have been cropping up here so if the approver
+
+69
+00:45:40,000 --> 00:46:57,000
+knows the random choices of the verifier can it can flip the answer to make the verifier reject not sure what that you mean in the context just of the graph isomorphism problem or um something in general i'm not sure you'll have to explain sorry i'll respond with a question mark what else can i answer for you guys so i got a question might if i p equals p space does that mean that iso or the or non-iso might be um in might be p space complete but no that's not known so we're about out of time
+
+70
+00:46:33,000 --> 00:47:59,000
+okay let's continue here [Music] okay so this this is where we're kind of getting going to start to get into the meat of things um [Music] and if you didn't quite understand everything up till now maybe just try to keep your intuition about how do i you know how does a powerful party convince a um a polynomial probabilistic polynomial time party of the number of satisfying assignments exact number not not at least but you won't know exactly the number um of satisfying assignments
+
+71
+00:47:17,000 --> 00:48:40,000
+um so it could be zero for example how do you convince that how do you convince someone that there were zero assignments and and and you know you can have an interaction which does that and that's not obvious at all how you're gonna do that um uh all right so um okay so we're gonna have to introduce some notation which i don't hope this doesn't cause heartburn here uh so let's say again here is the the computational the language we're working with number set and we have
+
+72
+00:48:01,000 --> 00:49:25,000
+a fee where that has m variables x1 to xm now here's our notation i'm going to if i write phi with this free phi of 0 that just means the formula that i get by plugging in 0 for x one and leaving all the rest of the variables uh alone okay so i substitute zero for x one where zero means false and one means true as usual and but that's it's going it's still going to be some other formula but just with that substitution if i write fee 0 1 that means i preset the first two variables to 0 and 1.
+
+73
+00:48:46,000 --> 00:50:09,000
+um if i write fee with a bunch of preset values i'm just setting the first i variables x1 to xi to some values and leaving the other variables as unset so i'm calling the ones that i'm nailing in there as i'm already saying these are the presets okay so this is just converting some formulas into other formulas that have somewhat fewer variables all right now let's recall that number notation the number sign notation number fee is the number of satisfying assignments now if i say number fee of 0
+
+74
+00:49:29,000 --> 00:50:36,000
+that's the number of satisfying assignments when i've preset x1 to 0. similarly if i preset the first i variables to some values and then i take i want to think how many how many satisfying assignments subject to those prefix presets i write it this way so i'm going to use this notation a lot you have to understand this notation ask if you don't none if you don't get it so another way of writing it i don't know if this is helpful but another way of writing number fee of a1 to a i
+
+75
+00:50:05,000 --> 00:51:35,000
+remember we have m variables all together that means i take the variables which i have not yet preset um and i allow them to range over all possible zeros and ones and i add up the the formulas values for all of those so there's a one every time i satisfy and a zero every time i don't satisfy so i'm adding up all the satisfying assignments subject to these i presets okay so here are two critical facts about this number sign notation first of all if i preset the first i values to something
+
+76
+00:50:54,000 --> 00:52:13,000
+now i can in addition set the next variable either to zero or to one and i get this relationship which is just simply a generalization of the fact that the total number of satisfying assignments of the formula is equal to the number of satisfying assignments when x1 is 0 plus the number of satisfying assignments when x1 is 1. right they together have to add up to the total number because x1 is going to be the either zero or one so that's fact number one fact number two is that if i preset everything
+
+77
+00:51:33,000 --> 00:52:53,000
+all of the variables so there are no variables left then the number of satisfying assignments subject to that preset of everything is just whether or not i've satisfied the formula which is the value of the formula on that those presets okay both two simple facts but it's going to be critical in the protocol i'm about to describe questions on this i think actually i do have a question for you so let's just see what do you think just to check your understanding okay got about 80 getting this
+
+78
+00:52:21,000 --> 00:53:38,000
+um i'm not sure that's good but uh all right almost done closing okay okay so uh yes a is the correct answer you know if if there are nine satisfying assignments all together and there are six satisfying assignments where the first variable is set to zero then there's only three satisfying assignments with the first variable set to one because nine has got to be equal to six plus three that's actually this fact number one it's not going to be 15 this is not true either so it's just a
+
+79
+00:53:11,000 --> 00:54:47,000
+good okay okay so let's try to with with that knowledge let's try to see how we can put number sat in ip so this is not going to quite work but it's really going to set us up to do this to finish this next time um so you might immediately see where this is going wrong but you'll you'll have to put up with it because um the setup is what's important um okay so understand now here's the here's the the setup we have um the input is a formula and a number where that number is supposed to be the
+
+80
+00:53:57,000 --> 00:55:23,000
+number of satisfying assignments you know it could be wrong and in which case we're not in the language um but if it's right you're in the language so the approver is supposed to convince the verifier that it's correct if it is correct and it's not gonna it's gonna fail no matter what it tries to do if it's uh not correct so this is the approver is going to send first of all um so so the proof is going to send a claim about the number of satisfying assignments going to send when i say this value here
+
+81
+00:54:41,000 --> 00:55:32,000
+this is what the prover if it's honest is going to send the right value of course the verifier does not know if the approver is honest but i'm describing how the honest approver is going to operate and we'll have to understand what happens if the prover tries to cheat so the proof is going to send the honest proof is going to send the number of satisfying assignments all together and the prover verifier just makes sure that that matches up with the input if it doesn't match up with the input uh
+
+82
+00:55:09,000 --> 00:56:27,000
+the verifier is just gonna you know you know the the verifier is gonna not be convinced that the input is um in the language so it's gonna just uh reject at that point um okay uh then now the verifier says okay that was very good that you sent me this how do i know that's right so what the verif prover is going to do to try to convince the verifier that this value was correct is uh unravel that by one level by say well you know there were nine satisfying assignments all together uh six of them
+
+83
+00:55:49,000 --> 00:57:09,000
+were when the when x one is zero and three of them were when x one is one to verify what does the verify have to check that these add up correctly when i preset x1 to zero and to one it had better add up to the total number of satisfying assignments if that works out the verifier is happy is still being it's still consistent with being convinced that this k was the right value um so um the next step is well the verifier says well how do i know those two values are correct the prover says okay well i'm going to prove
+
+84
+00:56:33,000 --> 00:57:38,000
+send un unravel them one level further then here's a number of satisfying assignments when the next variable is set to both possibilities for each of the possibilities of the first variable now if you're understanding me about what the prover is sending you should start to be getting a little nervous because something is i mean this is going to be correct but it's going to start it looks like it's starting to blow up in terms of the number of amount of work that's involved and
+
+85
+00:57:07,000 --> 00:58:10,000
+that's actually a problem but let's bear with that for the moment let's just worry about correctness not about complexity for the moment so the proof is going to now send the number of satisfying assignments for each of those four possible ways of presetting the first two variables and the verifier is going to check that that was consistent with the information the prover sent in the previous round right by again checking this identity here so then the proof is going to continue on doing that until it's got
+
+86
+00:57:41,000 --> 00:58:59,000
+it's done that through m rounds where m is the number of variables so at this point the proof is going to send all possible ways of presetting all of the variables so that now there's two to the m possibilities here again this is hopelessly not allowed but okay ignoring that the proofer's got to use this at the nth round to check what happens at the at the previous round so that's when they were m minus one values sent because each one has one more uh uh you're extending the presets by one
+
+87
+00:58:22,000 --> 00:59:47,000
+so which using this to check that the previous round was the values were correct so it's looking for um you know the m minus one presets have to add up correctly um you know in terms of the m the presets of m uh values uh for each of those ways of uh doing those uh m minus one presets and so now the provers send all of those two to the m counts which are by the way ones and zeros because at this point we have preset all of the values of the variables and so there's only one possible assignment at most
+
+88
+00:59:04,000 --> 01:00:13,000
+that there can be and now the verifier the approver is done the verifier is going to check by itself that these values make sense that these values are correct so it's going to do that by looking back at the formula so far up at this point the verifier has not been looking at the formula it's just been checking the internal consistency of the provers messages with each other but now at the end the verifier is going to take the messages these these values that the approver sent for each of the
+
+89
+00:59:41,000 --> 01:01:04,000
+two to the m presets and see if it matches up with what the formula would do remember that was the other sort of the base case of the the end the fact number two um from the uh slider to ago make sure that these agree okay and now the verifier says well okay if everything has checked out and all of these are are in agreement then the verifier is going to be convinced that um that uh fee had k satisfying assignments but if anywhere along the way one of these checks fails the approver is not the verifier is not
+
+90
+01:00:25,000 --> 01:01:44,000
+going to be convinced and is going to reject okay so in a sense this is kind of dopey you know you know we've just i'm just kind of giving you a complicated way of just counting up one by one each of the satisfying assignments of the formula and seeing if that matches k but nevertheless this way of looking at it is gonna be uh help us to understand um the way to fix this so so bear with me for another minute on this one so another way of looking at this which i think is is particularly useful
+
+91
+01:01:12,000 --> 01:02:28,000
+is to think of what happens well okay we'll get there in a second i want to look at what happens if k was wrong but before i do that let's look at the i'm going to give a kind of a graphic a graphical view of um the information that the prover sends and the and the verifiers actions in this protocol so the the values that the prover sending are going to be in yellow so the and the information that the verifier has or checks is going to be in white so the the verifier has the k the the
+
+92
+01:01:53,000 --> 01:03:07,000
+input value which is supposed to be the number of satisfying assignments and the prover sends some value and the verifier checks that this value which is supposed to be the number of satisfying assignments corresponds with k so that's one of the checks it does then the approver is going to send kind of take to justify this value it um sends the number of satisfying assignments when you have x1 set to zero or set to one the verify adds those up to give you and it's supposed to equal the total
+
+93
+01:02:30,000 --> 01:03:59,000
+number of satisfying assignments and so this is if you understood this protocol this is just i'm writing it out in a sort of a simplified way perhaps okay and so um keeps checking that these things add up correctly until you get down to setting all m values in all two to the impossible ways and now the verifier is going to then check to make sure that that equals the what the formula would say um okay okay so now let's what happens if k was the wrong value it did not agree with the number of
+
+94
+01:03:16,000 --> 01:04:51,000
+satisfying assignments um and what does what happens now um could the prover what happens if the approver tries to make the verifier accept anyway so um so the only thing the prover can do at the very first step would be to lie um about you know if the approver sends the if k is wrong and the proof approver sends the correct value for the the the total count the verifier is going to reject so i'm trying to see is it could the approver try to make the verifier accept what what happens so the prover has to lie here and i'm
+
+95
+01:04:09,000 --> 01:05:44,000
+going to indicate that by saying the approver is sending in the wrong value for um uh the the total count well if the proof is going to lie here um then just like you know if you you know you have a child who um tells a lie and then you start you know as the parent you start asking questions to try to see if the story is consistent one lie is going to lead to another lie um and that's what happens here if the uh in order to justify this lie um the proof is going to have to a lie in one or perhaps both but at least one
+
+96
+01:04:56,000 --> 01:06:03,000
+of these two values because you can't have the two correct values adding up to the incorrect value because you have to think about what's going on here so if this is a lie that's going to force a lie at one of one side of the other one level down which is then going to force a lie to propagate down and so there's a lie at every stage is going to force a lie at least in one one place or another to propagate all the way down to the bottom and then at the bottom the verifier will see
+
+97
+01:05:31,000 --> 01:06:49,000
+that the check doesn't work as when it turns when it tries to connect it up with the formula itself and the form verifier will reject okay so just a way of looking at this um if the form if the value if the input was not in the language um so uh but the problem is that as i said that this is exponential so how are we going to fix that so just looking ahead to what we're going to do on tuesday okay let's see if there's any questions here first of all uh okay yes i got a question should this be
+
+98
+01:06:19,000 --> 01:07:39,000
+uh should this be a minus i i purposely made this bracket only go not include the very last zero yeah there's a total of m zeroes here all together but the i left out the last zero that's why i said n minus one maybe it would have been better to say m okay so and you got another interesting question here why can't we reject right away if k is wrong um uh well the verifier is probabilistic polynomial time how does the verifier know if k is wrong um so it means or or or right so what we're trying to do is something
+
+99
+01:07:12,000 --> 01:08:10,000
+like you know like np where we have a certificate but now we have this kind of interactive certificate in the form of disprover maybe that's another way to look at it um where if you're in the language there should be some way for the prover to convince to get make you accept but if you're not not in the language there should be no way for the proverb to make you accept um uh so the verifier just can't reject right away because there's no way to tell how does the verifier know it's
+
+100
+01:07:41,000 --> 01:08:52,000
+going to start rejecting things when it shouldn't if it's just going to be rejecting willy-nilly here um okay how does the verifier need to determine if the prover is internally consistent instead of just asking so why does the verifier need to determine if the approver is internally consistent instead of just asking the questions in step n plus one yeah so maybe that's because it looks like all of the work is happening at the very end um but i'm really presenting this to you as a preparation
+
+101
+01:08:20,000 --> 01:09:28,000
+for what we're going to do on tuesday um so it's important to think about the connection from each step to the next each step is going to be justified by what happens at the next step until we get to the very end so you have to just understand it for what it is don't try to make it more efficient yeah i realize this is kind of dumb um good point we're not using the probabilism here um and moreover we're not really even using the interaction here the prover is doing all the sending the verifier is just
+
+102
+01:08:54,000 --> 01:10:21,000
+accepting at the end yeah this is we're not using the power and we're getting a weaker result so let's move on before we run out of time here so how do we gonna fix this so the problem is is blowing up each to justify each stage where each value we're um needing to present two values which add up to it um and that's uh good leading to a blow up now it would be nice if we can do something where each value was supported by just a single value at the next level so we know here's an idea well you know
+
+103
+01:09:39,000 --> 01:10:48,000
+in order to understand to see that uh that that this total count is correct why don't we just pick at random either zero or one and only follow that one down well the problem with doing that is because the the the sequence of lies is could be just a single path through this uh tree and the chances you're going to find that path down to a contradiction at the bottom is very low if you're just doing it at random um so just randomly picking zeros and ones as as the as the one you're going
+
+104
+01:10:16,000 --> 01:11:30,000
+to justify used to justify the previous value is not going to be good enough so what but this is what we're going to do however the values that we're going to pick for um for these random um inputs are not going to be boolean values we're going to pick non-boolean assignments to the variables which again just as with the branching program case didn't make any sense on the surface of it we're going to have to make it make sense and we'll have to see how to do that on tues
+
+105
+01:10:53,000 --> 01:12:12,000
+in tuesday's lecture okay so that's kind of the setup okay um yeah so in a similar question why is this any different from just non-deterministically guessing the assignments it's because of this we're really setting the stage okay so what we did today was we introduced them the the model and defined the complexity class we can we did show this one in its full glory we showed that non-iso is an ip really worth understanding this uh protocol here making sure you you're comfortable with that
+
+106
+01:11:41,000 --> 01:13:00,000
+and and also the the model itself and so for tuesday's lecture we're going to finish this up uh well we started showing that number set as an ip which is what we need to to do to prove co-np is an ip and we'll finish that next time which will be our last time okay so that's it for today i'll stick around for questions so a good question here why can't um v just reject if some of the checks are incorrect yes v could as soon as there's a check that fails we can just reject at that stage
+
+107
+01:12:21,000 --> 01:13:38,000
+i'm just trying to argue that at some point along the way if the input is not in the language there's going to be a check that fails so i mean i said reject at the end but yeah i mean you could have rejected at any point along the way um okay um someone's asking for what what role did i play uh so i did my my own personal role in this i were to which was twofold first of all i i came up with the idea uh of well not the idea i came up with the name interactive proof uh i remember when sylvia mccauley was
+
+108
+01:13:09,000 --> 01:14:13,000
+explaining this to me in my apartment many many years ago he had a kind of a little bit complicated and i don't even remember what the protocol was for it was not for something simple was something involving uh prime numbers and i said oh that's a kind of an interactive proof and it's and it it stuck from that point on so um that was one thing but the other thing in terms of more mathematically i my role was so uh shafi goldwater and i approved the equivalence of the two models the public
+
+109
+01:13:43,000 --> 01:14:42,000
+coin and the private coin version um so that that was uh my uh my role in this back and when this was all first coming out approved it approved it on an airplane on the way to a conference somewhere so i think we're going to notice any other questions i think we'll head out take care everybody see one see you on tuesday bye bye you
+
