@@ -8,9 +8,6 @@
     const chatForm = document.getElementById("video-chat-form");
     const chatInput = document.getElementById("video-chat-input");
     const summaryContent = document.getElementById("video-summary-content");
-    const transcriptStatusText = document.getElementById("transcript-status-text");
-    const transcriptStatusPill = document.getElementById("transcript-status-pill");
-    const refreshTranscriptButton = document.getElementById("refresh-transcript-button");
 
     const checkpointModal = document.getElementById("checkpoint-modal");
     const checkpointTitle = document.getElementById("checkpoint-title");
@@ -57,16 +54,6 @@
         message.innerHTML = `${escapeHtml(text)}${sourceType ? `<span class="chat-source">Source: ${escapeHtml(sourceType)}</span>` : ""}`;
         chatMessages.appendChild(message);
         chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
-
-    function setTranscriptStatus(message, available) {
-        if (transcriptStatusText) {
-            transcriptStatusText.textContent = message;
-        }
-        if (transcriptStatusPill) {
-            transcriptStatusPill.textContent = available ? "Transcript ready" : "Transcript pending";
-            transcriptStatusPill.title = message || "";
-        }
     }
 
     function renderSummary(summary) {
@@ -301,32 +288,6 @@
         });
     }
 
-    function setupTranscriptRefresh() {
-        if (!refreshTranscriptButton || !config.transcriptRefreshEndpoint) {
-            return;
-        }
-
-        refreshTranscriptButton.addEventListener("click", function () {
-            refreshTranscriptButton.disabled = true;
-            refreshTranscriptButton.textContent = "Refreshing...";
-            fetch(config.transcriptRefreshEndpoint, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-            })
-                .then((response) => response.json())
-                .then((payload) => {
-                    setTranscriptStatus(payload.message || "Transcript status updated.", Boolean(payload.transcript_available));
-                })
-                .catch(() => {
-                    setTranscriptStatus("Transcript refresh failed.", false);
-                })
-                .finally(() => {
-                    refreshTranscriptButton.disabled = false;
-                    refreshTranscriptButton.textContent = "Refresh Transcript";
-                });
-        });
-    }
-
     window.onYouTubeIframeAPIReady = function () {
         if (!config.youtubeVideoId || !window.YT || !document.getElementById("video-player")) {
             return;
@@ -350,5 +311,4 @@
 
     setupCheckpointHandlers();
     setupVideoChat();
-    setupTranscriptRefresh();
 })();
