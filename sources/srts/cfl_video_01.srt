@@ -1,0 +1,460 @@
+1
+00:00:25,000 --> 00:02:00,000
+okay why don't we begin hi everybody see how many we got here uh most of you um i'm sure the others will show up hopefully uh soon enough so welcome back um we have today's lecture four and um let's just remember what we've been doing um in the last few lectures we were exploring uh the regular languages as described by finite automata and regular expressions we showed how to convert them back and forth those two models to one another and we also showed how to prove certain languages are not regular now
+
+2
+00:01:13,000 --> 00:02:34,000
+remember finite automata are a very um weak model of computation they only have a limited memory a finite memory um and uh they still aren't able to do certain things with their finite memory but um they are you know um if you compare them with a general-purpose computer at least the way we think about it is their uh you know their capabilities are just extremely limited and so we're going to over the next uh few lectures explore uh some more powerful models we started doing that last time
+
+3
+00:01:54,000 --> 00:02:55,000
+uh the context-free grammars and as we'll see there are certain things that you can do i think we saw that last time as well those are some things you can do with context-free grammars that you cannot do with finite automata and uh but they still have their limitations as we'll see um so um today what we're going to do we're going to continue that discussion uh by looking at the definition of context-free grammars in a more formal way uh one of the uh things that we do in this course is develop practice with
+
+4
+00:02:25,000 --> 00:03:36,000
+formalism and um so that that's going to be in the spirit of that we also are going to look at their associated languages called the context free languages so they're going to be the counterpart for context-free grammars of what the regular languages are for the finite automata of regular expressions and then we're going to look at a an automaton based model which is the counterpart to the grammars called the push down automata and we'll see that those are equivalent in power and finally um well
+
+5
+00:03:00,000 --> 00:04:07,000
+and as part of that we will show how to convert the context free grammars to the push-down automata and that's what that's what that's what we're going to do today so we're going to move on then and uh return to uh our topic of context-free grammars that we began last time and just to refresh your memory um so here was that example of a context free grammar that we gave last time and it has the way we're going to be writing context-free grammars is using a bit of a shorthand uh which looks like this
+
+6
+00:03:33,000 --> 00:04:51,000
+when you have multiple rules that have the same variable on this on the left hand side you can combine them into one line so these two rules over here s goes to 0 s1 and s goes to r can be written in one line as a little bit more compact way this is standard as s goes to 0 s 1 or r that's where you would read this this is really two rules but written on one line okay so uh as you recall uh from last time a context-free grammar has terminals variables and rules uh those are the parts that we
+
+7
+00:04:12,000 --> 00:05:28,000
+speak of as well as one of the variables being designate designated as a starting variable which gets the whole thing going so i'll talk remind you about how that computation goes but um so the variables are the symbols that appear on the left-hand side of the rules the terminals are the other symbols that appear in the grammar and the we take the grammar and we use it to generate strings according to a certain system and the system is that you start out by writing down the uh starting variable
+
+8
+00:04:53,000 --> 00:05:56,000
+and then once you've written down that variable or whatever variables you have written down you're allowed to substitute them according to the rules of the substitution rules that are in the grammar so you can keep on replacing the variables that you have with the corresponding right hand sides and then you do that over and over again until you don't have any variables left only terminal symbols remain and at that point you have generated a string that's in the language of the grammar
+
+9
+00:05:26,000 --> 00:06:46,000
+all right so the grammar's language is going to be a language over strings whose alphabet are the terminal symbols so the terminal symbols in a certain sense play the same role as the input alphabet say for the finite automata okay the the the variables are kind of internal working um symbols for the grammar the terminals are sort of are are the symbols over which the language is is written okay we'll make that more precise in a minute where when i give the formal definition so the result is the generated string
+
+10
+00:06:06,000 --> 00:07:14,000
+and the language of the grammar is the language of all generated strings that you can get using that grammar so um and the important thing is that we call that language a context free language okay so the that's like what we get from that that's the analogous thing to the regular languages but here we call them context-free languages uh the things that you can get from a context-free grammar again just a quick recap of that example we did last time so you start out by writing the start variable
+
+11
+00:06:40,000 --> 00:07:53,000
+and then i'm going to give you kind of two views of that either in terms of the tree of substitutions which we call the parse tree or in terms of the resulting string as you do the substitutions so here is the uh parse tree here is the resulting strings here are the substitutions that you make um and now we have r um coming from s and we have zero zero r one one and now we have uh r in turn becomes an empty string and then uh the string that we generated is zero zero one one that's in the language of the grammar
+
+12
+00:07:16,000 --> 00:08:36,000
+and now uh if you play with this a little bit you'll see that the language of the grammar is all strings that look like runs of zeros followed by runs of ones all right so uh is that clear um i think we're gonna have a um i think the next uh slide is gonna have a check in and so hopefully that'll uh get us all together on the same page with this anyway um so here's our formal definition anyway uh we have a context-free grammar is a four-tuple there are four parts of context for grammar these are the parts
+
+13
+00:07:56,000 --> 00:09:08,000
+we've already been discussing uh the variables the terminal symbols the rules um the rules are always of the form a variable uh followed by you know with an arrow to a string of variables and terminals that's the way we write just write that down so this is the form of the rule and then we have the special start variable and we all wrap that up into a package this four tuple that's what the context free grammar is um now we have here uh and now maybe a little bit overkill but let's
+
+14
+00:08:33,000 --> 00:09:50,000
+talk about what formally speaking what the the way the grammar actually processes um and produces strings um so we're going to write uh the the standard notation for this is that if you have two strings of variables and terminals so imagine you have an intermediate string that you've generated in the grammar so far um you know which might be like 0 0 s 1 1 from the previous line so that's an intermediate string that is so far what you've generated you're going to say um maybe that's you and v might be the next
+
+15
+00:09:12,000 --> 00:10:33,000
+line down uh so that means we're going to write u arrow v and that arrow is the the word we're going to use is yields we'll say u yields v um if it can go from u to v just with one substitution step um and then we'll write u yields v in some number of steps or actually we say u derives v if it can go to u to v with some number of substitutions instead of just one and that's used with the um the yields arrow with the star above it to mean some number of um another way of writing that is you
+
+16
+00:09:54,000 --> 00:11:08,000
+can say u goes to v if there are a bunch of one step moves that you can make which take you from u to v and that whole sequence is called a derivation of v from u that's a sequence of steps that you go through doing these substitutions one by one to take you from u to v according to the rules of the grammar and lastly if u is a starting variable then we call that sequence just the derivation of v it could be the derivation from the start variable but that's kind of the assumed if you don't
+
+17
+00:10:31,000 --> 00:11:41,000
+say it's a derivation from anything the derivation of v in the grammar is the derivation of v from the start variable it's just the sequence of substitutions that you make kind of the you know what you is what i think you would expect now the language of the grammar is the set of all strings that um of terminal symbols that you can get from uh starting at the starting variable of the grammar okay and that's called a context-free language as i mentioned before so it's a context of free language it's the
+
+18
+00:11:06,000 --> 00:12:19,000
+language of of the grammar for some grammar okay so let's have a little check in here again nothing too hard nothing to get worried about anyway we're not counting correctness uh here so um let's just see um i'm gonna give you two uh things that look like grammars which of them are actually grammars and let me just pull that poll up uh here okay so which of these are valid grammars here are they both neither i mean you can kind of make an argument either you know either way for both of
+
+19
+00:11:44,000 --> 00:13:16,000
+them but both of them are kind of a little have their own a bit of weirdness to them uh in a way if you if you if you study them for a second um okay that's pretty much converged um share the results um okay so um so in fact the correct answer is b um [Music] and uh why is only c2 first of all you know well what's wrong with c1 c1 the problem with c1 is that the rules have things besides a single variable on the left hand side so having a b1 on the left-hand side is not legal in a context-free grammar
+
+20
+00:12:37,000 --> 00:13:38,000
+in fact there are other kinds of grammars there's a kind of grammar called a context sensitive grammar the term context free means you can replace the variable independent of its context in the intermediate string so independent of what's around it but here the this substitution is going to you can replace b but it depends on there being a one next to it um this is called a context sentence set of grammar but it's not the kind of character we're going to be using which are only context free grammar so c1 is
+
+21
+00:13:08,000 --> 00:14:22,000
+out that's not a legit context-free grammar c2 the thing that's a little weird about c2 is if you try to generate a string in c2 you'll see that um there's no way to get rid of the variables you're always going to be stuck with the variable um now that doesn't violate the definition of a context-free grammar so this is a context-free grammar but but it's not going to be able to generate any strings of only terminals so this is a context-free grammar whose language happens to be the empty
+
+22
+00:13:44,000 --> 00:15:03,000
+language but that's totally okay so the correct answer here is b that only c2 here is a valid context-free grammar okay um common let's just see common question does a string u derive itself yes a string u derives itself uh that's a little bit of a little bit of an esoteric question there for us right now but yes um a string u in in this definition here u arrow stars you is legit is illegal maybe it isn't uh according to the way i've written it down here but it is it is uh a legal
+
+23
+00:14:25,000 --> 00:15:45,000
+thing it's not going to really matter for you anyway but but it is illegal okay let's continue um let's do another somewhat interesting example of a context-free grammar um this is a grammar that is um can generate arithmetical expressions involving pluses and times so here it is it has how many rules well there are six rules here each line represents two rules so e goes to e plus t or t t goes to t times f or f and f goes to uh parenthesis e parenthesis or a um now so the variables are going to be the symbols
+
+24
+00:15:06,000 --> 00:16:06,000
+that appear on the left hand side et and f the terminal symbols which are going to be the symbols of the language that you're going to be generating um is going to be the plus the time symbols the parentheses are just terminal symbols here so they're nothing not playing any special role besides that and then you have the a which is representing kind of the um operand on which those operators uh would be working if there was actually an expression you would use but they're just symbols from the perspective of the
+
+25
+00:15:36,000 --> 00:16:52,000
+of the grammar and lastly the start variable is going to be as normally appears on the upper left hand side of the grammar in terms of the way you write it down so sometimes you might specify a different start variable but otherwise if not specified it's that it's the one in this corner here okay so let's just see uh some examples of uh using the grammar to generate uh a string so here is a string in the language a plus a times a and and this example will kind of reveal some other interesting features
+
+26
+00:16:14,000 --> 00:17:25,000
+of the grammar but let's just see it in operation first so again i'll try to write it to you in both ways in terms of the parse tree and the resulting string as you're doing the substitutions so um the uh so first we start with the e then we substitute e plus t and we see the resulting string z plus t but now we as we're doing additional substitutions the resulting string that you get is going to evolve um accordingly and um so i hope it comes across that this tree here picture on the left
+
+27
+00:16:49,000 --> 00:18:05,000
+shows you the structure of the various substitutions whereas on the right it just shows you the strings that you get as a result of those substitutions [Music] so now you can generate this particular string which is now in the language of this grammar you could generate all sorts of other strings as well uh such as you know parenthesis a plus a parenthesis times a and so on and in fact um this might be a piece of a programming language that you're trying to describe um and one application of
+
+28
+00:17:27,000 --> 00:18:48,000
+context-free grammars is to describe the syntax of programming languages you know what are the legal programs that you can write with in that programming language and not only that the grammar can be used to automatically generate the part of the compiler uh for that programming language which will interpret the um which would uh interpret the structure of the input you know the so-called parser which will figure out the meaning of the uh input to the compiler so that the compiler then can generate the code or
+
+29
+00:18:08,000 --> 00:19:19,000
+if it's an interpreter it could interpret the uh the resulting um code that you've given it um but the very first step in both of those is to figure out the meaning and the meaning is um embedded within the structure of the parse tree now in the in the case of this particular tree just to give you some sense of what meaning i have in mind this parse tree due to the structure of this grammar has the precedence for times over plus so normally when we write down a plus a times a you you assume you're going to
+
+30
+00:18:43,000 --> 00:19:39,000
+do the multiplication before you do the addition even though it appears second that's just the way we tend to write things and and this grammar has grouped it that way for you it groups the times lower down in the tree than the plus so the the times is going to be done before the plus if you imagine doing this in terms of the way the tree is guiding you so the tree as you can see has a certain amount of meaning built into it now we're not actually going to be using that in this course but i just
+
+31
+00:19:11,000 --> 00:20:36,000
+want to you describe that as a an illustration of how this material can get applied um now so you know here is what i'm saying that the tree contains additional information now that's also relevant um if you happen to have a grammar which might allow multiple parse trees for the same string okay that can happen um this particular grammar does not allow that but you might write other grammars that as we'll see in a minute that could generate the same string in multiple ways with multiple different parse trees
+
+32
+00:19:53,000 --> 00:21:15,000
+now that might be undesirable when you have a programming language because typically you want it to be only a single meaning for your code you don't want it to be ambiguous and have multiple meanings but um uh ambiguity is it does occur and it's not necessarily something we're always going to uh see is a bad thing um so you know i think as i mentioned last time a lot of this subject originated with linguistics um and that's where the terminology comes from grammar and um uh languages and so on the terminology for
+
+33
+00:20:35,000 --> 00:21:47,000
+the subject really comes out of linguistics in fact one of the key players for that is an emeritus faculty member at mit noam chomsky he was instrumental in setting a lot of this stuff up um but the um uh you you can think of grammars as applying to natural human languages as well so let me give you a little example as a pop-up this is not directly uh pop-up a check-in not directly relevant uh to the material i just presented but just sort of a curiosity um if you take the english sentence the boy
+
+34
+00:21:10,000 --> 00:22:26,000
+saw the girl with the mirror um you know does that is there only one natural uh interpretation for that sentence or are there perhaps other natural interpretations for that sentence so let me pose that to you as another uh poll here um and uh so i ask you to think about how many different meanings you might find for uh reasonable different meanings i mean you can you know if you're going to go wild you can think of zillions of meetings but i think in terms of reasonable meanings how many meetings might you get for the sentence
+
+35
+00:21:49,000 --> 00:23:17,000
+uh people are seeing more meetings than i'm seeing but that's okay um so this is a quick why don't we just give this another uh 10 seconds here um and then um most of you are in agreement with me um uh i can see here that uh uh you are uh seeing that there were two meanings the two meanings that i see here for this sentence are um when you say the boys or the girl with the mirror is who has the mirror is it the boy seeing the girl through the mirror or is it the girl that has the mirror
+
+36
+00:22:34,000 --> 00:23:38,000
+and the boy just happens to see her so two very different meanings for the same sentence and that's the nature of english it's just uh the the way um uh it's it's an it's it's an ambiguous um structure there and often we resolve that ambiguity in english with other information that we might have um but um typically you don't want there to be ambiguity when you have this a grammar say describing a programming like programming language okay um so let's continue on that um
+
+37
+00:23:06,000 --> 00:24:16,000
+so talking a little bit more about ambiguity i was promised you an example where you might have an ambiguous grammar um so uh if you take these two grammars g2 and g3 the g2 from the last slide and g3 is a similar grammar in fact has it's the grammar that has the very same language um that gives you the very same language so l of g2 equals l of g3 both of them are describing these arithmetical expressions um but whereas g2 has a unique parse tree for every string that you generate g3 can have multiple parse trees for the
+
+38
+00:23:42,000 --> 00:24:49,000
+same string okay so i'm just going to illustrate that here so here is the same string that we generated last time a plus a times a in g3 the parse tree is actually even simpler here um so here i'm showing you the uh there's just the two substitutions that you uh need to make starting from e and then to to get the string a plus a times a it's a it's a it's a simpler grammar in a sense um but you there's another parse tree that'll give you the same uh result and i've written that down
+
+39
+00:24:15,000 --> 00:25:41,000
+below here upside down um so uh the upper parse tree groups the times before the plus or more in more inside uh than the plus but the lower parse tree doesn't have that precedence built into it and can alternatively interpret the plus as being of higher precedence than times and so in that sense we have here um a grammar which is um has two interpretations for this um same string and we call that whoops we call that an an ambiguous uh derivation ambiguously derived string and the grammar itself is called an
+
+40
+00:24:58,000 --> 00:26:22,000
+ambiguous grammar um uh okay so let us continue on from that by the way there's a question here that came in uh uh like for example a plus a is that ambiguous in g2 no uh if you if you try to uh apply it you'll see the way that g2 can produce a plus a to a plus a plus a is going to group the first two and then the and then the the second one then the last one you can't you can't derive things in multiple ways um i mean addition is associative but the grammar doesn't it doesn't the grammar for the grammar
+
+41
+00:25:42,000 --> 00:27:06,000
+um it's going to have a prescribed order for the way things get interpreted there okay um so that's ambiguity um so let's uh introduce push down automata um which is going to be our automata counterpart for context-free languages all right um so the way i'm going to introduce push-down automata uh sort of shifting gears here and now um is by first uh giving a new view of finite automata remember before when we presented a finite automaton we gave it in terms of a state diagram which i've kind of shown
+
+42
+00:26:25,000 --> 00:27:32,000
+here in miniature form on the picture um uh we could do that for pushdown automata but the picture tends to be very complicated so i'm going to take a bit of a higher level um uh description for pushdown automata which is i'm calling a schematic view or a schematic diagram and there i'm really not going to be showing you the individual states but i'm going to be showing you the individual components of the machine at a sort of more of an abstract and from a more abstract perspective and
+
+43
+00:26:59,000 --> 00:28:07,000
+so from that perspective um [Music] a finite automaton has here what i'm going to call the finite control so i'm going to be suppressing the details of the states in this pic in this picture i'm going to represent uh that those states as the control of the um of the dfa or the nfa they're really going to be the same from this pictorial point of view um the input is going to be appear on as a string that's written down on what we're calling a tape again this is somewhat of an
+
+44
+00:27:33,000 --> 00:28:44,000
+anachronistic terminology back in my days people actually did feed their inputs into computers on a tape sometimes we don't do that so much anymore but that terminology has stuck and it's going to be a persisting um uh later on in the course too so you might as well get used to it um so the input is going to appear on a tape or sometimes called an input tape um and the way the machine actually will read that input whoops uh is going to have a head which is going to be um starting at the left side and moving
+
+45
+00:28:09,000 --> 00:29:21,000
+from left to right reading the symbols on the that appear on the input tape one by one okay so this is our picture of a an a finite automaton just redone from uh last time just a different way of picturing it now that's going to be setting the stage for the picture of a push down automaton because the push-on automaton is like a finite automaton but it has an extra feature has an extra device attached to it and that's called a stack okay so here's a schematic diagram for push down automaton
+
+46
+00:28:45,000 --> 00:30:08,000
+and that's going to be a stack which is going to be basically a form of auxiliary storage now remember part of the limitation for a finite automaton was that we had a limited amount of memory um so we were not able to do some very simple things like counting because we had a limited memory so the push-on automaton is going to be able to use its stack as a kind of unbounded memory but a memory that's very restricted in the way it can be used so it's unlimited but still restricted as we'll see
+
+47
+00:29:28,000 --> 00:30:50,000
+so uh the way the push down automaton uses um this extra memory on on what we're calling the stack or push down stack is that you can write symbols um instead of only reading symbols but those symbols can only be read at the very written or read at the very top of this list of symbols and every time you add a new symbol the other symbols that are already there get pushed down hence the name people also often refer to it as a stack of plates uh in a cafeteria if you've ever seen those things or you can remember back to
+
+48
+00:30:09,000 --> 00:31:11,000
+the days when we went to cafeteria uh which getting further and further away but um uh if you have a cafeteria you had a stack of plates and you know you as you removed plates from them they were on a spring and they kept coming up or if you add more they would go down and it's the same idea imagine these symbols here are sort of on a um on a spring and the more symbols you add them the more they go down uh or if you remove them by read and read them and remove them then they move back up okay
+
+49
+00:30:39,000 --> 00:31:48,000
+so a push out of tabaton operates like a finite like a non-deterministic finite diameter as we'll see push down automata for out for us are always going to be allowed to be non-deterministic so we're not going to be studying the push on automata that are restricted to be only deterministic um uh i'll say more about that in a second but like they operate like an nfa except they can write uh or read symbols from the top of the stack and when they write they're adding the symbol on pushing down that stack and
+
+50
+00:31:14,000 --> 00:32:16,000
+when they're reading they're removing symbols from the stack and thereby lifting up the stack okay we give them special names so those of you who have seen stacks already this is you know i'm sure old hat for you uh but i'm sure now everyone has have seen stacks before so uh the special name for writing onto a stack is called a push operation so that you're pushing a new symbol down on the top of the stack and it pushes everything down whereas when you're reading a symbol and
+
+51
+00:31:45,000 --> 00:32:48,000
+removing it from the top of the stack that's called a pop so that's reading and removing we we always think of those as going together writing and editing and reading and removing are combined i mean you might wonder why can't i just read it and leave it alone and not just have remove it you uh no you can get that effect by reading it and then uh which removes it and then putting it back if you really want it to stay there but the way we're setting it up is that reading comes with removing writing
+
+52
+00:32:16,000 --> 00:33:26,000
+comes with adding okay and they're called pushing and popping okay so let's do an example um so we have here a push down automaton for a language we'll call d it's a we've seen that language before it's this uh it was um actually we use the same uh letter for it the strings of zeros followed by ones where the numbers are the same of the two so zero to the k one to the k we couldn't do that with a finite automaton we will be able to do that with a push down automaton um
+
+53
+00:32:52,000 --> 00:34:09,000
+and here i uh um i thought i wrote down the input here but okay so the basic idea is i'm going to give you a uh an input now and the pushdown of the tombiton is supposed to test whether that input is in the language whether it's of this form um now it has the ability to use the stack because you know it's going to have to count how many zeros it has and so the way it's going to do it is you know i have a bunch of zeros hopefully and then a bunch of ones and you want to see that they're uh of the same number it's going
+
+54
+00:33:30,000 --> 00:34:35,000
+to take the zeros and store them on the stack until it sees a one and then one's going to start to read the ones and it's going to remove the zeros matching them off one to one with the ones that it's seen okay so um you initially first read the zeros and push them onto the stack until you read a one and then you read the ones uh while popping zeros from the stack and you enter the accept state if the stack is empty just like with a finite automaton the except entering the accept state only
+
+55
+00:34:04,000 --> 00:35:10,000
+counts when you're at the end of the input okay so um without me needing to say anything it's really saying you enter the accept state if the stack is empty at the end of the input string but that's kind of implicit because it only takes effect at the end of the input string if you enter an accept state alone in the middle somewhere it doesn't matter it doesn't affect anything um okay uh with that we're going to take a little break and then we'll be back uh shortly to look at push down automata again in a
+
+56
+00:34:39,000 --> 00:36:15,000
+more uh with a more formal definition um let me put that's going to be five minutes so if i can figure out how to get my timer screen up here yes and we will uh the camera when the candle burns down to nothing we will return and continue okay our candle has burned down and has gone out i think i never actually watched to see what would happen at the end uh so um we're good to go let's continue um uh good and let me put myself back in there all righty um [Music] so we were doing push down automata and
+
+57
+00:35:34,000 --> 00:36:58,000
+we just did that example of zero to the k1 to the k now that you have a stack we can do uh all sorts of fancy things that fina tamara could not do just with their limited memory okay so let's take a look at how we define push down automata um [Music] so now uh push down automata is actually going to be a six tuple so it's a little bit got some fancier stuff here to deal with not too much but a little bit um and uh so it has uh let's look at these a little bit more carefully since there's some novelty here
+
+58
+00:36:16,000 --> 00:37:27,000
+we have the uh input alphabet just as we had before uh sigma but we also have gamma which is the alphabet for uh using the stack now um you might ask why don't we just use the same alphabet well it's really a matter of convenience um that we would like to be able to have other symbols that uh could include the input alphabet but could include other things as well so it just gives you more flexibility in terms of what you're going to be writing on the stack um okay the transition function more
+
+59
+00:36:54,000 --> 00:37:53,000
+complicated uh so i think i don't know if i'm going to even say what the other things are but you know these are the accepting states this is the starting state so that's um the same as before but the transition function is is a much different animal here in a push-down automaton so let's just try to uh unpack that and understand what it's saying the transition function tells us how the machine operates how it goes from state to state how it's going to read the input how it
+
+60
+00:37:23,000 --> 00:38:39,000
+reads from the stack and what it might write on the stack too because that's going to all happen under program control so um what this means here is that you know when the machine is in a particular state um reading a particular input symbol let's ignore the empty string uh subscript for the monument so it's in a particular state reading a particular input symbol and with a certain stack symbol appearing at the top of the stack so that's all information that's available to the controller of this
+
+61
+00:38:04,000 --> 00:39:22,000
+pushdown automaton the transition function the current state the next input symbol and the symbol at the top of the stack and once we have that we know what new state we can go into and what new symbol we can write on the top of the stack okay so that's what the uh um right-hand side of this function specification means so this is where uh kind of the input to the function this is going to be the output of the function state entry and a new symbol to appear on the stack so this is the popping symbol this is the pushing
+
+62
+00:38:45,000 --> 00:40:00,000
+symbol so now there are two things that bear explanation here first of all now this is this is a power set so this is going to be representing as we did before um a non-deterministic machine we may have several possibilities and we're going to represent that as a set of possibilities for the machine that it could go to at any point i will give an example of how a push down automaton uses its non-determinism in a minute the other thing is is these epsilons so we have to understand why they are there
+
+63
+00:39:23,000 --> 00:40:46,000
+and we remember we had them for the nfas corresponding to when the nfa had an epsilon transition an empty transition so it could go along that transition without reading any input so this is going to play the same role here so if you have um instead of an input symbol from sigma appearing in this um uh part of the you know uh for the for the transition function instead you have an you have an epsilon appearing that means that the transition that that move of the machine can happen without reading any input symbol
+
+64
+00:40:06,000 --> 00:41:03,000
+just like for the nfa's or if you have an epsilon appearing for the stack symbol that means you can make that transition without reading any stack symbol so any whatever's sitting on the top of the stack it doesn't matter the machine can make that move and it won't read anything either we're not going to pop anything it's just going to uh be proceeding without looking at the stack at all or it might have both of them which case it's going to go from one state to another state without looking at the
+
+65
+00:40:36,000 --> 00:41:52,000
+input or at the top of the stack so um that's what the possibility of epsilon means for the um for the transition function in the in those places the epsilon appearing over here means something a little different but very similar what that means is that um [Music] we won't write anything on the top of the stack that's going to be we will go to a new state but without doing any writing so we'll leave the stack alone um so here means we're not going to read anything if it's in this position in this
+
+66
+00:41:15,000 --> 00:42:23,000
+position means we're not going to write anything okay so all of those things are valid and legal from the perspective of you know constructing a push-down automaton and i've kind of illustrated here you know just with a little bit of an example if you have delta that applies to some state q reading an input symbol a and popping a c from the top of the stack then you might have let's say in this case two possibilities that you might end up going to you might end up going to states r1 or to states r2
+
+67
+00:41:50,000 --> 00:42:53,000
+and in the former case you'll end up writing a d pushing a d onto this top of the stack and in the latter case you would be pushing an e onto the top of the stack okay so this is i'm trying to help you look at this notation you can you know you know i hope this is clear to you um i'm sure for some of you it's too slow but others of you i'm trying to help along but if you're really struggling with this notation at this point you know you really have to going to have to dig in and make sure you follow it
+
+68
+00:42:22,000 --> 00:43:25,000
+because it's only going to get harder from there i'm going to stop being uh going over these these kinds of points and if you're still struggling you can't get it this is not the right class for you i'll just i'll be honest um because we're just gonna be taking off like you know we're gonna start to accelerate fairly quickly okay so it's a non-deterministic machine um we accept uh like we did before uh there might be several different threads of the computation you're going to end
+
+69
+00:42:53,000 --> 00:43:55,000
+up accepting um if some of the threads or what at least one of the threads end up ends up in an accept state at the end of the input string okay that's when we machine overall accepts it's just the way we normally think of non-determinism again you can use the models that we had before in terms of guessing or parallelism whatever works for you and sometimes different things work in different different different occasions uh but that's how non-determinism works we'll do an example now okay here is a
+
+70
+00:43:25,000 --> 00:44:29,000
+push on automaton for a different language we haven't seen before i don't think well maybe we have um which is um going to be using its non-determinism in an essential way this is a language that is going to where non-determinism is going to be critical um without it you can't uh a deterministic push on automaton which is something by the way that people study um and there's a section of my book about that section 2.4 because it has relevance to applications we're not going to address
+
+71
+00:43:57,000 --> 00:45:19,000
+that in this course so you can just skip section 2.4 it's pretty technical uh i'll have to say um but still quite interesting and beautiful if you're if you like that stuff but it's technical we won't do it um so here is um this input string w w reverse for all possible w's over our alphabet zero one and what w reverse by the way means is writing w backwards uh so this is all strings followed by a reversal of the same string okay the string written backwards um really you can think of these as uh um
+
+72
+00:44:38,000 --> 00:45:43,000
+you know so these are strings that um well here's an example like 0 1 1 1 1 0 the string written backwards so this is a string in the language appearing on a tape as i as i described okay so how is the machine going to um recognize this language it's kind of pretty similar somewhat similar to before but with one important difference um and if you imagine i think again i like to use this kind of and anthropomorphizing these things putting yourself in the place of the machine and thinking how you would do it
+
+73
+00:45:13,000 --> 00:46:21,000
+um so if you imagine getting these symbols one by one zero one one you don't know what's coming next as you're getting the symbols you have to figure out how to match off the second half with the first half so you're gonna put the first half on the stack and then you're gonna remove the first half and match it off with the with the with the second half con conveniently the first half comes out backwards the stack is a first in last out kind of thing so um it comes out in reverse order so that's
+
+74
+00:45:47,000 --> 00:46:54,000
+perfect for matching off with the second half uh but the tricky part with this language is how do you know when you're at the when you're at the middle because you don't get to see um the rest you only get to see what you've seen so far you don't know what's coming so you know uh when you read that second one at this point you read zero one one now you're reading that second one you don't know that perhaps there's just going to be a zero following that and it's going to be
+
+75
+00:46:20,000 --> 00:47:28,000
+all so maybe you should be deciding to that this point here that i've marked um uh is the midpoint and you you put zero one on the tape and then start popping the second the the second one and matching it off with the first one um that might that would be a tempting thing to do but you just don't know um and that's where the non-determinism is going to be essential so let me let me write down more of this so what you're going to do is you're going to read and push input symbols but not
+
+76
+00:46:54,000 --> 00:47:52,000
+deterministically guessing that you're at the middle so you're going to now deterministically either repeat that and continue to read and push symbols onto the stack or you're going to go to two deciding that or guessing that you're at the midpoint and now it's time to start reading and popping instead of reading and pushing so you're going to read input symbols and popping that popping the stack symbols comparing the the two the the symbols that you're reading with the top the symbols you're
+
+77
+00:47:23,000 --> 00:48:34,000
+removing from the stack if they ever disagree then this thread of the non-determinism rejects because either the input is not in the language or at least you've made a wrong choice as to where the midpoint is um and then you're going to enter the accept state if the stack is empty and ignore this part for the moment of this software reference uh let's just um i'll speak to that in a second but um i just want to make sure we understand that at an intuitive level how this machine is using its
+
+78
+00:47:58,000 --> 00:49:09,000
+non-determinism to uh recognize this language because the non-determinism is critical and it's important that you understand it um so let me just make some side comments and then we'll come back to this software remark so first of all one question that comes up a lot well um not paying attention to the chat here sorry so if you're not getting answer from me try the tas but um one of the uh one of the um questions that comes up a lot when they're thinking about non-determinism for push down automata
+
+79
+00:48:35,000 --> 00:49:49,000
+is what happens to the stack the stack gets replicated in the non-determinism every time the machine forks just like everything else gets replicated so an entire every time there's a fork in the non-determinism and the machine branches into multiple possibilities the entire machine replicates the current state the current position of the head the what's the stack and its contents all of that gets replicated um and the two um sides of the the two branches or the two sides of the fork each go on
+
+80
+00:49:12,000 --> 00:50:08,000
+independently in their merry way okay doing their own thing independently and then if any one of them accepts that's the only way there's sort of a kind of a communication because the one that accepts raises the flag and then uh the overall machine is set to accept okay so the non-deterministic forks replicate the stack of saying it uh just want to make sure you've got that um and then this language requires non-determinism that that i said earlier um so our pda push down time model is
+
+81
+00:49:41,000 --> 00:50:38,000
+going to be non-deterministic i mean you might have examples which are deterministic but the model is going to always allow non-determinism okay what's this bit about the software so if you look at this formal definition here it doesn't have anywhere in it the ability to test if the stack is empty that's not part of the hardware specification at least as we are describing it for a push-down automaton you can might imagine someone somebody else describes push on the tama in some other way which gives that as a
+
+82
+00:50:09,000 --> 00:51:07,000
+primitive but we're not going to do that why because we don't need a primitive for that you can get the effect of testing if there's an empty stack even if you don't have that as a primitive for the machine because uh what you could do is you can start the machine off when it very at the very first thing it does is it writes a special symbol to mark um the bottom you know what's going to eventually be the bottom of the stack there's going to be some special symbol maybe a dollar sign
+
+83
+00:50:39,000 --> 00:51:36,000
+symbol that's the very first thing that the machine does and then it proceeds as before if ever sees that dollar sign symbol again it knows the stack is effectively empty okay so you can get the effect of testing for the stack being empty even if you don't have a primitive for that and we're not going to actually fuss about some details like that um so you can use when you're writing your homework sets you can just use the assumption that you can test for empty stack which is what i'm going to do
+
+84
+00:51:08,000 --> 00:52:20,000
+myself okay um so uh let's continue on um all right so yeah so now what we're going to do we're going to prove our one so far we really haven't proved anything we've just given some definitions and some examples today was going to now we're going to come to our big theorem which actually is um important and has some meat to it um and that is how do we convert you know i claim that to put context-free grammars and push down automata are equivalent well we're going to prove that
+
+85
+00:51:44,000 --> 00:52:52,000
+equivalence in one direction converting the grammars to push down automata okay so um let me show you how that goes in some ways um it's a nice proof not super complicated but it has some meat to it uh so if i give you a grammar here what i'm going to tell you how to do is convert that grammar into push down automaton which does the same language okay so if you're checked out for a minute please come back because we're sort of starting this topic now that you can think a bit about
+
+86
+00:52:20,000 --> 00:53:39,000
+this good good uh re-entry point if you're sort of uh been doing something else which i can't tell good thing uh so all right so converting a given grammar to a push down automaton how is that going to work so the idea is okay actually before i tell you the idea let's just think about it together again i like to think about the push down automaton building a push on automaton the way you would do it so a grammar is a generation device it generates strings a push down automaton or thinking about it as you you're a
+
+87
+00:53:00,000 --> 00:54:12,000
+recognizer you're given an input and you want to know is it in the language so you want to know is it possible for that grammar to generate that input you're given so how are you going how are you going to how are you going to do that um and uh are you going how are you going to um test if the input is in the language of the grammar well the thing that you would naturally do is you say well can i derive that string using the rules of the grammar let me start with the start string and try to do substitutions
+
+88
+00:53:36,000 --> 00:54:30,000
+and see if i get the string i'm given and if i can get it then i know it's in the language right that's a natural thing to do you're just going to try try to do so you know try to do the substitutions even get to the string now the thing is there are many there might be many different substitutions that you could make and you know that seems like a really challenging uh hard thing to figure out which substitutions to use among the many possibilities that's where non-determinism is going to come in
+
+89
+00:54:03,000 --> 00:55:02,000
+because you can think of yourself as guessing which substitutions to make and you're always going to make the right guess so the choices of which substitutions to make that's not going to be a problem for you that's going to be managed by the non-determinist so imagine you're always going to make the right substitution but now the challenge is how do you keep track of the intermediate results as you're doing those substitutions um and that's where the stack is going to come
+
+90
+00:54:33,000 --> 00:55:39,000
+in the machine is going to write down those intermediate results on the stack but even there there's a subtlety that's an important subtlety that you have to look at so let's try pulling that together so far before i get to that subtlety uh okay so as i mentioned um uh the push down automaton is is going to start out with the starting variable and is going to guess to be guessing the substitutions to make it's going to keep the intermediate results on the stack when it's done doing all the
+
+91
+00:55:07,000 --> 00:55:56,000
+substitutions and it has only terminal strings on the stack it can compare with the input and see if it got the right thing so if it made it all the right guesses so you think of it as guessing doing the right guesses but in the end you have to check to make sure that you've got the right the you that you did all the right thing and you accept when when things um have matched up you know you and you made all the right guesses so you have to in the end you have to check that you actually got
+
+92
+00:55:31,000 --> 00:56:34,000
+that input uh from doing those substitutions okay so let's let's let's try to see this operating in action and then you'll see the subtlety the the delicacy the the the the the a problem that's going to arise hopefully you're following at least in part what i'm just saying so far okay so here is the input we do know that that's an input in the language of the we we've been seeing this example multiple times so here's the input appearing on the input tape a
+
+93
+00:56:04,000 --> 00:57:23,000
+plus a times a now the push on automaton is supposed to be accepting that input because it's in the language of the ground okay so it's going to operate by first writing to start off the starting variable on the stack and then doing the substitutions as we're going along okay so um we're going to substitute we we we uh e goes to e plus t so we do that first substitution um and then we do the next substitution here the e so i'm i'm if you're looking at this tree here that means this is the right
+
+94
+00:56:45,000 --> 00:58:04,000
+tree for that uh for that input so we we substitute e by t uh so far so good the automaton can do to make that substitution then the next substitution is going to be a little uh so we're where e plus t we did we substitute here we got t plus t and now we're going to substitute the t times f which is this t over here we want to substitute that and that appears as t times f now on the stack now if you're following me you should be suddenly getting nervous because we just cheated it's okay
+
+95
+00:57:27,000 --> 00:58:40,000
+um doing substitution doing these replacements at the very top of the stack because the push down automaton has access to the top that's how stacks work but it does not have access deep down within the stack that is uh not house style that is not how stacks work so that's cheating but ignoring the cheating for the minute if you could replace those um do those substitutions deep down within the stack this would all work we would be good you would do the substitutions uh one after another until you ended up
+
+96
+00:58:03,000 --> 00:58:58,000
+with no uh variables and then you have the string here and you're going to match it off and compare it with the input it's all done in the right way so that the things are in the right order so the you know the after all the substitutions you'd have a plus a times a sitting here on the stack you match you compare that with the input it's going to match up and you'll end up accepting all good so how do we deal with that problem here problem access below the stack of step top of stack is cheating
+
+97
+00:58:31,000 --> 00:59:46,000
+what are we going to do instead so the idea is actually pretty simple well if you've understood what i've said so far the you know fixing that is actually not too bad um uh uh sort of fading out here uh put some more light on the on my image um so how do we do that uh how do we get the effect of the access below the top of the stack and the way we're going to do that is um by making the obs what we're going to do we're only going to do substitutions that we can make at the top of the stack
+
+98
+00:59:09,000 --> 01:00:09,000
+so whenever there's a variable at the top of the stack we're going to do the substitution because we the top we can access now what happens if we have a terminal symbol sitting at the top blocking our way from accessing variable variables below well actually that's an easy case to handle because we have terminal symbols sitting on the top they're never going to change anyway so you might as well match them with the input at that time so when you have a terminal sitting at the top we'll just read
+
+99
+00:59:41,000 --> 01:00:43,000
+another input symbol and do it and match it off there and we just keep reading the terminal symbols off until we have a variable sitting on the top then we do a substitution um and we keep substituting variables until we have a terminal then we read it then we compare it with the input and in so doing um we will end up getting the same effect that i described before without ever needing to dig down into the into the interior of the stack and doing substitutions there they're all going to rise up to the top uh and
+
+100
+01:00:13,000 --> 01:01:09,000
+we can always do them at the top okay um so anyway uh you know i forgot to do that here so instead only substitute variables when they're at the top of the stack uh if a terminal is on the top pop it and compare with the input and reject if they're not equal so if you ever have something which is not matching the way it's supposed to do that i mean that thread is just gonna fail you know then it was not a bad uh non-deterministic choice was made or maybe the input was not in the language
+
+101
+01:00:41,000 --> 01:01:46,000
+anyway and there are no no good choices um so here my animation broke here so let me just put the whole thing up in front of you so here is the actual construction um push the start symbol on the stack if the top of the stack uh is a variable replace it with a corresponding right-hand side doing a non-deterministic choice among the various possibilities if it's a terminal you pop it and match it with the next input symbol and if the stack is empty you accept so here is how the stack would actually
+
+102
+01:01:14,000 --> 01:02:23,000
+look for this particular input you know it would start off the same you'd have e and then substitute with e plus t and then we're going to always substitute do the substitutions at the top so e gets substituted by f oh is that right no this slide i messed up i apologize so e gets substituted by t which gets substituted by f um and the point is that when you get to an a sitting at the top uh forgive the typos here now we have a terminal symbol and that's going to get matched off with the next
+
+103
+01:01:48,000 --> 01:02:53,000
+input symbol and get removed and now we have just the plus and the t left and then the plus is also a terminal symbol that's going to get matched over the next thing we just have a t sitting on the top and now we can do a substitution okay so that's how uh it works okay i that's all i wanted to say i think um oh yeah there's one just remarked so this is not we're not going to prove this but i think it's uh i i do need to say this that actually you can do the conversion in the other direction
+
+104
+01:02:20,000 --> 01:03:32,000
+too you can convert a um so a is a context-free language if and only if some push-down automaton recognizes a and um if you haven't seen if and only if it's a it's an expression i'm going to use uh uh again over and over so you should get used to it it stands for if and only if and which just means the implication goes both ways so a is an uh context-free context-free language implies that some push on time time recognizes a and vice versa um so there's really two things you need
+
+105
+01:02:58,000 --> 01:03:58,000
+to prove whenever you have an if and only if you have to prove both directions um so uh thinking about that way splitting them in half um the the forward direction we've already proved converting a push context uh free grammar to a push down on automaton the reverse direction we're not going to prove it's in the book if you're curious and you're responsible knowing that the fact is true but you don't have to know the proof uh which is a somewhat comp a little bit complicated and
+
+106
+01:03:28,000 --> 01:04:51,000
+you know i think it would take us too long to go through it so you're not responsible for it um so there's a last check in here that i have for you which is just a question uh uh which you can answer based on the material that we presented so far is every regular language also a context-free language just yes no or you're not sure so let me launch that as a poll here okay about to close um [Music] ending polling and sharing results this one i think you you pretty much uh most of you got some of you uh
+
+107
+01:04:12,000 --> 01:05:34,000
+are not sure um every language is in fact a context-free language um and the way to see that is that every regular language can be done by a dfa or an nfa as we already showed and um dfa or an nfa is really just a push-on automaton that never uses its stack so you can always think of a dfa as a push down automaton and we already argued that pushdown automata are equivalent to context-free grammars and so they do the context-free languages so anything that you can do with a dfa you can also do with a push-down
+
+108
+01:04:51,000 --> 01:05:55,000
+automaton and so is therefore uh um all the regular languages are also context-free languages okay so with that let's just uh kind of pull things together um a little quick recap as to what we've been doing so far in the class we have the regular languages and the context-free languages we had the two forms of sort of getting at them the recognizer form which is like the automata based perspective like either a dfa or an nfa in the case of the regular languages push down automaton for the context-free languages
+
+109
+01:05:24,000 --> 01:06:33,000
+and for the generators we had the regular expression uh for the regular languages and the context-free grammars for the for the contextual languages okay um and as we just pointed out in our most in our last check-in the regular languages form a subset and in fact a proper subset of the context-free languages uh as shown in this venn diagram because we have already exhibited languages that are context-free but not regular all right so quick review we've defined the context-free grammars and their
+
+110
+01:05:59,000 --> 01:06:57,000
+associated languages the context-free languages we define push-down automata and we showed how to convert context free grammars to push down automatic um and that's all i have for you today okay here's a question i'll answer to everybody why do we strict ourselves to a stack why don't we use random access memory we will use random access memory um for the next model called the turing machine and we're going to introduce that i think next to the next lecture so that's going to be the
+
+111
+01:06:28,000 --> 01:07:56,000
+model that we're going to stick with throughout the term but we have not uh we were kind of using introducing weaker models uh as a kind of a prelude uh to the more general purpose uh computational model um uh really to get ourselves warmed up and also um because um for the weaker models you can fully analyze them um in a way that you cannot return machines you you will be able to as you will see you can determine properties of languages for the weaker models that you cannot for the more general models and so
+
+112
+01:07:14,000 --> 01:08:29,000
+i think that's helpful to have that perspective that you know for some cases you can get get a full analysis and some other cases you cannot um but anyway um that's the reason why we're stricter restricted to the stack besides the fact that these models have applications um that i think are worth you people seeing um why yeah some reason we chose a stack well why did we choose a stack and not some other data structure for our uh temporary for our our extra storage and the reason for a stack for one thing the stack is
+
+113
+01:07:51,000 --> 01:09:15,000
+what is exactly what you need to get to the correspondence with context-free grammars um if you use some other storage like the queue for example instead of a stack in fact you get a very different outcome and it's an actually interesting exercise to see what happens what do you get if you use a queue as an external storage instead of as a stack uh it's a good homework problem maybe i'll assign it um uh let's see um nfa okay uh we showed so um we we showed that non-determinism can be
+
+114
+01:08:35,000 --> 01:09:34,000
+eliminated for finite automata so nfas and dfas are equivalent uh what about for for pushdown automata uh the answer is no they're not equivalent i think i mentioned that earlier but i don't mind repeating it there are certain languages that can be done only with non-deterministic push down automata and cannot be done with deterministic push down automata for example that language w w reverse that requires the non-determinism in order for the machine to be able to guess where the middle is
+
+115
+01:09:04,000 --> 01:09:19,000
+so um okay i'm gonna head off uh thank you guys see you on tuesday you
+
