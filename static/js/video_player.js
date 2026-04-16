@@ -13,6 +13,8 @@
     const refreshTranscriptButton = document.getElementById("refresh-transcript-button");
 
     const checkpointModal = document.getElementById("checkpoint-modal");
+    const checkpointTitle = document.getElementById("checkpoint-title");
+    const checkpointTime = document.getElementById("checkpoint-time");
     const checkpointQuestionText = document.getElementById("checkpoint-question-text");
     const checkpointOptions = document.getElementById("checkpoint-options");
     const checkpointFeedback = document.getElementById("checkpoint-feedback");
@@ -32,6 +34,18 @@
             .replaceAll(">", "&gt;")
             .replaceAll('"', "&quot;")
             .replaceAll("'", "&#39;");
+    }
+
+    function formatSeconds(totalSeconds) {
+        const wholeSeconds = Math.max(0, Math.floor(Number(totalSeconds) || 0));
+        const minutes = Math.floor(wholeSeconds / 60);
+        const seconds = wholeSeconds % 60;
+        const hours = Math.floor(minutes / 60);
+        const remainingMinutes = minutes % 60;
+        if (hours > 0) {
+            return `${String(hours).padStart(2, "0")}:${String(remainingMinutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+        }
+        return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
     }
 
     function appendChatMessage(role, text, sourceType) {
@@ -131,20 +145,37 @@
             return;
         }
         activeCheckpoint = checkpoint;
+        if (checkpointTitle) {
+            checkpointTitle.textContent = "Quick Check";
+        }
+        if (checkpointTime) {
+            checkpointTime.textContent = `At ${formatSeconds(checkpoint.timestamp_seconds)}`;
+        }
         checkpointQuestionText.textContent = checkpoint.question || "Checkpoint question";
         checkpointOptions.innerHTML = "";
         checkpointFeedback.className = "checkpoint-feedback";
         checkpointFeedback.textContent = "";
         checkpointResumeButton.disabled = true;
 
-        (checkpoint.options || []).forEach((option, index) => {
+        const options = Array.isArray(checkpoint.options) && checkpoint.options.length
+            ? checkpoint.options
+            : ["True", "False"];
+
+        options.forEach((option, index) => {
             const optionId = `checkpoint-option-${index}`;
             const wrapper = document.createElement("label");
             wrapper.className = "checkpoint-option";
             wrapper.innerHTML = `
                 <input type="radio" name="checkpoint-option" id="${optionId}" value="${escapeHtml(option)}">
-                <span>${escapeHtml(option)}</span>
+                <span class="checkpoint-option-label">${escapeHtml(option)}</span>
             `;
+            const input = wrapper.querySelector("input");
+            if (input) {
+                input.addEventListener("change", function () {
+                    document.querySelectorAll(".checkpoint-option").forEach((item) => item.classList.remove("is-selected"));
+                    wrapper.classList.add("is-selected");
+                });
+            }
             checkpointOptions.appendChild(wrapper);
         });
 
