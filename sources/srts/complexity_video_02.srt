@@ -1,0 +1,480 @@
+1
+00:00:25,000 --> 00:01:52,000
+so we've been talking about p and np and the time complexity classes and today we're going to shift gear we're going to talk about uh space complexity or memory complexity as uh space complexity is what complexity theorists uh usually refer refer to it as um and um you know time and space are the two basic most basic measures of complexity that uh that we consider and so um today we're going to look at the the second of those two um the space complexity uh so we will define a lot of this is going to be
+
+2
+00:01:10,000 --> 00:02:23,000
+by analogy with what we did for time complexity we're going to define complexity classes we'll talk about polynomial space and non-deterministic polynomial space um see how those classes connect up with the time complexity classes that we've already defined and we'll do some examples that will be setting us up for our further discussion about space complexity next week so we're going to talk about first of all what it means for a turing machine to run in a certain certain amount of space
+
+3
+00:01:46,000 --> 00:03:06,000
+and that's simply going to be counting the number of cells that the turing machine scans over on its tape during the course of its computation you might be reading that cell might be writing on that cell but the total number of cells that it actually um visits um of course visiting the same cell multiple times only counts once because space can be reused but we're going to count the number of cells that the turing machine visits during the course of its computation and then define the space utilization by analogy with
+
+4
+00:02:26,000 --> 00:03:54,000
+what we did for time so we'll say a turing machine runs in a certain amount of space f n we'll say if first of all it has to always hold so all of the machines are deciders and it uses at most that much uh tape that much that it visits that number of cells on all inputs of length n so just like we said for time complexity the machine has to run within t of n time on all inputs of length n here it's going to have to use at most f of n cells on all inputs of length n in order for it to be running in space f n
+
+5
+00:03:12,000 --> 00:04:22,000
+okay a tape cell is simply a little square of the tape where you can write a symbol okay answering a question that good question that came in from the chat so um you know uh i'm not sure we have i have a diagram for that but the um in each of the little squares on the tape are going to be the tape cells generally we're going to be sticking to one tape turing machines but i'll make a brief remark about multi-tape during machining shortly better take cells sorry uh on all inputs of length n
+
+6
+00:03:49,000 --> 00:05:22,000
+uh so return now okay so that's for deterministic uh turing machines for non-deterministic touring machines we will say uh that it also runs in a certain amount of space so for a non-deterministic machine it has to use at most that many tape cells on each branch of its computation separately you don't add up the total number of cells used across all of the branches just like we don't add up the total amount of time the machine uses across all of its branches for the machine to be running in say space n
+
+7
+00:04:37,000 --> 00:05:51,000
+squared it has to be using it most n squared cells or order n squared cells on each one of its non-deterministic branches separately there might be exponentially many branches but that's okay but on each branch it's going to be using at most n squared or order n squared cells importantly though that still the machine has to be a decider it's not enough to be looping forever and using a small amount of space it could do that but that's not going to count toward the machine contributing to
+
+8
+00:05:14,000 --> 00:06:48,000
+its um space complexity of that language so for the machine to be running in a certain amount of space we say that the machine holds on all of its branches and each one of its branches uses at most that much space okay again i can see lots of typos here thank you um i messed this all up today uh some non-deterministic good thank you um all right so we're going to define the space complexity classes analogous to this time complexity classes so these are languages that you can do with machines
+
+9
+00:06:13,000 --> 00:07:44,000
+that run within that space bound so um space f n you can think of space n squared um is all of the languages that a deterministic one tape turing machine um can do within uh can decide within by using in most n-squared tape cells or order n-squared tape cells similarly the non-deterministic space complexity class are all of the languages that are non-deterministic one tape turing machine can decide running within that amount of space okay and lastly we have a polynomial space so that's the union over all polynomial
+
+10
+00:07:00,000 --> 00:08:18,000
+space bounds of the space complexity class and non-deterministic polynomial space it's the same for all of the non-deterministic uh polynomial space classes okay so i think i do have a check-in on this um whoops which talks about uh multi-tape turing machines so we could define space complexity for multi-tape turing machines just as we've been doing which is we did for one tape turning machines and then define the associated space complexity classes and then define the class p space but that would be for
+
+11
+00:07:41,000 --> 00:09:02,000
+multi-turing machines now for time uh remember that the class p that you would get from multitape turing machines is exactly the same as the class p that we got for one tape turing machines um that was part of the nice quality of the class p it's robust in that sense a natural so how about for p space um what do you think do we get the same class um no maybe or yes because we can convert a multi-tape turning machine to a single tape turning machine by only squaring the amount of space um that was what happened with time as you
+
+12
+00:08:23,000 --> 00:09:34,000
+remember or maybe we can do even better converting a multi-tape touring machine to single tape only increases it by by less by say a constant factor here remember how this is how we're defining space complexity for multi-tape turing machines we're taking the sum of all the cells used on all of the tapes all right so let's launch that poll and see what you think hopefully this is not too hard um yeah i think most of you have got the idea though some of you are i worry sometimes about some of the
+
+13
+00:09:02,000 --> 00:10:24,000
+answers that i get i don't know if you're serious or you're really com badly confused but anyway let's let's wrap this up another 10 seconds or so let's call okay i'm gonna end it yeah i mean i uh i think answer b is a reasonable answer in fact uh answer c is the correct answer uh you can if you just look at the same simulation from multi-tape to single tape and how much space overhead that simulation introduces um it's only linear you're basically just taking all of the tapes of the
+
+14
+00:09:57,000 --> 00:11:04,000
+multitape machine and writing them down next to one another obviously you know ignoring all the infinite infinitely many blanks we're just taking the active portion of the tapes writing them down next to each other so the total amount used is just going to be the sum on the single tape of what was used on each of the individual multitapes in the original machine so there's just a linear cost overhead by converting from multi-tape to single tape when you're looking at space the amount of memory that's used
+
+15
+00:10:31,000 --> 00:11:39,000
+for time remember there was some additional overhead because we had to be uh updating um where the virtual heads were and that uh cost extra time to move our single head around to do that but for space the amount of time that's introduced is not as irrelevant we're only looking at the amount of memory and so that's a um link going to just uh you know the overhead on that is very low i would do worry about the folks who are answering a for example in this uh for this question you should be
+
+16
+00:11:05,000 --> 00:12:45,000
+rethinking what's what what's really going on here um uh so okay um now let us um move on here from from that to our next uh slide and compare uh the time and space complexity classes you know or time and space complexity how do they relate to one another and so first of all we're going to point out um let's uh start out here t of n is going to be represent some bound either on the time or the amount of space and generally at least up till this point um and most of the mostly going forward though there's going to be
+
+17
+00:11:55,000 --> 00:13:26,000
+one variation on that a little later but we're going to be focusing on uh bounds which are at least big enough to either read the input or at least hold the input that's why we we refer to t of n being at least n um so now if we look at uh the time complexity class t of n think of that t of n like typically would be say n squared maybe and the things that you can do in n squared time i claim you can also do in n squared space um and basically um it's just using the very same machine
+
+18
+00:12:40,000 --> 00:13:53,000
+suppose you have a machine that runs in n squared time how could it possibly use say n square n cubed space if it's running only in n square time even if it tries to use as much state as it possibly could as many tape cells as it possibly could and you know sending its head cruising out um into the blind portion of the tape chewing up as much uh as many tape cells as it possibly can in in n squared time it's only going to be able to use n squared space so the very same machine that runs in t of n time is also going
+
+19
+00:13:15,000 --> 00:14:35,000
+to run in t event space um so this containment here follows you know really without doing um any work at all um so just re restating that here um a uh turing machine that runs in t of n steps cannot use more than t of n tape cells okay so right now we're focusing on we could prove some analogous statements about non-deterministic complexity um but let's focus here on the deterministic complexity now let's look at going the other direction suppose we have a turing machine that uses t of n
+
+20
+00:13:56,000 --> 00:15:14,000
+space now does that immediately imply it's using only t of n and time and that's uh not so clear and in fact probably not true because a space appears to be much more powerful than time and within a certain amount of space you can run for much longer than that same amount of time um so how long could you run so what which you can show is that if you're running uh within a certain amount of space t event space let's say n squared space for example the amount of time you could use is
+
+21
+00:14:36,000 --> 00:15:42,000
+going to be exponential in n squared a 2 to the order n squared sometimes we also write that as the union of c to the um n squared by sort of pulling down that constant here if you want well it's also just to understand what we mean by order t of n up in the exponent it means that the union over c to the t of n for all c either of these are just completely equivalent so whichever one you're more comfortable with but why is this going to be true why does a turing machine that runs in say
+
+22
+00:15:12,000 --> 00:16:45,000
+um uh say n squared space use at most uh uh two to the order n squared time and that's because if you look at how many possible configurations the machine can have remember that a configuration is is essentially the contents of the tape this is also the head position and the state but the dominant um uh the dominant aspect of a configuration is the tape and so how many different tape contents can you have well it's going to be exponential in the saw in the length of that tape because you know each cell can have some
+
+23
+00:15:59,000 --> 00:17:07,000
+fixed number of symbols in it if a machine repeats a configuration it's going to go forever which we're forbidding um in uh you know in the in these machines because they're all going to be deciders so they can only run um uh for an amount of time which is bounded by the number of configurations that the machine can have and so the machine can have you know if it's running in t of n space then the amount of time that it could be running is going to be at most some constant to the t of
+
+24
+00:16:37,000 --> 00:17:52,000
+n or two to the order of t events saying the same thing uh uh you know unless it's going to repeat a configuration and end up looping okay so these are the two fundamental connections between time and space time is contained within the same amount of space space is contained within that amount of time exponentiated okay um so one car reliary of that is that the class p is contained within p space similarly np is going to be contained within an np space for the very same reason um okay is this
+
+25
+00:17:24,000 --> 00:18:40,000
+um understandable you know this is this is a good place or in a moment to have one more line to to to to tell you about but leading into the next slide so if you understand the definitions of what we've done so far all of the the the this is a this is a fairly straightforward theorem and the and the corollary is immediate okay so um anything that you can do in n squared time you can do an n squared space and so for if anything you can do in polynomial time you can also do in polynomial space
+
+26
+00:18:02,000 --> 00:19:07,000
+yes c somebody's asking me you know what is the c c is essentially going to be the size of the tape alphabet um because that's going to govern how many different configurations you have there's a slight extra uh factor it's like you know slight extra factor for the tape um the the head location and also the um state but uh the the main thing is going to be the number of tape symbols and the length of the tape okay but what's going to come next is we're going to prove something more
+
+27
+00:18:36,000 --> 00:19:53,000
+powerful than this corollary that p is contained in p space because not only is p contained in p space but np is also contained in p space and for that we're going to have to do more work so somebody's asking me about the number of states the number of states is going to be indep is fixed depend upon depending on the machine only so um they it doesn't depend upon the uh depend up on n so it could in most affect the number configurations by a constant factor and those constant factors are going to
+
+28
+00:19:20,000 --> 00:20:40,000
+be absorbed within the definitions of these uh complexity classes because that's how we would define them to be um uh you know ignoring the constant factors but you know why don't we just take a you know this may be a good place to pause for a second and see if there's any questions because you know i think for some of you this may be um straightforward but you know i i think it's less common to be measuring thinking about uh the amount of memory as a complexity measure um so this is perhaps a little
+
+29
+00:20:06,000 --> 00:21:00,000
+less familiar some of you have seen measuring time and other classes but remember measuring the the amount of space that the algorithm uses probably is a little less familiar and maybe that's it's worth spending a moment or two answering questions about that so i'm not sure i understand the question that just came in but i'll i'll read it out there is it possible that a turing machine can loop forever absolutely but a turing machine that loops forever does not count as one that
+
+30
+00:20:40,000 --> 00:21:52,000
+runs within the space bound to run within the space bound the machine must halt on every input it has to be a decider we're only considering deciders here so is it possible that turn machine can look forever yes isn't the turing machine we're talking about a member of space and thus a decider um not totally sure i understand the question but if a turing machine is not halting on all inputs it's not a decider that's our definition um are we good and we're not getting very
+
+31
+00:21:20,000 --> 00:22:32,000
+many questions here so i'm assuming you're all with me or so lost you don't even know what to ask which is not good um so be bold if you're confused throw our question out there because i'm i i don't want to race through this lecture since it's it's maybe a little less familiar to some of you okay so let's move on um as promised i'm going to show you now that np not only p as is kind of happens immediately but np is contained as a subset of a p space so that is oh
+
+32
+00:21:56,000 --> 00:23:02,000
+i didn't get a question i moved on before i answered this question can i explain part two of the proof again part two okay let's just do it um uh if something runs in a certain amount of space you have to just think about how many different configurations the machine can have within that amount of space remember the configurations that we defined way back at lbas um so the number of configurations the machine can have depends on how much space it's allocated like the lbas they had a fixed number of
+
+33
+00:22:30,000 --> 00:23:33,000
+configurations and we gave a calculation for that um which is basically an exponential in the amount of space that's how many configurations the machine can have so if the machine is not a is not looping if it's a decider it can never repeat a configuration and that's going to tell us how long the machine can possibly run for you know it's a it's it's it's important to understand i'm not sure if i knew how to say that in any way be that different from what i said before but um
+
+34
+00:23:02,000 --> 00:24:02,000
+okay getting back now to proving that np is a subset of p space so now we're going to have to do something that's sort of in a way uh different from what we did on the previous slide because now it's not going to be enough to work with the same machine before when we were converting we're showing that a certain amount of time time classes contained within a spaceclass it was by virtue of the very same machine by just showing that if it's running within a certain amount of time then it has to be running
+
+35
+00:23:33,000 --> 00:24:35,000
+within that same amount of sp within that same amount of space um or in terms of the space it was in the x given a certain amount of space it has to be running that same machine within a certain amount of time here we're going to mixing non-determinism and determinism so we're going to have to take a machine that's in uh an np type machine a non-deterministic polynomial time machine and convert it into a deterministic machine that doesn't use a whole lot of space so there's a difference in the
+
+36
+00:24:05,000 --> 00:25:16,000
+character of this theorem because we have to introduce a new machine um and the way we're going to prove that um i i'm going to take advantage of some of the things we've already shown to prove this one could also prove it a little bit more directly and maybe it's worth understanding making sure you understand both proofs so the first thing i'm going to observe is that sat our np complete language um the satisfiability language itself is a member of p space and the reason for that is
+
+37
+00:24:44,000 --> 00:26:10,000
+um when you're given a formula and now you want to test if that formula is satisfiable one way to do it the most obvious way to do it is try all assignments one by one and see if any of them satisfy the formula now that's going to take a lot of time but how much space does it use i have in mind reusing the space every time we try the next assignment think of going through all of the assignments the way an odometer would work just trying every possible assignment but reusing the space where you're going
+
+38
+00:25:31,000 --> 00:26:30,000
+to write that assignment down um sort of incrementing it like like a number um written in binary if you wish um going through all the possible assignments every time you get in the next assignment you plug it into the formula and see if the formula is satisfied if it is then you can accept immediately if not you go on to the next assignment and only when you've gone through all the assignments in that way and none of them have satisfied the formula then you can reject so how much space does that use
+
+39
+00:26:01,000 --> 00:27:14,000
+that doesn't use a whole lot of space because you're reusing the space um to write down one assignment after the next okay it's only going to be using an amount of space which is big enough to hold an assignment which is basically linear because it's the size of the number of variables of the formula so that's going to be a linear amount of space to solve the satisfiability problem and so the satisfiability problem is certainly in p space um step one step two is we're going to take advantage
+
+40
+00:26:38,000 --> 00:27:46,000
+of what we know about reducibility um so if a is polynomial time reducible to b we've already commented we didn't say this exactly in this way but you know it's still going to follow that anything you can do in a certain amount of time you can also do in that amount of space because there's a very same machine um doesn't can't use any more space than the amount of time it was allocated so if a is polynomial time reducible to b it's also going to be reducible in polynomial space the a polynomial space
+
+41
+00:27:11,000 --> 00:28:28,000
+machine could do the reduction so that means if a is polynomial time reducible to b and b is in polynomial space then a is also in polynomial space but we know because satisfiability is np-complete that every language of np is reducible to sat so put sat in place of b every np language is polynomial time reducible to sat and we now know that sat is in p space so therefore every language in np is in p space because they're all polynomial time reducible to set okay so just by using some of the
+
+42
+00:27:55,000 --> 00:29:00,000
+technology we've developed namely the notion of completeness sort of shows us some of its power that if you want to conclude something about an entire class an entire complexity class if you have a complete problem for that complexity class often it's enough just to work with the complete problem and then everything else by virtue of the reducibility is going to inherit the same property it doesn't work in all cases but in many of the cases as long as the um you know the reducibility can be computed by the um
+
+43
+00:28:28,000 --> 00:29:42,000
+by the the type of procedure you're working with um then you can then it follows uh you know you could also prove this more directly i think it's in some ways a little clumsy or a little bit um less elegant but you can say well let me just take my um uh take a language that's in np it has a non-deterministic polynomial time algorithm and then give a deterministic polynomial space algorithm simulates that np algorithm just by going through all the different branches but making sure that going through all those different
+
+44
+00:29:04,000 --> 00:30:11,000
+branches you're reusing the space and not using new space every time you're going through a different branch and you can arrange things if you're just a little bit careful to do it that way so you could give a direct simulation in polynomial space of any uh np turing machine so that i mean that's also completely satisfactory but i think this is a little more elegant so now let's also this furthermore is going to allow us to conclude some additional languages are in p space let's define a class we have not yet
+
+45
+00:29:38,000 --> 00:31:02,000
+seen though maybe you've seen this i think we've talked about this this notion of uh co before um i think we talked about co-touring reducib co touring recognizable um so uh the class those are the class of languages whose complements are turning recognizable and the same for co and p this is the class of languages whose complements are in np so you take the complement of every language that's in np and now you get all the languages that are in this class co np complement of np um so for example the complement of the
+
+46
+00:30:21,000 --> 00:31:41,000
+hand handpath problem so all the graphs which don't have hamiltonian paths from uh you know esthetic so the the the non-hamiltonian uh graph uh the non-hamiltonian path problem that's a cohen p problem um well here's a language we haven't i'm not going to define uh as in terms of its complement it's a the tautology problem so these are the problem language these are all formulas or these are the formulas where all assignments satisfy the formula all assignments make the formula true
+
+47
+00:31:01,000 --> 00:32:28,000
+um so a tautology is a statement that's always true so no matter how you plug in the variables so the the tautology tautology language is in co-np um because it's complement which is the non-tautologies those are the formulas for which um there's some assignment which makes it false so that's going to be clearly an np language so tautology is a co and p language okay um now one thing that we get immediately from the theorem as a corollary really should write this as a corollary is that cohen p
+
+48
+00:31:46,000 --> 00:33:14,000
+is also a subset of p space and the reason for that is and this is something that you know it's um again easy but make sure you understand it is that p space itself is closed under complement because it is defined in terms of deterministic machines and deterministic machines you can always flip the answer and get a machine of the same type which um uh uh will decide the complementary language so for deterministic machines deterministic deciders i should say um you can always flip the answer
+
+49
+00:32:31,000 --> 00:33:55,000
+um now so here we have anything that's in p space it has a deterministic polynomial time a polynomial space uh machine and so its complementary line which is also going to be in p space so p space and cos base p co p space are equal and so that's why coen p uh is going to be in p space it's going to be a subset of p space okay i hope that's not getting mixed up by all of the different uh alphabet soup here but um uh here is maybe a picture maybe that'll be helpful uh of how the world looks for
+
+50
+00:33:14,000 --> 00:34:41,000
+the time and spice uh complexity classes um so far uh so we have p is a subset of np it's also a subset of co np um again for the same reason that p and co p are equal we never never even really talk about copy because it's the same as p um uh but np and cohen p that those are two classes where we don't know whether they're equal or not uh because an np machine um you know you can't necessarily complement the behavior of an np machine and end up with an np machine so a question how do we know that cohen
+
+51
+00:33:59,000 --> 00:35:01,000
+p is a complete class of problems i didn't say that there's anything about completeness and cohen p is just a collection of languages i'm not saying it's anything any particular feature about it in fact it does have a complete problem just like np has a complete complete problem the complements and i'm not going to prove this right here but though it's pretty straightforward complements of all the np-complete languages are going to be co-np-complete languages um and um so
+
+52
+00:34:32,000 --> 00:35:42,000
+uh so i'm getting so okay so let's i will answer some of the questions about or about possible alternate worlds this is how we believe the world looks like with each one of these regions being separated from one another including this little corner of the world here np and intersect co-np which is not um there might be languages in here which are not in p and we actually believe there are such languages but again all of this is conjectural um and even whether p and p space are the same or different is an un
+
+53
+00:35:07,000 --> 00:36:03,000
+is an open question we don't even know the answer to that which is perhaps even more shocking that we don't know how to solve pnn you know proved p different from np that we don't know how to prove p different from p space which seems to be a much bigger class uh it would be incredible that anything you can do with a polynomial amount of space uh you can also do with a polynomial amount of time um but i don't know how to prove that they're different and in fact so this is how the
+
+54
+00:35:35,000 --> 00:36:42,000
+world could look um everything could collapse down p could equal p space and then all of these classes would be the same um and i should also mention i don't have this as another diagram here but just to answer you know there's also another pos there's other possibilities for example um p could equal np without it being equal to p space and then you'd have a different looking venn diagram here where there'd be just two classes p np and co np would all be the same p space would be different
+
+55
+00:36:09,000 --> 00:37:24,000
+that's possible at least we have no idea uh had a head of m a a lot of these things can collapse in in various ways um and you just have to make sure that you you know there are some collapses that obviously could not uh occur like p if p equals np it's also going to equal cohen p um so you can't get some there are obviously some crazy collapses which could not uh happen that p collapsing p and np being the same but different from cohen b that can't happen but um avoiding some obvious contradictory
+
+56
+00:36:48,000 --> 00:38:04,000
+situations everything else is possible so somebody said so well here's a question let me just answer a few of these did we use the completeness of co np to show that cohen p is a subset of co-p space no we didn't do it that way we showed that uh co-np um uh well let's see didn't we is that fair um well i i suppose you know np of subset of p space immediately implies because he's complementing both sides that cohen p is a subset of copy space so you don't have to deal with
+
+57
+00:37:35,000 --> 00:38:47,000
+the complete problems on the other side that's too complicated to get into here but you don't you don't need to talk about co-empty complete problems um though again those are very simple to to get from np complete problems um let's see what else is here uh are there np complete problems that are in co-np so the answer to that is no not as far as well i mean there would be if there was an np complete problem in co-np then all of np would be in cohen p and they would be equal so we suspect the np complete problems
+
+58
+00:38:11,000 --> 00:39:33,000
+are not in co and p but don't know how to prove that so why is tautology in cohen p so here is tautology sits in this class here the reason is that its complementary language is an np the complement of tautology are the languages where there is some assignment which makes the formula false so with a with an np machine you can just guess that assignment and check that it makes the formula false so the complement of tautology is an np language and so tautology is a co-np language um okay uh so somebody's asking about p space and
+
+59
+00:38:57,000 --> 00:40:12,000
+np-space and how do those relate to one another so that's looking ahead um to what we're going to be doing next week but i'll give you a preview an old but at the time surprising theorem was that piece base and np space actually are equal so there this analogy with time breaks down so polynomial space and non-deterministic polynomial space do turn out to be equal the most obvious way of proving of trying to simulate an np an np space machine would be give you an exponential deterministic space algorithm uh so
+
+60
+00:39:37,000 --> 00:40:38,000
+we'll go through that but there is an algorithm which collapses non-deterministic polynomial space down to deterministic polynomial space which again at the time was kind of surprising uh and so last question i'll take here is there some equivalent concept to the idea of a certificate for co-np yes there is a notion of a certificate but now it's going to be a certificate that you're not in the language instead of a certificate that you're in the language and then again works for the very same
+
+61
+00:40:09,000 --> 00:41:06,000
+reason that we had certificates for np languages where you had certificate for membership for cohenp you have a certificate for non-membership i don't know if there's no other certificate for membership in co mp um okay so let's move on um okay so now we're going to introduce we're going to look at some important examples these are examples that we're going to um i'm going to give you two examples first one called tqbf and then we're going to have a second example both of those
+
+62
+00:40:39,000 --> 00:41:47,000
+we're going to one of them is going to be an example of a problem in p space the other one is going to be an example of a problem in np space um and it's these are going to be important languages for us so they're not just going to serve as examples for today but you know um they're going to be useful languages for us later on so just keep that in mind as we're going through going through it so to understand tqbf you have to understand um what are called quantified boolean formulas
+
+63
+00:41:12,000 --> 00:42:17,000
+or qbfs so those are boolean formulas just like the ones we've been seeing we've been talking about with boolean variables and the ands ors and and negated variables um but now you're going to add quantifiers exist quantifiers for all quantifiers if you haven't seen quantifiers you you need to go back and re you know review those um you know i think that we already kind of introduced talked about them briefly earlier in the in the term but um this is part of the basic math that you
+
+64
+00:41:46,000 --> 00:42:52,000
+need to know maybe you'll not comfortable with them you'll pick it up somewhat during the course of the today's and the next few lectures but anyway uh so if you have a boolean formula formula i'll give you some examples that has exist and for all quantifiers one of the requirement for it to be a qbf is that all of the variables have to be within the scope of one of the quantifiers so you all of the variables of the formula have to be quantified by one of the quantifiers and the we're
+
+65
+00:42:20,000 --> 00:43:40,000
+going to assume the quantifiers are in front are sort of leading quantifiers in front of the rest of the uh of the of the rest of the expression so because all of the variables have been quantified then a quantified boolean formula is going to be either true or false following the meaning of the quantifiers um and again some of this may become clear as we do some examples uh okay so here are some examples coming so here is one here is a qbf so all of the variables the which are just x and y they both appear in front
+
+66
+00:43:04,000 --> 00:44:36,000
+of uh next to some quantifier so that's going to be that's a requirement uh if we have a qbf and so this says for all x there exists a y this expression holds so we need to kind of unpack that and understand what it means it says for every x for every for every way of assigning a boolean value to x so uh x is going to be either true or false there exists a way of assigning a boolean value for y to make this true determined to to make the rest of the expression hold true um and we'll go through that but
+
+67
+00:43:50,000 --> 00:44:57,000
+let's let's uh contrast that with the second example where i invert the order of the quantifiers because that's going to be important for the meaning of the formula so if i say for every x there is a y which makes this the rest of it true that says well no matter how i set x there's going to be a way to set y to make this true so that says well if i set x to true it's got to be some way to set y to make to make the the the remaining expression hold um so if i said x to true what should i
+
+68
+00:44:27,000 --> 00:45:47,000
+set y to be um well uh if i said x to be true and maybe i said y to be true well then this this clause is uh satisfied but this clause won't be satisfied so setting y to be true is not it won't work but for every x i'm only need to show there exists some y so if i pick x to be true i can say y to be false um and now this one is this one holds and this one holds and the formula holds but i have to make sure that that's going to be the case for both settings of x because i'm saying for all x so if i said x not
+
+69
+00:45:07,000 --> 00:46:24,000
+a false because i already showed that it works for x equal to true if i set x to false if i set now y to be true this is going to hold so this expression is true because it is the case that for every way to set x there is a way to set y so this part holds let's look at let's compare that with this case is there some way to set y such that no matter how i said x this is going to hold and that's not going to be true no matter what you pick for y um there is going to be some way to set
+
+70
+00:45:46,000 --> 00:47:22,000
+x to make this false so does it resist a y such that every x makes us true no if you try x equal to true it's not going to work if you try x equal to false it's not going to work so this second fi2 expression quantified qbf is false okay we're going to be playing with these a lot so it's important to understand how this this quantification works um so tqbf is the problem of testing whether one of these qbfs is true or phrased as a language it's the collection of true qb true qbfs and that's where we get the um
+
+71
+00:46:33,000 --> 00:47:53,000
+uh the uh acronym tqbf not acronym the the the abbreviation tqbf for the true quantified boolean formulas so going back to that example p1 is a true quantified boolean formula and v2 is not a true quantified building formula so that's why p1 is in the language v2 is not in the language now our computational problem is to test whether quantified boolean formulas are true or not and now we can do in polynomial space oh there's a check in first i claim that sat is a special case of tqbf why is that
+
+72
+00:47:23,000 --> 00:48:59,000
+how can we um think of sat as a special case if i give you a sat formula how can i see that as also a tqbf problem if you want to test if that formula is true what would you say remove all the quantifiers or add some quantifiers and what kind of quantifiers maybe um uh how is sat just testing a formula satisfiable a special case of this what i claim is a more general problem of solving these tqbf problems okay closing down let's call yes indeed you know satisfiability so c is correct when you're talking about a
+
+73
+00:48:18,000 --> 00:49:49,000
+satisfiability problem you're saying is there a satisfying assignment another way of writing that down is take the boolean formula represent take that boolean formula and put exists in front of all the variables saying the is there a is there exists does there exist a way to set x1 and x2 and x3 and x4 to make the formula true make your formula hold so um sat is a special case by adding exist quantifiers of a tqbf problem so c is correct um okay so why is this problem in p space as i claimed and for that we're going to
+
+74
+00:49:04,000 --> 00:50:28,000
+give a simple recursive algorithm um in any uh a quantified boolean formula now if you want to test if it's true or not you know we're going to basically strip off the leading quantifiers so if it's an exist quantifier we'll remove it and plug in true and false associated to its variable and then solve those problems recursively okay so this is just going to be a recursive procedure for solving tqbf problems operating by stripping off the the quantifiers in front and uh getting smaller and smaller
+
+75
+00:49:48,000 --> 00:50:58,000
+formulas but now we're going to be plugging in uh values true and false um instead of relying on the quantifier uh to um uh to to to uh give us the meaning of the formula okay so first of all if there are no quantifiers then there are no variables because all variables have to be bound within quantifiers and in that case the uh that quantified boolean formula has to simply be the statement true or the statement false and so you're going to output accordingly because that's all it can be if you have no variables
+
+76
+00:50:24,000 --> 00:51:55,000
+um if the formula starts with an exist quantifier what you're going to do so here psi is the remainder of the formula after you strip off that exist quantifier so you're going to evaluate psi now but take that variable that was bound by the exist and just plug in true um or and false respectively so you're going to get two two now new problems um and uh run them uh and evaluate them using the same procedure recursively uh but now with x plugged in for true plugged in for x and also then with false plug in for x
+
+77
+00:51:10,000 --> 00:52:26,000
+and get the answers for those two cases and if either one of them ended up accepting then you're going to accept because you know there exists a value uh for x which makes the whole thing true because you you you just recursively showed that there was such a value you know either true or false the thing is has accepted and if both of them fail then you're going to reject and the very same idea if you have a for all quantifier you're going to evaluate the remainder of the formula again with x equal to true and false so
+
+78
+00:51:47,000 --> 00:53:00,000
+as two subproblems but now you're going to require them both to accept because that's the meaning of for all that both assignments to x have to make the formula true so you're going to evaluate them recursively and accept both of them are true as determined by your recursive your recursion okay so how much space does this use um i'm not going to go through this in great detail but uh each recursive level uses just a constant amount of space so every time you do a recursion you have to remember
+
+79
+00:52:24,000 --> 00:53:44,000
+that uh that value uh that assignment to that to that variable you want to think of recursion as being implemented on a stack so you're just going to pop push on the stack that value of that variable which is that true or false so basically it's one bit of memory uh that you're going to require every time you're going down the recursion you just have to remember what um you know which case you're working on whether x equal to true or x equal to false uh and um so each recursive level just involves
+
+80
+00:53:04,000 --> 00:54:07,000
+constant space and the depth of the recursion you know how far how much might you have to remember well it's going to be at most one for every quantifier um because that's you know you're stripping them off as you're going down the recursion so that's going to be at most the length of the formula that says most of the number of quantifiers you can have and so uh the total amount of space used by this is going to be um just n order n okay so this problem is solved in uh in n space
+
+81
+00:53:35,000 --> 00:54:46,000
+and so that's why it's in p space okay i think that's all i wanted to say about this okay if we've got the tape and a turning machine as memory in a modern computer what does the finite control correspond to the finite control corresponds to just a finite additional memory um the tape is an unlimited amount of memory uh or if we're putting bounds you know the amount of tape is going to be say n squared memory where n is the length of n n is the length of the input so um yeah they're both memories but um
+
+82
+00:54:14,000 --> 00:55:22,000
+the finite control is it doesn't grow with n so that's going to be just a you know some constant amount of memory what would be the time complexity of this album time complexity would be bad it's going to be exponential so you'd have to just double check that but it's going to be something like 2 to the number of variables that you have two to the number of quantifiers plus some small overhead for evaluating the formula multiple time but it's going to be exponential um that's going to answer for you
+
+83
+00:54:57,000 --> 00:56:06,000
+so someone is asking going back again to co-np and how do we know there exists a problem in cohen p that is co and p complete we didn't define even what that means but uh co-np-complete means we're going to start seeing other examples of completeness for different complexity classes in particular one of one thing that's going to happen on tuesdays we'll see a problem that's complete for p space in fact it's going to be tq tqbf sort of looking ahead is going to be a piece based complete problem
+
+84
+00:55:33,000 --> 00:56:48,000
+but we even have to have the notion of what we mean by uh complete for these other classes and in the case of co np a problem is co and p complete if it's in in co np and every other co np problem is polynomial time reducible to it so just exactly the same as we have for np just plugging in co np instead and you just have to work through the logic but it's pretty straightforward the complement of any np complete problem is going to be a co-np-complete problem using that definition um uh so
+
+85
+00:56:13,000 --> 00:57:20,000
+just i i don't want to go through through that those simple steps but you just can go and verify that offline that that's going to be true and i think we're going to probably talk about that later in the semester too um so another question how does the tqbf algorithm ah that is a good question here um why is the tqbf algorithm that i just described in p space doesn't the thing every time i'm doing the recursion doesn't things branch out so that i end up using exponential space
+
+86
+00:56:52,000 --> 00:57:52,000
+critical thing which i don't i actually don't think i mentioned which i think is important to observe is that when you're doing those two recursive calls when you set x equal to true and set x equal to false after you've determined that the the answer for when you set x equal to true now you reuse that space that very same space to test what happens when you have x equal to false so that's that's the power of space which makes it different from time is that it can be reused
+
+87
+00:57:22,000 --> 00:58:17,000
+so after you've got the answer for when you have x equal to true now you free up that space that's no longer needed anymore you just remember the answer and now you see what happens when you have x equal to false using that same space so there's no exponential blow-up that's that's an important point i'm glad you gave me the chance to to say it so somebody's asking about defining time of an undetermined turing machine to the maximum time of each branch well that's sort of what
+
+88
+00:57:50,000 --> 00:59:00,000
+we have done maybe i don't understand your question but you'll have to ask it after after um afterwards because i want to i don't want to be delaying any more than we that we have so we're going to we're going to go back and um move on here okay second example um and this one is a kind of a fun example but it's also going to be an important one for us um it's called the latter problem now so you may have seen something called the word ladder but in general a ladder is a sequence of
+
+89
+00:58:28,000 --> 00:59:53,000
+strings which are all of the same length but where consecutive strings differ in a single symbol um so so for example if you have a word letter for english it's going to be a ladder where all the words are english all of the um strings are english words so here's an example i thought i fixed that okay here is here is a a word ladder for english and maybe you've seen these suppose i want to try to get from work to play but all of the intermediate uh strings should be english words with four letters
+
+90
+00:59:16,000 --> 01:00:25,000
+that differ from their previous one in only a single letter and i want to somehow change the word work to the word play so i don't know if you know so for example i can change work to pork so here's just one letter difference um which looks like it's an improvement because now i have the i'm agree an agreement on the play um but sometimes you know you might change it you might have a good change and then you have to undo it later which i think actually happens here um so pork then this port but then we gave
+
+91
+00:59:50,000 --> 01:01:10,000
+up that progress we made port to sort to suit to slot you understand again you understand what i'm doing here each case i'm just changing a single letter but all of these words all of these have to be legitimate english words of length four plot ploy and then play okay so that's what a word lighter in english would be of course you can do it in different languages and i'm going to talk about it abstractly where instead of having any natural human language as being the uh test for a word
+
+92
+01:00:30,000 --> 01:01:52,000
+b for being a string being legitimate i'm going to define a um any old language uh let's let's say it's a is going to be some language some set of strings and the and the those are going to be the legal strings that can be in the ladder so a ladder in a is a lot of strings that are all members of a um and now the the latter dfa problem is a is going to be the language of some dfa so i'm giving you b um and so i want and then a start string and an n string so this is like work and
+
+93
+01:01:12,000 --> 01:02:32,000
+play u and v are like work and play so where b is a dfa and its language has a ladder that goes from u to v here are the intermediate strings okay and all right um so um i'm going to show you that this latter dfa problem is in np space okay and it's not this is not super hard because basically uh well let's just actually look at the slide here the way it's going to work is it's not deterministically going to guess that sequence from u to v so if i if i'm trying to get from work
+
+94
+01:02:03,000 --> 01:03:21,000
+to play imagine those i'm going to be using this as um you know in place of the uh the of the language of my fine art automaton just because this is easier to talk about but imagine these are being strings that are that are accepted by that that dfa um so now i'm trying to get from my string u to the string v and i want to test can i get there by some uh changing one letter at a time but staying as strings that are accepted by the dfa um i'm just going to guess that sequence non-deterministically
+
+95
+01:02:42,000 --> 01:03:43,000
+but i have to make sure careful of two things um i don't want to guess the sequence solid in advance because that sequence might be exponentially long you have to calculate how long it could possibly be but you might might you know you might change to one symbol then change it to a different symbol then change it back to that original symbol or so the the only bound that you can write down is the number of possible strings that you can have of that length um so it might be exponential uh you
+
+96
+01:03:13,000 --> 01:04:20,000
+don't want to write down that whole thing because that's going to be exceeding your space bound but what you don't need to you're just going to guess them one at a time forgetting about the previous ones just keep guessing the next uh one in the sequence and only remembering that one and seeing if uh you're ever get to the the string your you your target string but then when you do that you have to make sure that you don't end up going forever um because that's not allowed
+
+97
+01:03:45,000 --> 01:04:56,000
+in your uh in your um in your np space algorithm uh so you're going to have to keep a counter to make sure that if you go beyond that bound which is going to be the maximum number of strings you could possibly have then you're going to just shot that branch of the non-determinism off you're going to just reject on that branch okay so here is i'm going to write to say this here here is my non-deterministic uh you know polynomial space procedure um i'm given my language my dfab and my
+
+98
+01:04:23,000 --> 01:05:39,000
+start and end strings i let y equal the start string write down the length of my strings that i'm going to have to keep in mind all the way through and then i'm going to just repeat the following t times where t is the maximum length as can be which is the the size of the alphabet of these of these things to the nth power where m is the length of those strings uh and i'm just going to not deterministically change one symbol at a time making sure that i'm staying in the language so rejecting immediately if that change
+
+99
+01:05:01,000 --> 01:06:34,000
+introduced a string outside the language and accepting if that string that i get by changing that single symbol is now my target um and if i've gone through my bound and i haven't managed to reach that target then i'm just going to reject and we just have to observe that this algorithm doesn't use too much space so if you imagine what we need here here's my input unv which is of length n and the total amount of space i just have to remember the current y um and um and also my counter t my counter up to t
+
+100
+01:05:52,000 --> 01:07:18,000
+so um each of those can be written down with it with uh essentially in space so the total amount is going to be order n space um so that shows that uh this latter dfa problem is actually in non-deterministic space n not deterministic linear space um and what we're going to show next um is that this language is actually solvable in deterministic space and this is kind of perhaps a bit of a surprise okay um so what's the size of the input the size of the input is uh going to be what it takes to write
+
+101
+01:06:38,000 --> 01:08:07,000
+down the uh the dfa and the uh the two strings u and v um so uh um here uh yeah i mean i i should have also included as part of the input the the description of b itself but um uh so but that's going to even work in my favor because um so this this is slightly incorrect because b itself has to appear as part of the input so apologies for that but still the amount of uh space used is going to be order n um because these are going to be actually less than n um so let me jump be so we don't run out of time for
+
+102
+01:07:25,000 --> 01:08:26,000
+the lecture we can save additional questions for afterward i'll stick around for a few minutes i just really have one more slide here um and that is proving this theorem that ladder can be done in deterministically in polynomial space and that's going to be important as a kind of a preview of what we're going to be doing on tuesday and you know if this goes a little fast i'll go over it again on tuesday so let's just see how it goes so i'm going to show the same ladder dfa problem
+
+103
+01:08:00,000 --> 01:09:10,000
+is solvable deterministically in polynomial space and but this time it's going to be in squared space instead of non-deterministically in end space so there's going to be some cost but it's only going to be a squaring so remember what the problem is you know i'm giving you that dfa and giving you two strings in the language of that dfa and i want to know can i get from one the first string to the second string by changing one symbol at a time but always making sure that the strings are
+
+104
+01:08:34,000 --> 01:09:43,000
+along the way are accepted by that dfa okay so i'm going to introduce notation saying can i get from string u to v by a ladder but now i'm limiting how many steps i can take so i'm writing u to v but doing it only within b b intermediate strings b steps so is there a ladder from u to v of length at most b that's what it means to write this notation down so i'm going to uh give you a recursive procedure to solve the bounded ladder problem where it's just like the before but now i'm going
+
+105
+01:09:12,000 --> 01:10:44,000
+to say not only does there a ladder from u to v but there's a ladder of length at most b okay so that's going to allow me to solve the latter problem recursively by shrinking the size of b um uh okay so um let's how is this going to work uh um well here's going to be the idea so here is my u and my v um and the procedure is going to work by instead of non-deterministically guessing the steps that take me from work to play because i don't have non-determinism anymore i have to operate
+
+106
+01:10:06,000 --> 01:11:18,000
+deterministically what i'm going to do is work instead of um i'm going to instead of going from looking at the very first thing that follows from from you i'm going to jump right to the middle and try every possible middle string oh i have no clue even what that middle string should look like so i'm going to try all possibilities in the sequence but then i'm going to use once i have one of those possibilities i'm going to recursively try to solve the problem by splitting that now but i'm now going to
+
+107
+01:10:44,000 --> 01:11:57,000
+divide that b value in half okay so here is the maximum value we can have this is the t from the previous slide which is the maximum length um and i uh here i'm going to try every possible intermediate let's start off with a all a's um and now i cut the problem in half can i get from work to all a's and all a's to play well very first thing i should check is making sure that all a's in fact is a string uh in the language and if we're thinking of the languages sort of you know matching it's like
+
+108
+01:11:22,000 --> 01:12:24,000
+english all a's is not a legitimate word so you try the next one aab and this is how it's going to work but now you're going to be instead of using english you're going to feed it into the finite automaton just one after the next trying every possibility until you know like a clock like a like an odometer trying them all until eventually you find a string that's in the language sort of i'm representing that by an english word able maybe that's the first word that you would have found and then
+
+109
+01:11:53,000 --> 01:13:29,000
+once you find that you're gonna can i get from work to able and able to play recursively reusing the space again but now where the bound is cut in half okay so that's that's the whole album so um just going through it quickly and we'll do this again um uh here is my dfa going from u to v within b steps first of all oh this is bad uh t should not be one b this should be b if b is one um can i quickly fix that uh so these t's should be b's my apologies um so if t is one if b is one
+
+110
+01:12:43,000 --> 01:14:00,000
+then they have to d then i'm only allowed a a ladder of length one now i just check at the media directly do you and v different in just in one place if yes then accept else i reject uh if it's greater than one now i'm going to do this procedure that i described i'm going to try for each possible w uh in the middle um i'm gonna try that w test whether i can get from u to w in half the number of steps and from w to v in half the number of steps and except if they both accept um
+
+111
+01:13:24,000 --> 01:14:29,000
+and if trying all possible w's none of them work then i know that there's no way to get from u to v and b steps and so then i reject okay and then to do the original problem which was not the bounded ladder problem i just do the bounded line i do the bounded ladder problem where i put in t which is the maximum possible length that it could be to get from work to play out to get from u to v okay so the space analysis um well i'm kind of out of time here so we're going to go through this again
+
+112
+01:13:57,000 --> 01:15:21,000
+next time we have a very quick so let me skip that uh analysis i'll review this next time i have a very quick check-in i just want to get to you get get here um find an english word letter that connects the word must to the word vote you can think about that i mean i it's not that hard to come up with such a word ladder uh so i encourage you to think about that also to think about voting which is also important that's coming up um okay another five seconds here um okay i'm gonna end this so make sure you
+
+113
+01:14:45,000 --> 01:15:59,000
+get your credit for the check-in okay so uh we're at the end of the hour um into the end of the night end of the 80 minutes anyway uh so this is what we did today um and looks like i ran over by a minute so my apologies and but i'll stick around here um if any of you have any further questions so but otherwise uh lecture is over uh see you guys do we know anything about ladder for other kinds of languages i i don't know um uh interesting question whether you can say uh some nice things about the
+
+114
+01:15:28,000 --> 01:17:07,000
+latter um the latter um problem in other in other cases i don't know okay why is t here this value of t sigma to the m the maximum length of a um of a word letter so what did what first of all we have to m maybe i should have written this down m is the the the length of the words uh sigma is the alphabet of the words um so the number of possible different words is sigma to the m these are all possible words that there could possibly be so uh there's no reason in a word like or ever to repeat the word because you
+
+115
+01:16:17,000 --> 01:17:46,000
+can just find a shorter word ladder that still does the job of connecting to connecting a start in the end so you can just cut out that middle part um the repeated part so in that case the longest possible word letter is going to be the total number of possible words that you can have which is going to be sigma the size of sigma to the m explain again why cohen p is a subset of p space um well maybe i'll say it this way take the why is why is every co np language also in pd space well take the complement of your co-mp
+
+116
+01:17:03,000 --> 01:18:19,000
+language that's an np language an np language is in p space because we proved that that's what we proved um uh but if a language is in p space its complement is also in p space because for a deterministic procedure you can just flip the answer of the machine um so now you get you know if so if b language b is in cohen p its complement b b complement is an np which is in p space but now so b complement is in p space so now p space you can invert the answer and now b is also in p space i hope that
+
+117
+01:17:41,000 --> 01:18:49,000
+helps um somebody's giving me the answer to get from uh uh must to vote but you know i i i've seen an answer and that's you know there are online tools that will answer word letters um so you just plug in the two you know where the start and the finish and it'll give you the word ladder and then the one that this person is sent me is the one you get from that that tool so i suspect it didn't find it himself i i actually uh before lecture i actually saw that on my own besides the
+
+118
+01:18:15,000 --> 01:19:38,000
+one that i know the one that the one that the tool will give you so that tool gives one in uh i think five steps and i found one on my own of six steps it's not that hard but yeah must most lost lose rose wrote and vote i think maybe that's seven steps um anyway you see you can solve the for short words you can solve these generally pretty quickly on your own um what else what else can i do for you um do we need to worry about coming back to a previously visited word visited word on the construction on this page
+
+119
+01:19:00,000 --> 01:20:17,000
+no we don't have to worry about coming back to a previously visited word all you need to worry about is making sure that you bound how long you're going to go for and that's where the previously visited issue comes in you know if the um [Music] if the word letter that you found repeats some word well then there would would have been a shorter word ladder that would have also worked but uh you know it still shows that it's possible to get from the uh the start word to the finish word um
+
+120
+01:19:38,000 --> 01:20:21,000
+if you if you're if you have a repeated one in between so that that doesn't matter we don't have to worry about that if you did then it would be a problem so i think i will it's four or five i think i want to head out uh see you all guys and i'm going to join my tas in the meeting shortly so bye-bye thank you for being here you
+
