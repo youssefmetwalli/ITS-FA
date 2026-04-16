@@ -10,7 +10,6 @@
     const summaryContent = document.getElementById("video-summary-content");
     const transcriptStatusText = document.getElementById("transcript-status-text");
     const transcriptStatusPill = document.getElementById("transcript-status-pill");
-    const transcriptPreview = document.getElementById("transcript-preview");
     const refreshTranscriptButton = document.getElementById("refresh-transcript-button");
 
     const checkpointModal = document.getElementById("checkpoint-modal");
@@ -24,7 +23,7 @@
     let progressInterval = null;
     let activeCheckpoint = null;
     let lastProgressSyncSecond = 0;
-    let summaryRequested = Boolean(progress.summary_shown || summaryContent.querySelector(".summary-grid"));
+    let summaryRequested = Boolean(progress.summary_shown || (summaryContent && summaryContent.querySelector(".summary-grid")));
 
     function escapeHtml(value) {
         return String(value || "")
@@ -52,6 +51,7 @@
         }
         if (transcriptStatusPill) {
             transcriptStatusPill.textContent = available ? "Transcript ready" : "Transcript pending";
+            transcriptStatusPill.title = message || "";
         }
     }
 
@@ -285,9 +285,6 @@
                 .then((response) => response.json())
                 .then((payload) => {
                     setTranscriptStatus(payload.message || "Transcript status updated.", Boolean(payload.transcript_available));
-                    if (payload.transcript_preview && transcriptPreview) {
-                        transcriptPreview.textContent = payload.transcript_preview;
-                    }
                 })
                 .catch(() => {
                     setTranscriptStatus("Transcript refresh failed.", false);
