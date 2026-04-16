@@ -7,32 +7,6 @@ from typing import Any
 
 
 DEFAULT_SECTION_VIDEOS: dict[str, list[dict[str, Any]]] = {
-    "introduction": [
-        {
-            "id": "intro_video_01",
-            "section_key": "introduction",
-            "title": "Introduction to Theory of Computation",
-            "url": "",
-            "description": "TODO: Replace this placeholder with your introductory section video.",
-            "youtube_video_id": "",
-            "transcript_text": "",
-            "generated_summary": None,
-            "checkpoint_questions": [
-                {
-                    "timestamp_seconds": 60,
-                    "question": "What is the main goal of studying models of computation?",
-                    "options": [
-                        "To avoid formal reasoning",
-                        "To understand what problems machines can solve",
-                        "To replace all programming languages",
-                        "To remove the need for algorithms",
-                    ],
-                    "correct_answer": "To understand what problems machines can solve",
-                    "explanation": "Theory of computation studies formal models and the limits of computation.",
-                }
-            ],
-        }
-    ],
     "fsm_regular": [
         {
             "id": "fsm_video_01",
@@ -159,32 +133,6 @@ DEFAULT_SECTION_VIDEOS: dict[str, list[dict[str, Any]]] = {
                     ],
                     "correct_answer": "They justify claims rigorously",
                     "explanation": "Formal proofs are what make theoretical claims precise and defensible.",
-                }
-            ],
-        }
-    ],
-    "applications": [
-        {
-            "id": "applications_video_01",
-            "section_key": "applications",
-            "title": "Applications of Automata Theory",
-            "url": "",
-            "description": "TODO: Replace this placeholder with an applications section video.",
-            "youtube_video_id": "",
-            "transcript_text": "",
-            "generated_summary": None,
-            "checkpoint_questions": [
-                {
-                    "timestamp_seconds": 70,
-                    "question": "Why do applications matter in an automata course?",
-                    "options": [
-                        "They show where abstract models are used in practice",
-                        "They prove all machines are equivalent",
-                        "They remove the need for definitions",
-                        "They only matter for hardware design",
-                    ],
-                    "correct_answer": "They show where abstract models are used in practice",
-                    "explanation": "Applications connect formal models to compilers, verification, parsing, security, and more.",
                 }
             ],
         }
