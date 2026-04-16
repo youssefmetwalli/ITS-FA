@@ -354,33 +354,96 @@
 
         .checkpoint-card {
             width: min(94vw, 680px);
-            background: white;
-            border-radius: 20px;
-            padding: 24px;
-            box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 251, 255, 0.96));
+            border: 1px solid rgba(183, 215, 234, 0.42);
+            border-radius: 24px;
+            padding: 26px;
+            box-shadow: 0 22px 56px rgba(0, 0, 0, 0.26);
+        }
+
+        .checkpoint-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 8px;
+        }
+
+        .checkpoint-header h3 {
+            margin: 0;
+            color: #133452;
+            letter-spacing: -0.03em;
+            font-size: 1.65rem;
+        }
+
+        .checkpoint-time {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, rgba(216, 240, 255, 0.96), rgba(231, 249, 241, 0.92));
+            border: 1px solid rgba(151, 205, 231, 0.44);
+            color: #244660;
+            font-size: 0.84rem;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .checkpoint-prompt {
+            color: #476178;
+            line-height: 1.6;
+            margin: 0 0 16px 0;
         }
 
         .checkpoint-options {
             display: grid;
-            gap: 10px;
+            gap: 12px;
             margin: 18px 0;
         }
 
         .checkpoint-option {
             display: flex;
-            gap: 10px;
-            align-items: flex-start;
-            border-radius: 14px;
-            border: 1px solid rgba(56, 107, 147, 0.16);
-            padding: 12px 14px;
-            background: #f8fbfd;
+            gap: 12px;
+            align-items: center;
+            border-radius: 18px;
+            border: 1px solid rgba(56, 107, 147, 0.14);
+            padding: 15px 16px;
+            background: linear-gradient(180deg, rgba(248, 251, 253, 0.96), rgba(242, 248, 252, 0.92));
+            transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease, background 0.18s ease;
+            cursor: pointer;
+        }
+
+        .checkpoint-option:hover {
+            transform: translateY(-1px);
+            border-color: rgba(69, 136, 181, 0.26);
+            box-shadow: 0 10px 20px rgba(15, 65, 98, 0.08);
+        }
+
+        .checkpoint-option input {
+            margin: 0;
+            accent-color: #3f9fe1;
+        }
+
+        .checkpoint-option.is-selected {
+            border-color: rgba(58, 145, 197, 0.42);
+            background: linear-gradient(135deg, rgba(221, 242, 255, 0.98), rgba(235, 249, 244, 0.94));
+            box-shadow: 0 12px 24px rgba(31, 101, 143, 0.12);
+        }
+
+        .checkpoint-option-label {
+            display: block;
+            font-size: 1.02rem;
+            font-weight: 700;
+            color: #173654;
         }
 
         .checkpoint-feedback {
             display: none;
             margin-top: 12px;
-            padding: 14px;
-            border-radius: 14px;
+            padding: 14px 16px;
+            border-radius: 16px;
+            line-height: 1.6;
         }
 
         .checkpoint-feedback.show {
@@ -534,7 +597,11 @@
 
     <div id="checkpoint-modal" class="checkpoint-modal" aria-hidden="true">
         <div class="checkpoint-card">
-            <h3 id="checkpoint-title">Checkpoint Question</h3>
+            <div class="checkpoint-header">
+                <h3 id="checkpoint-title">Quick Check</h3>
+                <span id="checkpoint-time" class="checkpoint-time">Checkpoint</span>
+            </div>
+            <p class="checkpoint-prompt">Answer before continuing the video.</p>
             <p id="checkpoint-question-text"></p>
             <div id="checkpoint-options" class="checkpoint-options"></div>
             <div id="checkpoint-feedback" class="checkpoint-feedback"></div>
