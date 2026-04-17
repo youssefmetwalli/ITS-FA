@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ module.title }}</title>
     <link rel="stylesheet" href="/static/css/styles.css">
+    <script src="{{ url_for('static', filename='js/gamification.js') }}"></script>
     <style>
         .subchapter-item {
             background-color: #f9f9f9;
@@ -127,8 +128,14 @@
               }
             })
             .then(response => {
-              if (response.ok) {
+              return response.json().then(payload => ({ ok: response.ok, payload }));
+            })
+            .then(({ ok, payload }) => {
+              if (ok) {
                 console.log("Chapter read count incremented");
+                if (payload && payload.gamification_feedback) {
+                  window.showGamificationFeedback(payload.gamification_feedback);
+                }
               } else {
                 console.log("Failed to increment read count");
               }
