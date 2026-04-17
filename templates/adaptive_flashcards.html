@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Adaptive Flashcards</title>
     <link rel="stylesheet" href="/static/css/styles.css">
+    <script src="{{ url_for('static', filename='js/gamification.js') }}" defer></script>
     <style>
         .flashcards-shell {
             max-width: 1100px;
@@ -308,6 +309,8 @@
         <a class="button" href="{{ url_for('index') }}">Home</a>
         <a class="button" href="{{ url_for('course_page') }}">Course</a>
         <a class="button" href="{{ url_for('chat') }}">Chat</a>
+        <span class="button" style="pointer-events:none;">Level {{ dashboard.header_summary.level }}</span>
+        <span class="button" style="pointer-events:none;">{{ dashboard.header_summary.xp_total }} XP</span>
     </div>
 
     <div class="flashcards-shell">
@@ -514,6 +517,9 @@
             pendingNextFlashcard = payload.next_flashcard;
             chapterCompleted = Boolean(payload.path_completed);
             updateOverview(payload);
+            if (payload.gamification_feedback) {
+                window.showGamificationFeedback(payload.gamification_feedback);
+            }
             nextButton.style.display = 'inline-flex';
         }
 
