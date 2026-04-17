@@ -90,7 +90,15 @@
                 duration_seconds: durationSeconds,
                 ...extraPayload,
             }),
-        }).catch(() => null);
+        })
+            .then((response) => response.json())
+            .then((payload) => {
+                if (payload && payload.gamification_feedback && window.showGamificationFeedback) {
+                    window.showGamificationFeedback(payload.gamification_feedback);
+                }
+                return payload;
+            })
+            .catch(() => null);
     }
 
     function requestSummary() {
@@ -107,6 +115,9 @@
             .then((payload) => {
                 if (payload.summary) {
                     renderSummary(payload.summary);
+                    if (payload.gamification_feedback && window.showGamificationFeedback) {
+                        window.showGamificationFeedback(payload.gamification_feedback);
+                    }
                     postProgress({ completed: true, summary_shown: true });
                 } else if (summaryContent && payload.message) {
                     summaryContent.innerHTML = `<p class="summary-placeholder">${escapeHtml(payload.message)}</p>`;
