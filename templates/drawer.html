@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>FSM Drawer</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}" />
+    <script src="{{ url_for('static', filename='js/gamification.js') }}"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
         integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
         crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -270,6 +271,8 @@
         <a class="button" href="{{ url_for('index') }}">Home</a>
         <a class="button" href="{{ url_for('course_page') }}">Course</a>
         <a class="button" href="/chat">Chat</a>
+        <span class="button" style="pointer-events:none;">Level {{ dashboard.header_summary.level }}</span>
+        <span class="button" style="pointer-events:none;">{{ dashboard.header_summary.xp_total }} XP</span>
     </div>
 
     <!-- MODERN TOGGLE CONTAINER -->
@@ -917,6 +920,9 @@
                         const data = await response.json();
                         const firstLine = data.result.split('\n')[0].trim();
                         resultDiv.textContent = data.result;
+                        if (data.gamification_feedback) {
+                            window.showGamificationFeedback(data.gamification_feedback);
+                        }
                         if (firstLine.toLowerCase() === 'correct') {
                             resultDiv.style.color = '#28a745';
                             resultDiv.style.borderColor = '#28a745';
@@ -969,6 +975,9 @@
                         const data = await response.json();
                         const firstLine = (data.result || '').split('\n')[0].trim();
                         resultDiv.textContent = data.result || 'No response.';
+                        if (data.gamification_feedback) {
+                            window.showGamificationFeedback(data.gamification_feedback);
+                        }
                         if (firstLine.toLowerCase() === 'correct') {
                             resultDiv.style.color = '#28a745';
                             resultDiv.style.borderColor = '#28a745';
