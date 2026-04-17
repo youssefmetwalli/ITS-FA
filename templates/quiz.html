@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <title>Quiz</title>
     <link rel="stylesheet" href="/static/css/styles.css">
+    <script src="{{ url_for('static', filename='js/gamification.js') }}" defer></script>
 
     <style>
         /* Styles for quiz container and items */
@@ -399,8 +400,11 @@
                     }
                     return response.json();
                 })
-                .then(data => {
+        .then(data => {
                     console.log('Quiz result saved:', data);
+                    if (data.gamification_feedback) {
+                        window.showGamificationFeedback(data.gamification_feedback);
+                    }
                     renderQuizResult(score, questionItems.length, data.recommended_videos || []);
                 })
                 .catch(error => {
@@ -439,6 +443,8 @@
                 Submit Quiz
             </button>
             <a class="quiz-button" href="javascript:history.back()">Back</a>
+            <span class="quiz-button" style="cursor:default; background: linear-gradient(45deg, #d9f4ff, #bfe7ff); color:#153652;">Level {{ dashboard.header_summary.level }}</span>
+            <span class="quiz-button" style="cursor:default; background: linear-gradient(45deg, #d9f4ff, #bfe7ff); color:#153652;">{{ dashboard.header_summary.xp_total }} XP</span>
         </div>
     </div>
 
