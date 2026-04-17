@@ -16,6 +16,11 @@ import random
 import traceback
 import google.generativeai as genai
 from services.chat_state_service import ChatStateService
+from services.gamification_service import (
+    GamificationService,
+    RewardEvent,
+    default_gamification_state,
+)
 from services.adaptive_flashcard_service import (
     LEVELS,
     answer_flashcard,
@@ -81,6 +86,7 @@ retrieval_service = RetrievalService()
 video_retrieval_service = VideoRetrievalService()
 video_summary_service = VideoSummaryService()
 chat_state_service = ChatStateService()
+gamification_service = GamificationService(db)
 explainer_agent = ExplainerAgent(retrieval_service)
 examiner_agent = ExaminerAgent()
 diagnoser_agent = DiagnoserAgent(retrieval_service)
@@ -138,6 +144,19 @@ def _merge_video_progress(video_id: str, updates: dict) -> dict:
     _save_video_learning_progress(progress)
     return current
 
+
+def _build_gamification_feedback(user_data: dict | None = None) -> dict:
+    return gamification_service.build_dashboard_payload(user_data or {})
+
+
+def _current_user_dashboard_payload() -> dict:
+    user_id = session.get("user_id")
+    if not user_id:
+        return gamification_service.build_dashboard_payload({})
+    user_doc = db.collection("Users").document(user_id).get()
+    user_data = user_doc.to_dict() if user_doc.exists else {}
+    return gamification_service.build_dashboard_payload(user_data)
+
 # Routes
 @app.route("/")
 def index():
@@ -150,12 +169,14 @@ def index():
     chapters_read = user_data.get("chapters_read", 0)
     quizzes_attempted = user_data.get("quizzes_attempted", 0)
     quizzes_completed = user_data.get("quizzes_completed", 0)
+    dashboard = gamification_service.build_dashboard_payload(user_data)
 
     return render_template(
         "home.html",
         chapters_read=chapters_read,
         quizzes_attempted=quizzes_attempted,
-        quizzes_completed=quizzes_completed
+        quizzes_completed=quizzes_completed,
+        dashboard=dashboard,
     )
 
 @app.route("/login", methods=["GET", "POST"])
@@ -193,7 +214,8 @@ def login():
                     "read_chapters": [],
                     "quizzes_attempted": 0,
                     "quizzes_completed": 0,
-                    "answers": {}
+                    "answers": {},
+                    "gamification": default_gamification_state(),
                 })
             
             return redirect(url_for("index"))
@@ -349,23 +371,45 @@ def increment_chapter_read(chapter_id):
 
     try:
         user_doc = user_ref.get()
+        reward_result = None
         if user_doc.exists:
             user_data = user_doc.to_dict()
-            current_count = user_data.get('chapters_read', 0)
-            user_ref.update({'chapters_read': current_count + 1})
             read_chapters = user_data.get('read_chapters', [])
-
             if chapter_id not in read_chapters:
+                current_count = user_data.get('chapters_read', 0)
+                user_ref.update({'chapters_read': current_count + 1})
                 read_chapters.append(chapter_id)
                 user_ref.update({"read_chapters": read_chapters})
+                reward_result = gamification_service.award_event_xp(
+                    user_id,
+                    "chapter_completed",
+                    f"chapter:{chapter_id}:completed",
+                    {"chapter_id": chapter_id},
+                )
 
         else:
             user_ref.set({
                 'chapters_read': 1,
-                'read_chapters': [chapter_id]
+                'read_chapters': [chapter_id],
+                'gamification': default_gamification_state(),
             }, merge=True)
+            reward_result = gamification_service.award_event_xp(
+                user_id,
+                "chapter_completed",
+                f"chapter:{chapter_id}:completed",
+                {"chapter_id": chapter_id},
+            )
 
-        return jsonify({"message": "Chapter read count incremented"}), 200
+        return jsonify(
+            {
+                "message": "Chapter read count updated",
+                "gamification_feedback": reward_result or {
+                    "xp_gained": 0,
+                    "feedback_items": [],
+                    "dashboard_payload": _current_user_dashboard_payload(),
+                },
+            }
+        ), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -416,6 +460,7 @@ def course_page():
     read_chapters = user_data.get("read_chapters", [])
     adaptive_progress = user_data.get("adaptive_flashcard_progress", {})
     adaptive_section_progress = user_data.get("adaptive_flashcard_section_progress", {})
+    dashboard = gamification_service.build_dashboard_payload(user_data)
     chapters_ref = db.collection("chapters")
     chapters = []
 
@@ -448,6 +493,7 @@ def course_page():
         read_chapters=read_chapters,
         section_flashcard_meta=section_flashcard_meta,
         section_video_meta=section_video_meta,
+        dashboard=dashboard,
     )
 
 
@@ -472,7 +518,10 @@ def module_detail(module_id):
         subchapters.append(subchapter)
 
     return render_template(
-        "module_detail.html", module=chapter_data, subchapters=subchapters
+        "module_detail.html",
+        module=chapter_data,
+        subchapters=subchapters,
+        dashboard=_current_user_dashboard_payload(),
     )
 
 
@@ -543,6 +592,7 @@ def video_learning_page(video_id):
         progress_endpoint=url_for("video_progress_api", video_id=video_id),
         summary_endpoint=url_for("video_summary_api", video_id=video_id),
         transcript_refresh_endpoint=url_for("video_transcript_refresh_api", video_id=video_id),
+        dashboard=_current_user_dashboard_payload(),
     )
 
 
@@ -619,12 +669,28 @@ def video_summary_api(video_id):
     summary_payload, error_message = video_summary_service.load_or_generate_summary(db, video_record)
     if summary_payload:
         progress = _merge_video_progress(video_id, {"summary_shown": True})
+        reward_result = None
+        if progress.get("completed") or progress.get("watched_percentage", 0.0) >= 85.0:
+            reward_result = gamification_service.award_event_xp(
+                session["user_id"],
+                "video_summary_opened",
+                f"video:{video_id}:summary_opened",
+                {
+                    "video_id": video_id,
+                    "video_title": video_record.get("title", video_id),
+                },
+            )
         return jsonify(
             {
                 "summary": summary_payload,
                 "selected_video_id": video_id,
                 "summary_shown": progress["summary_shown"],
                 "message": "Summary ready.",
+                "gamification_feedback": reward_result or {
+                    "xp_gained": 0,
+                    "feedback_items": [],
+                    "dashboard_payload": _current_user_dashboard_payload(),
+                },
             }
         )
 
@@ -673,7 +739,40 @@ def video_progress_api(video_id):
             "summary_shown": bool(request_data.get("summary_shown", current_progress["summary_shown"])),
         },
     )
-    return jsonify({"progress": updated_progress, "selected_video_id": video_id})
+    reward_events: list[RewardEvent] = []
+    if checkpoint_id:
+        reward_events.append(
+            RewardEvent(
+                "video_checkpoint_answered",
+                f"video:{video_id}:checkpoint:{checkpoint_id}",
+                {"video_id": video_id},
+            )
+        )
+    completed_now = bool(updated_progress.get("completed")) or updated_progress.get("watched_percentage", 0.0) >= 85.0
+    if completed_now:
+        video_record = get_video_by_id(db, video_id) or {"id": video_id, "title": video_id}
+        reward_events.append(
+            RewardEvent(
+                "video_completed",
+                f"video:{video_id}:completed",
+                {
+                    "video_id": video_id,
+                    "video_title": video_record.get("title", video_id),
+                },
+            )
+        )
+    reward_result = gamification_service.apply_events(session["user_id"], reward_events) if reward_events else None
+    return jsonify(
+        {
+            "progress": updated_progress,
+            "selected_video_id": video_id,
+            "gamification_feedback": reward_result or {
+                "xp_gained": 0,
+                "feedback_items": [],
+                "dashboard_payload": _current_user_dashboard_payload(),
+            },
+        }
+    )
 
 
     
@@ -699,7 +798,8 @@ def quiz_page(chapter_id):
         incorrect_answers=incorrect_answers,
         hints=hints,
         question_concepts=question_concepts,
-        zip=zip 
+        zip=zip,
+        dashboard=_current_user_dashboard_payload(),
     )
 
 
@@ -748,6 +848,24 @@ def quiz_result():
             len(recommended_videos),
         )
 
+        reward_events: list[RewardEvent] = []
+        if normalized_chapter_id is not None:
+            reward_events.append(
+                RewardEvent(
+                    "quiz_attempted",
+                    f"quiz:{normalized_chapter_id}:attempted",
+                    {"chapter_id": normalized_chapter_id},
+                )
+            )
+            if score == total and total:
+                reward_events.append(
+                    RewardEvent(
+                        "quiz_perfect",
+                        f"quiz:{normalized_chapter_id}:perfect",
+                        {"chapter_id": normalized_chapter_id},
+                    )
+                )
+
         user_doc = user_ref.get()
         if user_doc.exists:
             user_data = user_doc.to_dict()
@@ -758,12 +876,19 @@ def quiz_result():
                 current_completed = user_data.get('quizzes_completed', 0)
                 user_ref.update({'quizzes_completed': current_completed + 1})
 
+            reward_result = gamification_service.apply_events(user_id, reward_events) if reward_events else None
+
             return jsonify(
                 {
                     "message": "Quiz result recorded",
                     "score": score,
                     "total": total,
                     "recommended_videos": recommended_videos,
+                    "gamification_feedback": reward_result or {
+                        "xp_gained": 0,
+                        "feedback_items": [],
+                        "dashboard_payload": gamification_service.build_dashboard_payload(user_data),
+                    },
                 }
             ), 200
         else:
@@ -771,15 +896,22 @@ def quiz_result():
             # e.g. if user somehow wasn't created in signup
             new_data = {
                 'quizzes_attempted': 1, 
-                'quizzes_completed': 1 if score == total else 0
+                'quizzes_completed': 1 if score == total else 0,
+                'gamification': default_gamification_state(),
             }
             user_ref.set(new_data, merge=True)
+            reward_result = gamification_service.apply_events(user_id, reward_events) if reward_events else None
             return jsonify(
                 {
                     "message": "User doc created and quiz result recorded",
                     "score": score,
                     "total": total,
                     "recommended_videos": recommended_videos,
+                    "gamification_feedback": reward_result or {
+                        "xp_gained": 0,
+                        "feedback_items": [],
+                        "dashboard_payload": _current_user_dashboard_payload(),
+                    },
                 }
             ), 200
 
@@ -998,6 +1130,7 @@ def adaptive_flashcards_page(chapter_id):
     page_context = _build_flashcard_page_context(chapter_id)
     if isinstance(page_context, tuple):
         return page_context
+    page_context["dashboard"] = _current_user_dashboard_payload()
     return render_template("adaptive_flashcards.html", **page_context)
 
 
@@ -1006,6 +1139,7 @@ def adaptive_flashcards_section_page(section_key):
     page_context = _build_flashcard_section_page_context(section_key)
     if isinstance(page_context, tuple):
         return page_context
+    page_context["dashboard"] = _current_user_dashboard_payload()
     return render_template("adaptive_flashcards.html", **page_context)
 
 
@@ -1028,6 +1162,11 @@ def adaptive_flashcards_answer(chapter_id):
     if flashcards_by_level is None or chapter_progress is None:
         return jsonify({"error": error_state or "Flashcards unavailable"}), 400
 
+    answered_level = chapter_progress["current_level"]
+    answered_flashcard = next(
+        (card for card in flashcards_by_level.get(answered_level, []) if card["id"] == flashcard_id),
+        None,
+    )
     try:
         updated_progress, answer_result = answer_flashcard(
             flashcards_by_level,
@@ -1041,6 +1180,42 @@ def adaptive_flashcards_answer(chapter_id):
     user_doc = user_ref.get()
     user_data = user_doc.to_dict() if user_doc.exists else {}
     user_ref.set(build_progress_update_payload(user_data, chapter_id, updated_progress), merge=True)
+
+    reward_events: list[RewardEvent] = []
+    if answer_result.is_correct:
+        reward_events.append(
+            RewardEvent(
+                "flashcard_correct",
+                f"flashcard:chapter:{chapter_id}:{flashcard_id}:correct",
+                {
+                    "chapter_id": chapter_id,
+                    "concept": (answered_flashcard or {}).get("concept", ""),
+                },
+            )
+        )
+    if answer_result.level_completed:
+        reward_events.append(
+            RewardEvent(
+                "flashcard_level_completed",
+                f"flashcard:chapter:{chapter_id}:level:{answered_level}:completed",
+                {
+                    "chapter_id": chapter_id,
+                    "level": answered_level,
+                },
+            )
+        )
+    if answer_result.path_completed:
+        reward_events.append(
+            RewardEvent(
+                "flashcard_path_completed",
+                f"flashcard:chapter:{chapter_id}:path:completed",
+                {
+                    "chapter_id": chapter_id,
+                    "entity_title": chapter_data.get("title", f"Chapter {chapter_id}"),
+                },
+            )
+        )
+    reward_result = gamification_service.apply_events(session["user_id"], reward_events) if reward_events else None
 
     current_level = updated_progress["current_level"]
     next_flashcard = choose_next_flashcard(flashcards_by_level, updated_progress)
@@ -1061,6 +1236,11 @@ def adaptive_flashcards_answer(chapter_id):
             "next_flashcard": next_flashcard,
             "chapter_title": chapter_data.get("title", f"Chapter {chapter_id}"),
             "chapter_id": chapter_id,
+            "gamification_feedback": reward_result or {
+                "xp_gained": 0,
+                "feedback_items": [],
+                "dashboard_payload": gamification_service.build_dashboard_payload(user_data),
+            },
         }
     )
 
@@ -1084,6 +1264,11 @@ def adaptive_flashcards_section_answer(section_key):
     if flashcards_by_level is None or section_progress is None:
         return jsonify({"error": error_state or "Section flashcards unavailable"}), 400
 
+    answered_level = section_progress["current_level"]
+    answered_flashcard = next(
+        (card for card in flashcards_by_level.get(answered_level, []) if card["id"] == flashcard_id),
+        None,
+    )
     try:
         updated_progress, answer_result = answer_flashcard(
             flashcards_by_level,
@@ -1099,6 +1284,42 @@ def adaptive_flashcards_section_answer(section_key):
     adaptive_section_progress = user_data.get("adaptive_flashcard_section_progress", {})
     adaptive_section_progress[section_key] = updated_progress
     user_ref.set({"adaptive_flashcard_section_progress": adaptive_section_progress}, merge=True)
+
+    reward_events: list[RewardEvent] = []
+    if answer_result.is_correct:
+        reward_events.append(
+            RewardEvent(
+                "flashcard_correct",
+                f"flashcard:section:{section_key}:{flashcard_id}:correct",
+                {
+                    "section_key": section_key,
+                    "concept": (answered_flashcard or {}).get("concept", ""),
+                },
+            )
+        )
+    if answer_result.level_completed:
+        reward_events.append(
+            RewardEvent(
+                "flashcard_level_completed",
+                f"flashcard:section:{section_key}:level:{answered_level}:completed",
+                {
+                    "section_key": section_key,
+                    "level": answered_level,
+                },
+            )
+        )
+    if answer_result.path_completed:
+        reward_events.append(
+            RewardEvent(
+                "flashcard_path_completed",
+                f"flashcard:section:{section_key}:path:completed",
+                {
+                    "section_key": section_key,
+                    "entity_title": section_config["title"],
+                },
+            )
+        )
+    reward_result = gamification_service.apply_events(session["user_id"], reward_events) if reward_events else None
 
     current_level = updated_progress["current_level"]
     next_flashcard = choose_next_flashcard(flashcards_by_level, updated_progress)
@@ -1119,6 +1340,11 @@ def adaptive_flashcards_section_answer(section_key):
             "next_flashcard": next_flashcard,
             "chapter_title": section_config["title"],
             "chapter_id": section_key,
+            "gamification_feedback": reward_result or {
+                "xp_gained": 0,
+                "feedback_items": [],
+                "dashboard_payload": gamification_service.build_dashboard_payload(user_data),
+            },
         }
     )
 
@@ -1154,7 +1380,7 @@ def adaptive_flashcards_section_reset(section_key):
 
 @app.route("/chat")
 def chat():
-    return render_template("chat.html")
+    return render_template("chat.html", dashboard=_current_user_dashboard_payload())
 
 
 @app.route("/chat_api", methods=["POST"])
@@ -1166,6 +1392,8 @@ def chat_api():
 
     try:
         chat_state = chat_state_service.load_state()
+        had_active_question = chat_state.active_question is not None
+        active_question_before = chat_state.active_question
         logging.info(
             "Chat request received: message='%s' active_question=%s recent_agent=%s",
             user_message,
@@ -1175,6 +1403,18 @@ def chat_api():
 
         payload, updated_state = chat_orchestrator.handle_message(user_message, chat_state)
         chat_state_service.save_state(updated_state)
+        reward_result = None
+        if payload.get("agent_used") == "diagnoser" and had_active_question and active_question_before is not None:
+            topic = ", ".join(active_question_before.concept_tags) or active_question_before.prompt
+            reward_result = gamification_service.award_event_xp(
+                session["user_id"],
+                "chat_question_answered",
+                f"chat:question:{active_question_before.question_id}:answered",
+                {
+                    "question_id": active_question_before.question_id,
+                    "topic": topic[:120],
+                },
+            )
 
         logging.info("Received message: %s", user_message)
         logging.info(
@@ -1183,6 +1423,8 @@ def chat_api():
             payload.get("concepts_touched"),
             payload.get("has_active_question"),
         )
+        if reward_result:
+            payload["gamification_feedback"] = reward_result
         return jsonify(payload)
     except Exception:
         logging.error("Multi-agent chat error:\n%s", traceback.format_exc())
@@ -1312,10 +1554,10 @@ def drawer():
 
     if mode == 'fsm-to-regex':
         initial_fsm = _generate_fsm()
-        return render_template("drawer.html", mode=mode, fsm=initial_fsm)
+        return render_template("drawer.html", mode=mode, fsm=initial_fsm, dashboard=_current_user_dashboard_payload())
     else:
         initial_regex = _generate_regex()
-        return render_template("drawer.html", mode=mode, regex=initial_regex)
+        return render_template("drawer.html", mode=mode, regex=initial_regex, dashboard=_current_user_dashboard_payload())
 
 def _generate_fsm():
     """Generate a random simple FSM that can be converted to regex, with varied logic and states."""
@@ -1541,7 +1783,27 @@ Your task is to determine if a given regular expression correctly describes the 
     try:
         logging.info("Sending regex check request to Gemini.")
         response = model.generate_content(prompt)
-        return jsonify({"result": response.text})
+        response_text = response.text or ""
+        first_line = response_text.splitlines()[0].strip().lower() if response_text else ""
+        reward_result = None
+        if first_line == "correct" and session.get("user_id"):
+            challenge_payload = json.dumps(fsm, sort_keys=True)
+            reward_result = gamification_service.award_event_xp(
+                session["user_id"],
+                "regex_practice_completed",
+                gamification_service.challenge_key("regex", challenge_payload),
+                {"challenge_type": "fsm_to_regex"},
+            )
+        return jsonify(
+            {
+                "result": response_text,
+                "gamification_feedback": reward_result or {
+                    "xp_gained": 0,
+                    "feedback_items": [],
+                    "dashboard_payload": _current_user_dashboard_payload(),
+                },
+            }
+        )
     except Exception as e:
         logging.error(f"Error calling Gemini API for regex check: {e}")
         return jsonify({"error": "Failed to get analysis from the AI model."}), 500
@@ -1580,7 +1842,26 @@ Your task is to determine if the student's FSM accepts exactly the same language
     try:
         logging.info("Sending FSM check request to Gemini.")
         response = model.generate_content(prompt)
-        return jsonify({"result": response.text})
+        response_text = response.text or ""
+        first_line = response_text.splitlines()[0].strip().lower() if response_text else ""
+        reward_result = None
+        if first_line == "correct" and session.get("user_id"):
+            reward_result = gamification_service.award_event_xp(
+                session["user_id"],
+                "fsm_practice_completed",
+                gamification_service.challenge_key("fsm", str(regex)),
+                {"challenge_type": "regex_to_fsm", "regex": regex},
+            )
+        return jsonify(
+            {
+                "result": response_text,
+                "gamification_feedback": reward_result or {
+                    "xp_gained": 0,
+                    "feedback_items": [],
+                    "dashboard_payload": _current_user_dashboard_payload(),
+                },
+            }
+        )
     except Exception as e:
         logging.error(f"Error calling Gemini API for FSM check: {e}")
         return jsonify({"error": "Failed to get analysis from the AI model."}), 500
