@@ -234,6 +234,8 @@
         <a class="button" href="{{ url_for('index') }}">Home</a>
         <a class="button" href="/chat">Chat</a>
         <a class="button" href="/drawer">Practice</a>
+        <span class="button" style="pointer-events:none;">Level {{ dashboard.header_summary.level }}</span>
+        <span class="button" style="pointer-events:none;">{{ dashboard.header_summary.xp_total }} XP</span>
     </div>
 
     <div class="info-container">
