@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ video.title }} | Video Learning</title>
     <link rel="stylesheet" href="/static/css/styles.css">
+    <script src="{{ url_for('static', filename='js/gamification.js') }}" defer></script>
     <style>
         .video-page-shell {
             width: min(95vw, 1500px);
@@ -483,6 +484,8 @@
         <h1>Video Learning</h1>
         <a class="button" href="{{ url_for('index') }}">Home</a>
         <a class="button" href="{{ url_for('course_page') }}">Course</a>
+        <span class="button" style="pointer-events:none;">Level {{ dashboard.header_summary.level }}</span>
+        <span class="button" style="pointer-events:none;">{{ dashboard.header_summary.xp_total }} XP</span>
     </div>
 
     <div class="video-page-shell">
