@@ -55,6 +55,15 @@
             margin-bottom: 25px;
         }
 
+        .availability-note {
+            display: block;
+            color: rgba(255, 255, 255, 0.78);
+            font-size: 0.9rem;
+            line-height: 1.45;
+            margin: -10px auto 25px;
+            max-width: 320px;
+        }
+
         /* 3. Input Fields */
         input {
             width: 100%;
@@ -171,6 +180,9 @@
     <div class="login-card">
         <h1>Automata ITS</h1>
         <p>Enter your access passkey to continue.</p>
+        <span class="availability-note">
+            Currently available exclusively for the FU08 Automata class at the University of Aizu.
+        </span>
 
         <form action="/login" method="POST">
             <!-- IMPORTANT: name matches app.py -->
