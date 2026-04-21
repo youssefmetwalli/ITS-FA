@@ -54,12 +54,28 @@ SECTION_LOOKUP = {config["key"]: config for config in SECTION_CONFIGS}
 SECTION_LEVEL_CARD_COUNT = 10
 
 load_dotenv()
-b64 = os.environ.get("GOOGLE_CREDS_B64")
-if not b64:
-    raise RuntimeError("Missing GOOGLE_CREDS_B64")
 
-creds_dict = json.loads(base64.b64decode(b64))
-initialize_app(credentials.Certificate(creds_dict))
+def _normalize_service_account_payload(payload):
+    normalized = dict(payload)
+    private_key = normalized.get("private_key")
+    if isinstance(private_key, str):
+        normalized["private_key"] = private_key.replace("\\n", "\n")
+    return normalized
+
+
+def _load_firebase_credentials():
+    creds_b64 = os.environ.get("GOOGLE_CREDS_B64")
+    if creds_b64:
+        return _normalize_service_account_payload(json.loads(base64.b64decode(creds_b64)))
+
+    creds_json = os.environ.get("GOOGLE_CREDENTIALS_JSON")
+    if creds_json:
+        return _normalize_service_account_payload(json.loads(creds_json))
+
+    raise RuntimeError("Missing Firebase credentials. Set GOOGLE_CREDS_B64 or GOOGLE_CREDENTIALS_JSON.")
+
+
+initialize_app(credentials.Certificate(_load_firebase_credentials()))
 db = firestore.client()
 genai.configure(api_key=os.environ.get("GOOGLE_API_KEY"))
 model = genai.GenerativeModel("gemini-2.5-flash-lite")
