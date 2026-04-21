@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from flask import Flask, render_template, redirect, url_for, abort, request, session, jsonify
 from dotenv import load_dotenv
 import os, base64
