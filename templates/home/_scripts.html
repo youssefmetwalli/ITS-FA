@@ -1,0 +1,149 @@
+<script>
+    (function () {
+        const CIRCUMFERENCE = 301.59;
+
+        document.querySelectorAll('.ring-meter').forEach(function (ring) {
+            const percent = Number(ring.dataset.percent || 0);
+            const offset = CIRCUMFERENCE - ((Math.max(0, Math.min(100, percent)) / 100) * CIRCUMFERENCE);
+            requestAnimationFrame(function () {
+                ring.style.strokeDashoffset = offset;
+            });
+        });
+
+        document.querySelectorAll('.xp-bar-fill').forEach(function (bar) {
+            const width = bar.dataset.width || '0%';
+            requestAnimationFrame(function () {
+                bar.style.width = width;
+            });
+        });
+
+        document.querySelectorAll('.tab-toggle button').forEach(function (button) {
+            button.addEventListener('click', function () {
+                const target = button.dataset.chartTarget;
+                document.querySelectorAll('.tab-toggle button').forEach(function (item) {
+                    item.classList.toggle('active', item === button);
+                });
+                document.querySelectorAll('.chart-card').forEach(function (card) {
+                    card.classList.toggle('active', card.id === target);
+                });
+            });
+        });
+
+        document.querySelectorAll('[data-momentum-escalator]').forEach(function (escalator) {
+            const source = Array.from(escalator.querySelectorAll('[data-momentum-source]')).map(function (node) {
+                return {
+                    label: node.dataset.label || '',
+                    detailTitle: node.dataset.detailTitle || 'Progress Signal',
+                    value: node.dataset.value || '0',
+                    detail: node.dataset.detail || '',
+                    title: node.dataset.title || '',
+                    bgStart: node.dataset.bgStart || '#f8fcff',
+                    bgEnd: node.dataset.bgEnd || '#f0f7fd',
+                    border: node.dataset.border || 'rgba(169, 208, 232, 0.34)',
+                    accent: node.dataset.accent || '#658096'
+                };
+            });
+
+            if (source.length === 0) {
+                return;
+            }
+
+            let topCard = escalator.querySelector('[data-momentum-slot="top"]');
+            let midCard = escalator.querySelector('[data-momentum-slot="mid"]');
+            let bottomCard = escalator.querySelector('[data-momentum-slot="bottom"]');
+            let incomingCard = escalator.querySelector('[data-momentum-slot="incoming"]');
+            let startIndex = 0;
+            let isAnimating = false;
+            let intervalId = null;
+
+            function applyItem(card, item) {
+                card.querySelector('[data-field="label"]').textContent = item.label;
+                card.querySelector('[data-field="detail-title"]').textContent = item.detailTitle;
+                card.querySelector('[data-field="value"]').textContent = item.value;
+                card.querySelector('[data-field="detail"]').textContent = item.detail;
+                card.title = item.title;
+                card.style.setProperty('--momentum-bg-start', item.bgStart);
+                card.style.setProperty('--momentum-bg-end', item.bgEnd);
+                card.style.setProperty('--momentum-border', item.border);
+                card.style.setProperty('--momentum-accent', item.accent);
+            }
+
+            function setSlot(card, slotName, disableTransition) {
+                card.classList.remove('slot-top', 'slot-mid', 'slot-bottom', 'slot-incoming', 'slot-out', 'no-transition');
+                card.classList.add('momentum-rail-card', 'slot-' + slotName);
+                if (disableTransition) {
+                    card.classList.add('no-transition');
+                }
+            }
+
+            function renderWindow(baseIndex, disableTransition) {
+                applyItem(topCard, source[baseIndex % source.length]);
+                applyItem(midCard, source[(baseIndex + 1) % source.length]);
+                applyItem(bottomCard, source[(baseIndex + 2) % source.length]);
+                applyItem(incomingCard, source[(baseIndex + 3) % source.length]);
+                setSlot(topCard, 'top', disableTransition);
+                setSlot(midCard, 'mid', disableTransition);
+                setSlot(bottomCard, 'bottom', disableTransition);
+                setSlot(incomingCard, 'incoming', disableTransition);
+            }
+
+            renderWindow(startIndex, true);
+            void escalator.offsetHeight;
+            [topCard, midCard, bottomCard, incomingCard].forEach(function (card) {
+                card.classList.remove('no-transition');
+            });
+
+            if (source.length <= 3) {
+                return;
+            }
+
+            function rotate() {
+                if (isAnimating) {
+                    return;
+                }
+
+                isAnimating = true;
+                setSlot(topCard, 'out', false);
+                setSlot(midCard, 'top', false);
+                setSlot(bottomCard, 'mid', false);
+                setSlot(incomingCard, 'bottom', false);
+
+                window.setTimeout(function () {
+                    startIndex = (startIndex + 1) % source.length;
+
+                    const outgoingCard = topCard;
+                    topCard = midCard;
+                    midCard = bottomCard;
+                    bottomCard = incomingCard;
+                    incomingCard = outgoingCard;
+
+                    renderWindow(startIndex, true);
+                    void escalator.offsetHeight;
+                    [topCard, midCard, bottomCard, incomingCard].forEach(function (card) {
+                        card.classList.remove('no-transition');
+                    });
+                    isAnimating = false;
+                }, 740);
+            }
+
+            function startRotation() {
+                if (intervalId) {
+                    return;
+                }
+                intervalId = window.setInterval(rotate, 4100);
+            }
+
+            function stopRotation() {
+                if (!intervalId) {
+                    return;
+                }
+                window.clearInterval(intervalId);
+                intervalId = null;
+            }
+
+            escalator.addEventListener('mouseenter', stopRotation);
+            escalator.addEventListener('mouseleave', startRotation);
+            startRotation();
+        });
+    })();
+</script>

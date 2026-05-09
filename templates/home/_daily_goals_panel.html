@@ -1,0 +1,21 @@
+<div class="panel reveal delay-4">
+    <div class="panel-head">
+        <div>
+            <span class="section-kicker">Daily Goals</span>
+            <h3>Today’s Study Targets</h3>
+        </div>
+    </div>
+    <div class="goals-list goals-ready">
+        {% for goal in dashboard.daily_goals %}
+        <div class="goal-item {% if goal.completed %}completed{% endif %}" title="{{ goal.label }}: {{ goal.current }} of {{ goal.target }}">
+            <div class="goal-head">
+                <strong>{{ goal.label }}</strong>
+                <small>{{ goal.current }}/{{ goal.target }}</small>
+            </div>
+            <div class="goal-bar">
+                <div class="goal-bar-fill" style="transform: scaleX({{ goal.progress_percent / 100 }});"></div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>

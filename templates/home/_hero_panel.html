@@ -1,0 +1,51 @@
+<div class="panel hero-panel reveal delay-1">
+    <span class="hero-kicker">Current Progression</span>
+    <div class="hero-grid">
+        <div class="hero-copy">
+            <h2>Keep the learning loop moving.</h2>
+            <p>Every meaningful study action now contributes to a visible progression system. This dashboard tracks momentum, highlights completion patterns, and makes weak spots easier to spot before they become bottlenecks.</p>
+            <div class="overview-row">
+                <div class="metric-card xp" title="Total XP earned across the tutoring system.">
+                    <span>Total XP</span>
+                    <strong>{{ dashboard.overview.total_xp }}</strong>
+                    <small>All accumulated study rewards.</small>
+                </div>
+                <div class="metric-card level" title="Current gamified level based on total XP.">
+                    <span>Current Level</span>
+                    <strong>{{ dashboard.overview.current_level }}</strong>
+                    <small>Level scales with consistent progress.</small>
+                </div>
+                <div class="metric-card streak" title="Consecutive active study days.">
+                    <span>Current Streak</span>
+                    <strong>{{ dashboard.overview.current_streak }}</strong>
+                    <small>Stay active daily to maintain it.</small>
+                </div>
+                <div class="metric-card badges" title="Unlocked milestone badges.">
+                    <span>Badges Earned</span>
+                    <strong>{{ dashboard.overview.badge_count }}</strong>
+                    <small>Milestones reached so far.</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="xp-card" title="Progress toward the next level.">
+            <strong>XP Progress Toward Next Level</strong>
+            <div class="xp-caption">
+                <span>Level {{ dashboard.xp_progress.current_level }}</span>
+                <span>{{ dashboard.xp_progress.progress_percent }}% complete</span>
+            </div>
+            <div class="xp-bar-shell">
+                <div class="xp-bar-fill" data-width="{{ dashboard.xp_progress.progress_percent }}%"></div>
+                <div class="xp-bar-glow"></div>
+            </div>
+            <div class="xp-meta">
+                <span>{{ dashboard.xp_progress.current_floor_xp }} XP</span>
+                <span>{{ dashboard.xp_progress.next_level_xp }} XP</span>
+            </div>
+            <div class="xp-caption">
+                <span>{{ dashboard.xp_progress.xp_to_next_level }} XP until the next level</span>
+                <span>{{ dashboard.overview.total_xp }} total</span>
+            </div>
+        </div>
+    </div>
+</div>

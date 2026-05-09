@@ -1,0 +1,112 @@
+<div class="panel reveal delay-4">
+    <div class="panel-head">
+        <div>
+            <span class="section-kicker">Study Momentum</span>
+            <h3>Escalating Snapshot</h3>
+        </div>
+    </div>
+    <div class="study-momentum" data-momentum-escalator>
+        <div class="momentum-escalator" aria-live="polite">
+            <div class="momentum-rail-card slot-top" data-momentum-slot="top">
+                <div class="momentum-copy">
+                    <span data-field="label">Chapters</span>
+                    <strong data-field="detail-title">Progress Signal</strong>
+                    <small data-field="detail">{{ dashboard.stats.chapters_completed }} chapters counted toward progression milestones.</small>
+                </div>
+                <div class="momentum-value" data-field="value">{{ dashboard.stats.chapters_read }}</div>
+            </div>
+            <div class="momentum-rail-card slot-mid" data-momentum-slot="mid">
+                <div class="momentum-copy">
+                    <span data-field="label">Quizzes</span>
+                    <strong data-field="detail-title">Progress Signal</strong>
+                    <small data-field="detail">{{ dashboard.stats.quizzes_completed }} completed overall, {{ dashboard.stats.quizzes_perfect }} perfect-score milestones.</small>
+                </div>
+                <div class="momentum-value" data-field="value">{{ dashboard.stats.quizzes_attempted }}</div>
+            </div>
+            <div class="momentum-rail-card slot-bottom" data-momentum-slot="bottom">
+                <div class="momentum-copy">
+                    <span data-field="label">Flashcards</span>
+                    <strong data-field="detail-title">Progress Signal</strong>
+                    <small data-field="detail">{{ dashboard.stats.flashcard_levels_completed }} gated levels completed.</small>
+                </div>
+                <div class="momentum-value" data-field="value">{{ dashboard.stats.flashcards_correct }}</div>
+            </div>
+            <div class="momentum-rail-card slot-incoming" data-momentum-slot="incoming" aria-hidden="true">
+                <div class="momentum-copy">
+                    <span data-field="label">Videos</span>
+                    <strong data-field="detail-title">Progress Signal</strong>
+                    <small data-field="detail">{{ dashboard.stats.video_checkpoints_answered }} checkpoints answered.</small>
+                </div>
+                <div class="momentum-value" data-field="value">{{ dashboard.stats.videos_completed }}</div>
+            </div>
+        </div>
+        <div hidden>
+            <div
+                data-momentum-source
+                data-label="Chapters"
+                data-detail-title="Progress Signal"
+                data-value="{{ dashboard.stats.chapters_read }}"
+                data-detail="{{ dashboard.stats.chapters_completed }} chapters counted toward progression milestones."
+                data-title="Chapters read and progression-counted chapter completions."
+                data-bg-start="#f2f9ff"
+                data-bg-end="#e2f0ff"
+                data-border="rgba(124, 181, 235, 0.42)"
+                data-accent="#5b84aa"></div>
+            <div
+                data-momentum-source
+                data-label="Quizzes"
+                data-detail-title="Progress Signal"
+                data-value="{{ dashboard.stats.quizzes_attempted }}"
+                data-detail="{{ dashboard.stats.quizzes_completed }} completed overall, {{ dashboard.stats.quizzes_perfect }} perfect-score milestones."
+                data-title="Quiz attempts, completions, and perfect-score milestones."
+                data-bg-start="#f2fffb"
+                data-bg-end="#ddf5ec"
+                data-border="rgba(104, 203, 168, 0.4)"
+                data-accent="#4f8d74"></div>
+            <div
+                data-momentum-source
+                data-label="Flashcards"
+                data-detail-title="Progress Signal"
+                data-value="{{ dashboard.stats.flashcards_correct }}"
+                data-detail="{{ dashboard.stats.flashcard_levels_completed }} gated levels completed."
+                data-title="Adaptive flashcard correctness and difficulty-gate completion."
+                data-bg-start="#fff7ed"
+                data-bg-end="#ffe8cf"
+                data-border="rgba(231, 169, 90, 0.42)"
+                data-accent="#a96f29"></div>
+            <div
+                data-momentum-source
+                data-label="Videos"
+                data-detail-title="Progress Signal"
+                data-value="{{ dashboard.stats.videos_completed }}"
+                data-detail="{{ dashboard.stats.video_checkpoints_answered }} checkpoints answered."
+                data-title="Video completions and transcript-grounded checkpoint answers."
+                data-bg-start="#f6f3ff"
+                data-bg-end="#e9e0ff"
+                data-border="rgba(154, 129, 226, 0.42)"
+                data-accent="#7860bc"></div>
+            <div
+                data-momentum-source
+                data-label="Chat Practice"
+                data-detail-title="Progress Signal"
+                data-value="{{ dashboard.stats.chat_questions_answered }}"
+                data-detail="Diagnosed responses to active tutor questions."
+                data-title="Tutor-generated practice questions answered in chat."
+                data-bg-start="#fff3f6"
+                data-bg-end="#ffdfe8"
+                data-border="rgba(224, 123, 156, 0.42)"
+                data-accent="#b95f7f"></div>
+            <div
+                data-momentum-source
+                data-label="Practice Tools"
+                data-detail-title="Progress Signal"
+                data-value="{{ dashboard.stats.fsm_challenges_completed + dashboard.stats.regex_challenges_completed }}"
+                data-detail="{{ dashboard.stats.fsm_challenges_completed }} FSM and {{ dashboard.stats.regex_challenges_completed }} regex completions."
+                data-title="FSM and regex challenge completions."
+                data-bg-start="#f5f7ea"
+                data-bg-end="#e4edca"
+                data-border="rgba(154, 183, 86, 0.42)"
+                data-accent="#728b3f"></div>
+        </div>
+    </div>
+</div>

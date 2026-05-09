@@ -1,0 +1,39 @@
+<div class="panel reveal delay-2">
+    <div class="panel-head">
+        <div>
+            <span class="section-kicker">Progress Rings</span>
+            <h3>Completion At A Glance</h3>
+            <p class="panel-subcopy">Four high-signal rings map your study footprint across the major learning surfaces.</p>
+        </div>
+    </div>
+    <div class="ring-grid">
+        {% for ring in dashboard.ring_metrics %}
+        <div class="ring-card" title="{{ ring.label }}: {{ ring.current }} out of {{ ring.total }}">
+            <div class="ring-figure">
+                <svg class="ring-svg" viewBox="0 0 120 120" aria-hidden="true">
+                    <circle class="ring-bg" cx="60" cy="60" r="48"></circle>
+                    <circle
+                        class="ring-meter"
+                        cx="60"
+                        cy="60"
+                        r="48"
+                        data-percent="{{ ring.percent }}"
+                        stroke="url(#ring-gradient-{{ loop.index }})"></circle>
+                    <defs>
+                        <linearGradient id="ring-gradient-{{ loop.index }}" x1="0%" y1="100%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="{{ ring.color_start }}"></stop>
+                            <stop offset="100%" stop-color="{{ ring.color_end }}"></stop>
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <div class="ring-center">
+                    <strong>{{ ring.percent|round|int }}%</strong>
+                    <small>{{ ring.current }}/{{ ring.total }}</small>
+                </div>
+            </div>
+            <h4>{{ ring.label }}</h4>
+            <p>{{ ring.detail }}</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>

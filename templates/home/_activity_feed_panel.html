@@ -1,0 +1,22 @@
+<div class="panel reveal delay-3">
+    <div class="panel-head">
+        <div>
+            <span class="section-kicker">Activity Feed</span>
+            <h3>Recent Momentum</h3>
+        </div>
+    </div>
+    {% if dashboard.recent_activity %}
+    <div class="activity-list">
+        {% for activity in dashboard.recent_activity %}
+        <div class="activity-item" title="{{ activity.type }}">
+            <div class="activity-head">
+                <strong>{{ activity.label }}</strong>
+            </div>
+            <small>{{ activity.timestamp }}</small>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="empty-state">Recent milestones, completions, and badge unlocks will appear here as you work through the tutoring system.</p>
+    {% endif %}
+</div>

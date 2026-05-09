@@ -1,0 +1,24 @@
+{% import 'home/_badge_macros.html' as badge_macros %}
+
+<div class="panel reveal delay-2">
+    <div class="panel-head">
+        <div>
+            <span class="section-kicker">Badge Shelf</span>
+            <h3>Milestone Badges</h3>
+        </div>
+    </div>
+    <div class="badge-grid">
+        {% for badge in dashboard.badges.catalog[:8] %}
+        <div class="badge-card {% if badge.unlocked %}unlocked{% else %}locked{% endif %}" title="{{ badge.description }}">
+            <div class="badge-icon" aria-hidden="true">
+                {{ badge_macros.render_badge_icon(badge.icon) }}
+            </div>
+            <strong>{{ badge.name }}</strong>
+            <small>{{ badge.description }}</small>
+            <span class="badge-state">
+                {% if badge.unlocked %}Unlocked{% else %}Locked{% endif %}
+            </span>
+        </div>
+        {% endfor %}
+    </div>
+</div>

@@ -1,0 +1,22 @@
+<div class="panel reveal delay-4">
+    <div class="panel-head">
+        <div>
+            <span class="section-kicker">Concept Snapshot</span>
+            <h3>Strengths And Friction Points</h3>
+        </div>
+    </div>
+    <div class="snapshot-list">
+        {% for item in dashboard.concept_snapshot.strengths %}
+        <div class="snapshot-item" title="Current strength signal">
+            <strong>Strength</strong>
+            <small>{{ item }}</small>
+        </div>
+        {% endfor %}
+        {% for item in dashboard.concept_snapshot.weak_spots %}
+        <div class="snapshot-item" title="Current weak-spot signal">
+            <strong>Watch This</strong>
+            <small>{{ item }}</small>
+        </div>
+        {% endfor %}
+    </div>
+</div>

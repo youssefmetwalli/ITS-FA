@@ -1,0 +1,57 @@
+<div class="panel chart-panel reveal delay-3">
+    <div class="panel-head">
+        <div>
+            <span class="section-kicker">Trend View</span>
+            <h3>XP And Activity Trends</h3>
+            <p class="panel-subcopy">Switch between estimated XP earned and raw activity counts across recent study days.</p>
+        </div>
+        <div class="tab-toggle" aria-label="Chart mode">
+            <button type="button" class="active" data-chart-target="xp-chart">XP</button>
+            <button type="button" data-chart-target="activity-chart">Activity</button>
+        </div>
+    </div>
+
+    <div class="chart-switcher bars-ready" id="chart-switcher">
+        <div class="chart-card active" id="xp-chart">
+            <div class="bar-chart">
+                {% for point in dashboard.trend_chart.xp_points %}
+                <div class="bar-col" title="{{ point.label }}: {{ point.value }} XP">
+                    <div class="bar-value">{{ point.value }}</div>
+                    <div class="bar-stack">
+                        <div class="bar xp" style="--bar-height: {{ point.height_percent }}%;"></div>
+                    </div>
+                    <div class="bar-label">{{ point.label }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="chart-card" id="activity-chart">
+            <div class="bar-chart">
+                {% for point in dashboard.trend_chart.activity_points %}
+                <div class="bar-col" title="{{ point.label }}: {{ point.value }} logged actions">
+                    <div class="bar-value">{{ point.value }}</div>
+                    <div class="bar-stack">
+                        <div class="bar activity" style="--bar-height: {{ point.height_percent }}%;"></div>
+                    </div>
+                    <div class="bar-label">{{ point.label }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="distribution-grid">
+            {% for item in dashboard.distribution_chart %}
+            <div class="distribution-item" title="{{ item.label }} accounts for {{ item.percent }}% of tracked recent completion volume.">
+                <div class="distribution-head">
+                    <span>{{ item.label }}</span>
+                    <span>{{ item.percent }}%</span>
+                </div>
+                <div class="distribution-track">
+                    <div class="distribution-fill" style="--fill-width: {{ item.percent }}%; background: linear-gradient(90deg, {{ item.color }}, {{ item.color }}cc);"></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
