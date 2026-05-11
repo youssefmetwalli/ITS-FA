@@ -217,6 +217,7 @@
 
             const correctAnswer = activeCheckpoint.correct_answer || "";
             const isCorrect = selected.value === correctAnswer;
+            activeCheckpoint.answerCorrect = isCorrect;
             checkpointFeedback.className = `checkpoint-feedback show ${isCorrect ? "correct" : "incorrect"}`;
             checkpointFeedback.textContent = isCorrect
                 ? `Correct. ${activeCheckpoint.explanation || ""}`.trim()
@@ -230,7 +231,10 @@
             }
             const checkpointId = String(activeCheckpoint.checkpoint_id || activeCheckpoint.timestamp_seconds);
             answeredCheckpointIds.add(checkpointId);
-            postProgress({ answered_checkpoint_id: checkpointId });
+            postProgress({
+                answered_checkpoint_id: checkpointId,
+                checkpoint_correct: Boolean(activeCheckpoint.answerCorrect),
+            });
             hideCheckpointModal();
             const resumePlayer = player;
             activeCheckpoint = null;
