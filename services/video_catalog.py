@@ -161,6 +161,13 @@ def normalize_video_record(record: dict[str, Any], fallback_id: str | None = Non
     normalized["description"] = str(normalized.get("description", "")).strip()
     normalized["youtube_video_id"] = str(normalized.get("youtube_video_id", "")).strip()
     normalized["transcript_text"] = str(normalized.get("transcript_text", "")).strip()
+    raw_concept_tags = normalized.get("concept_tags", [])
+    if isinstance(raw_concept_tags, list):
+        normalized["concept_tags"] = [str(item).strip() for item in raw_concept_tags if str(item).strip()]
+    elif isinstance(raw_concept_tags, str) and raw_concept_tags.strip():
+        normalized["concept_tags"] = [raw_concept_tags.strip()]
+    else:
+        normalized["concept_tags"] = []
     normalized["generated_summary"] = normalized.get("generated_summary")
     normalized["checkpoint_questions"] = _normalized_checkpoint_ids(
         list(normalized.get("checkpoint_questions", []))
