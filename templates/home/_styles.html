@@ -123,6 +123,30 @@
         display: grid;
         grid-template-columns: minmax(0, 1.7fr) minmax(340px, 0.98fr);
         gap: 22px;
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+    }
+
+    .dashboard-grid h2,
+    .dashboard-grid h3,
+    .dashboard-grid h4,
+    .dashboard-grid .hero-kicker,
+    .dashboard-grid .section-kicker,
+    .dashboard-grid .metric-card span,
+    .dashboard-grid .metric-card strong,
+    .dashboard-grid .xp-card strong,
+    .dashboard-grid .ring-center strong,
+    .dashboard-grid .goal-item strong,
+    .dashboard-grid .activity-item strong,
+    .dashboard-grid .snapshot-item strong,
+    .dashboard-grid .badge-card strong,
+    .dashboard-grid .badge-state,
+    .dashboard-grid .distribution-head,
+    .dashboard-grid .bar-value,
+    .dashboard-grid .bar-label,
+    .dashboard-grid .momentum-copy span,
+    .dashboard-grid .momentum-copy strong,
+    .dashboard-grid .momentum-value {
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
     }
 
     .dashboard-main,
@@ -717,6 +741,204 @@
         color: #7c8793;
     }
 
+    .knowledge-panel {
+        display: grid;
+        gap: 18px;
+    }
+
+    .knowledge-modal {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 28px;
+        z-index: 1400;
+    }
+
+    .knowledge-modal.is-open {
+        display: flex;
+    }
+
+    .knowledge-modal-backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(8, 22, 38, 0.62);
+        backdrop-filter: blur(8px);
+    }
+
+    .knowledge-modal-dialog {
+        position: relative;
+        width: min(1180px, 100%);
+        max-height: min(90vh, 920px);
+        overflow-y: auto;
+        z-index: 1;
+    }
+
+    .knowledge-panel-modal {
+        padding: 24px;
+    }
+
+    .knowledge-head {
+        margin-bottom: 0;
+    }
+
+    .knowledge-close-button {
+        border: none;
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #dff3ff, #d8f4ec);
+        color: #184566;
+        font-size: 1.6rem;
+        line-height: 1;
+        cursor: pointer;
+        box-shadow: 0 10px 18px rgba(28, 73, 111, 0.12);
+        transition: transform 0.18s ease, box-shadow 0.18s ease;
+        flex: 0 0 auto;
+    }
+
+    .knowledge-close-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 14px 22px rgba(28, 73, 111, 0.16);
+    }
+
+    .knowledge-overview-row {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .knowledge-overview-card,
+    .knowledge-column,
+    .knowledge-focus-card {
+        background: linear-gradient(180deg, #f9fcff, #eef7fd);
+        border: 1px solid rgba(171, 210, 233, 0.36);
+        border-radius: 20px;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82);
+    }
+
+    .knowledge-overview-card {
+        padding: 16px;
+    }
+
+    .knowledge-overview-card span {
+        display: block;
+        color: #69849a;
+        font-size: 0.76rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+    }
+
+    .knowledge-overview-card strong {
+        display: block;
+        color: #143552;
+        font-size: 1.95rem;
+        letter-spacing: -0.06em;
+        margin-bottom: 8px;
+    }
+
+    .knowledge-overview-card small,
+    .knowledge-placeholder,
+    .knowledge-item small,
+    .knowledge-focus-card small {
+        color: var(--text-soft);
+        line-height: 1.55;
+    }
+
+    .knowledge-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+    }
+
+    .knowledge-column {
+        padding: 18px;
+    }
+
+    .knowledge-column h4 {
+        margin: 0 0 12px 0;
+        color: #153650;
+        font-size: 1rem;
+    }
+
+    .knowledge-list {
+        display: grid;
+        gap: 10px;
+    }
+
+    .knowledge-item {
+        padding: 12px 14px;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.72);
+        border: 1px solid rgba(175, 212, 232, 0.3);
+    }
+
+    .knowledge-item.weak {
+        background: linear-gradient(180deg, rgba(255, 244, 246, 0.84), rgba(255, 236, 241, 0.72));
+        border-color: rgba(224, 147, 168, 0.28);
+    }
+
+    .knowledge-item.recommendation {
+        background: linear-gradient(180deg, rgba(242, 252, 247, 0.86), rgba(233, 248, 240, 0.74));
+        border-color: rgba(115, 191, 156, 0.26);
+    }
+
+    .knowledge-item-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: baseline;
+        margin-bottom: 4px;
+    }
+
+    .knowledge-item-head strong {
+        color: #163753;
+    }
+
+    .knowledge-item-head span {
+        color: #5a7790;
+        font-size: 0.86rem;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .knowledge-activity {
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+    }
+
+    .knowledge-focus-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .knowledge-focus-card {
+        padding: 14px 16px;
+    }
+
+    .knowledge-meter {
+        margin: 10px 0 8px 0;
+        height: 10px;
+        border-radius: 999px;
+        background: rgba(23, 83, 121, 0.08);
+        overflow: hidden;
+    }
+
+    .knowledge-meter-fill {
+        height: 100%;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #72c5ff, #4ccca3);
+        transition: width 0.9s cubic-bezier(.2, .8, .2, 1);
+    }
+
+    .knowledge-placeholder {
+        margin: 0;
+    }
+
     .stats-grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -776,6 +998,14 @@
         gap: 14px;
     }
 
+    .study-momentum-panel {
+        padding: 16px 16px 14px 16px;
+    }
+
+    .study-momentum-panel .panel-head {
+        margin-bottom: 8px;
+    }
+
     .momentum-subcopy {
         color: var(--text-soft);
         line-height: 1.7;
@@ -783,11 +1013,11 @@
     }
 
     .momentum-escalator {
-        --momentum-card-height: 158px;
-        --momentum-card-gap: 34px;
+        --momentum-card-height: 108px;
+        --momentum-card-gap: 18px;
         position: relative;
-        padding-bottom: 10px;
-        height: calc((var(--momentum-card-height) * 3) + (var(--momentum-card-gap) * 2) + 10px);
+        padding-bottom: 6px;
+        height: calc((var(--momentum-card-height) * 3) + (var(--momentum-card-gap) * 2) + 6px);
         overflow: hidden;
     }
 
@@ -795,14 +1025,14 @@
         position: absolute;
         inset-inline: 0;
         height: var(--momentum-card-height);
-        padding: 16px 20px;
-        border-radius: 24px;
+        padding: 12px 16px;
+        border-radius: 18px;
         border: 1px solid var(--momentum-border, rgba(169, 208, 232, 0.34));
         background: linear-gradient(180deg, var(--momentum-bg-start, #f8fcff), var(--momentum-bg-end, #f0f7fd));
         box-shadow: 0 10px 24px rgba(28, 73, 111, 0.08);
         display: grid;
         grid-template-columns: minmax(0, 1fr) auto;
-        gap: 12px 18px;
+        gap: 8px 14px;
         align-items: center;
         transition: transform 0.72s cubic-bezier(.2, .82, .24, 1), opacity 0.72s ease, box-shadow 0.3s ease;
         will-change: transform, opacity;
@@ -848,32 +1078,32 @@
     .momentum-copy span {
         display: block;
         color: var(--momentum-accent, #658096);
-        font-size: 0.72rem;
+        font-size: 0.62rem;
         font-weight: 800;
         text-transform: uppercase;
         letter-spacing: 0.08em;
-        margin-bottom: 6px;
+        margin-bottom: 3px;
     }
 
     .momentum-copy strong {
         display: block;
         color: #173a57;
-        font-size: 1.15rem;
+        font-size: 0.9rem;
         line-height: 1.05;
         letter-spacing: -0.035em;
-        margin-bottom: 6px;
+        margin-bottom: 3px;
     }
 
     .momentum-copy small {
         display: block;
         color: #204566;
-        font-size: 0.88rem;
-        line-height: 1.42;
+        font-size: 0.72rem;
+        line-height: 1.28;
     }
 
     .momentum-value {
         color: #12324c;
-        font-size: 2.2rem;
+        font-size: 1.65rem;
         font-weight: 900;
         line-height: 1;
         letter-spacing: -0.08em;
@@ -907,11 +1137,14 @@
     @media (max-width: 1260px) {
         .dashboard-grid,
         .hero-grid,
-        .section-grid {
+        .section-grid,
+        .knowledge-grid {
             grid-template-columns: 1fr;
         }
 
-        .ring-grid {
+        .ring-grid,
+        .knowledge-overview-row,
+        .knowledge-focus-grid {
             grid-template-columns: repeat(2, minmax(0, 1fr));
         }
     }
@@ -926,12 +1159,22 @@
         .overview-row,
         .ring-grid,
         .badge-grid,
-        .stats-grid {
+        .stats-grid,
+        .knowledge-overview-row,
+        .knowledge-focus-grid {
             grid-template-columns: 1fr;
         }
 
         .nav-actions {
             justify-content: flex-start;
+        }
+
+        .knowledge-modal {
+            padding: 16px;
+        }
+
+        .knowledge-modal-dialog {
+            max-height: 92vh;
         }
 
         .bar-chart {
@@ -943,8 +1186,8 @@
         }
 
         .momentum-escalator {
-            --momentum-card-height: 184px;
-            --momentum-card-gap: 28px;
+            --momentum-card-height: 136px;
+            --momentum-card-gap: 18px;
         }
 
         .momentum-rail-card {
