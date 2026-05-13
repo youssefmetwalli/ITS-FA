@@ -9,7 +9,7 @@
     </div>
     <div class="badge-grid">
         {% for badge in dashboard.badges.catalog[:8] %}
-        <div class="badge-card {% if badge.unlocked %}unlocked{% else %}locked{% endif %}" title="{{ badge.description }}">
+        <div class="badge-card badge-tone-{{ badge.icon }} {% if badge.unlocked %}unlocked{% else %}locked{% endif %}" title="{{ badge.description }}">
             <div class="badge-icon" aria-hidden="true">
                 {{ badge_macros.render_badge_icon(badge.icon) }}
             </div>
