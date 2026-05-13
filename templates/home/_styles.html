@@ -661,6 +661,20 @@
     }
 
     .badge-card {
+        --badge-unlocked-glow: rgba(219, 176, 84, 0.42);
+        --badge-unlocked-shadow: rgba(176, 129, 37, 0.12);
+        --badge-unlocked-top-glow: rgba(255, 212, 105, 0.36);
+        --badge-unlocked-bottom-glow: rgba(255, 237, 186, 0.28);
+        --badge-unlocked-bg-start: #fffdf6;
+        --badge-unlocked-bg-mid: #fff4db;
+        --badge-unlocked-bg-end: #fcedc4;
+        --badge-unlocked-icon-start: #fff3c7;
+        --badge-unlocked-icon-mid: #ffd974;
+        --badge-unlocked-icon-end: #ffc94b;
+        --badge-unlocked-icon-color: #8a5b00;
+        --badge-unlocked-title: #7d5608;
+        --badge-unlocked-body: #866430;
+        --badge-unlocked-state: #9b6d09;
         position: relative;
         padding: 16px;
         border-radius: 22px;
@@ -681,8 +695,13 @@
 
     .badge-card.unlocked {
         background:
-            radial-gradient(circle at top right, rgba(255, 214, 133, 0.24), transparent 28%),
-            linear-gradient(180deg, #fbfdff, #ecf7ff);
+            radial-gradient(circle at top right, var(--badge-unlocked-top-glow), transparent 30%),
+            radial-gradient(circle at bottom left, var(--badge-unlocked-bottom-glow), transparent 34%),
+            linear-gradient(180deg, var(--badge-unlocked-bg-start), var(--badge-unlocked-bg-mid) 68%, var(--badge-unlocked-bg-end));
+        border-color: var(--badge-unlocked-glow);
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.92),
+            0 16px 30px var(--badge-unlocked-shadow);
     }
 
     .badge-icon {
@@ -719,6 +738,22 @@
         color: #8c96a0;
     }
 
+    .badge-card.unlocked .badge-icon {
+        background: linear-gradient(145deg, var(--badge-unlocked-icon-start), var(--badge-unlocked-icon-mid) 62%, var(--badge-unlocked-icon-end));
+        color: var(--badge-unlocked-icon-color);
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.88),
+            0 10px 18px rgba(194, 141, 33, 0.18);
+    }
+
+    .badge-card.unlocked strong {
+        color: var(--badge-unlocked-title);
+    }
+
+    .badge-card.unlocked small {
+        color: var(--badge-unlocked-body);
+    }
+
     .badge-card small,
     .snapshot-item small,
     .activity-item small,
@@ -739,6 +774,180 @@
 
     .badge-card.locked .badge-state {
         color: #7c8793;
+    }
+
+    .badge-card.unlocked .badge-state {
+        color: var(--badge-unlocked-state);
+    }
+
+    .badge-tone-compass {
+        --badge-unlocked-glow: rgba(219, 176, 84, 0.42);
+        --badge-unlocked-shadow: rgba(176, 129, 37, 0.12);
+        --badge-unlocked-top-glow: rgba(255, 212, 105, 0.36);
+        --badge-unlocked-bottom-glow: rgba(255, 237, 186, 0.28);
+        --badge-unlocked-bg-start: #fffdf6;
+        --badge-unlocked-bg-mid: #fff4db;
+        --badge-unlocked-bg-end: #fcedc4;
+        --badge-unlocked-icon-start: #fff3c7;
+        --badge-unlocked-icon-mid: #ffd974;
+        --badge-unlocked-icon-end: #ffc94b;
+        --badge-unlocked-icon-color: #8a5b00;
+        --badge-unlocked-title: #7d5608;
+        --badge-unlocked-body: #866430;
+        --badge-unlocked-state: #9b6d09;
+    }
+
+    .badge-tone-spark {
+        --badge-unlocked-glow: rgba(210, 169, 105, 0.42);
+        --badge-unlocked-shadow: rgba(161, 119, 55, 0.12);
+        --badge-unlocked-top-glow: rgba(255, 204, 136, 0.34);
+        --badge-unlocked-bottom-glow: rgba(255, 235, 204, 0.28);
+        --badge-unlocked-bg-start: #fffdf8;
+        --badge-unlocked-bg-mid: #fff0dd;
+        --badge-unlocked-bg-end: #f9dfbf;
+        --badge-unlocked-icon-start: #fff1d8;
+        --badge-unlocked-icon-mid: #ffcf8d;
+        --badge-unlocked-icon-end: #f5b95d;
+        --badge-unlocked-icon-color: #875415;
+        --badge-unlocked-title: #7d4f11;
+        --badge-unlocked-body: #855f2d;
+        --badge-unlocked-state: #965f14;
+    }
+
+    .badge-tone-trophy {
+        --badge-unlocked-glow: rgba(226, 177, 72, 0.44);
+        --badge-unlocked-shadow: rgba(182, 128, 22, 0.13);
+        --badge-unlocked-top-glow: rgba(255, 217, 112, 0.38);
+        --badge-unlocked-bottom-glow: rgba(255, 236, 168, 0.3);
+        --badge-unlocked-bg-start: #fffdf3;
+        --badge-unlocked-bg-mid: #fff2cf;
+        --badge-unlocked-bg-end: #fae2a9;
+        --badge-unlocked-icon-start: #fff0bc;
+        --badge-unlocked-icon-mid: #ffd45a;
+        --badge-unlocked-icon-end: #ffba1f;
+        --badge-unlocked-icon-color: #865200;
+        --badge-unlocked-title: #7b4a00;
+        --badge-unlocked-body: #86622a;
+        --badge-unlocked-state: #9b5c00;
+    }
+
+    .badge-tone-layers {
+        --badge-unlocked-glow: rgba(198, 154, 97, 0.4);
+        --badge-unlocked-shadow: rgba(154, 109, 48, 0.12);
+        --badge-unlocked-top-glow: rgba(255, 204, 148, 0.34);
+        --badge-unlocked-bottom-glow: rgba(255, 228, 196, 0.28);
+        --badge-unlocked-bg-start: #fffdf8;
+        --badge-unlocked-bg-mid: #fbeede;
+        --badge-unlocked-bg-end: #f3dabc;
+        --badge-unlocked-icon-start: #fff1df;
+        --badge-unlocked-icon-mid: #f3c98f;
+        --badge-unlocked-icon-end: #dfa159;
+        --badge-unlocked-icon-color: #7e5420;
+        --badge-unlocked-title: #754d1d;
+        --badge-unlocked-body: #846446;
+        --badge-unlocked-state: #8f5d24;
+    }
+
+    .badge-tone-play {
+        --badge-unlocked-glow: rgba(212, 165, 95, 0.4);
+        --badge-unlocked-shadow: rgba(169, 118, 45, 0.12);
+        --badge-unlocked-top-glow: rgba(255, 210, 133, 0.34);
+        --badge-unlocked-bottom-glow: rgba(255, 239, 199, 0.28);
+        --badge-unlocked-bg-start: #fffdf7;
+        --badge-unlocked-bg-mid: #fff2e0;
+        --badge-unlocked-bg-end: #f7e0bb;
+        --badge-unlocked-icon-start: #fff2d7;
+        --badge-unlocked-icon-mid: #ffd38e;
+        --badge-unlocked-icon-end: #efb45b;
+        --badge-unlocked-icon-color: #7f5311;
+        --badge-unlocked-title: #754d11;
+        --badge-unlocked-body: #86612e;
+        --badge-unlocked-state: #955d0f;
+    }
+
+    .badge-tone-flame {
+        --badge-unlocked-glow: rgba(219, 150, 76, 0.42);
+        --badge-unlocked-shadow: rgba(176, 101, 26, 0.12);
+        --badge-unlocked-top-glow: rgba(255, 192, 118, 0.34);
+        --badge-unlocked-bottom-glow: rgba(255, 224, 176, 0.28);
+        --badge-unlocked-bg-start: #fffdf7;
+        --badge-unlocked-bg-mid: #ffefde;
+        --badge-unlocked-bg-end: #f7d8b4;
+        --badge-unlocked-icon-start: #ffefd8;
+        --badge-unlocked-icon-mid: #ffc97f;
+        --badge-unlocked-icon-end: #f49c4f;
+        --badge-unlocked-icon-color: #82430d;
+        --badge-unlocked-title: #7b420e;
+        --badge-unlocked-body: #875f35;
+        --badge-unlocked-state: #974b10;
+    }
+
+    .badge-tone-bolt {
+        --badge-unlocked-glow: rgba(209, 171, 92, 0.42);
+        --badge-unlocked-shadow: rgba(162, 122, 37, 0.12);
+        --badge-unlocked-top-glow: rgba(255, 218, 125, 0.34);
+        --badge-unlocked-bottom-glow: rgba(255, 238, 188, 0.28);
+        --badge-unlocked-bg-start: #fffdf8;
+        --badge-unlocked-bg-mid: #fff3dc;
+        --badge-unlocked-bg-end: #f6e1ba;
+        --badge-unlocked-icon-start: #fff3d6;
+        --badge-unlocked-icon-mid: #ffda95;
+        --badge-unlocked-icon-end: #eebb57;
+        --badge-unlocked-icon-color: #765011;
+        --badge-unlocked-title: #704a0f;
+        --badge-unlocked-body: #806334;
+        --badge-unlocked-state: #8a6112;
+    }
+
+    .badge-tone-crown {
+        --badge-unlocked-glow: rgba(210, 169, 84, 0.44);
+        --badge-unlocked-shadow: rgba(166, 122, 34, 0.13);
+        --badge-unlocked-top-glow: rgba(255, 215, 121, 0.36);
+        --badge-unlocked-bottom-glow: rgba(255, 236, 179, 0.3);
+        --badge-unlocked-bg-start: #fffdf6;
+        --badge-unlocked-bg-mid: #fff2d5;
+        --badge-unlocked-bg-end: #f8dfad;
+        --badge-unlocked-icon-start: #fff2cb;
+        --badge-unlocked-icon-mid: #ffd86a;
+        --badge-unlocked-icon-end: #f0b82d;
+        --badge-unlocked-icon-color: #7f5000;
+        --badge-unlocked-title: #784b02;
+        --badge-unlocked-body: #856129;
+        --badge-unlocked-state: #976109;
+    }
+
+    .badge-tone-diagram {
+        --badge-unlocked-glow: rgba(197, 160, 93, 0.4);
+        --badge-unlocked-shadow: rgba(149, 111, 42, 0.12);
+        --badge-unlocked-top-glow: rgba(245, 206, 136, 0.34);
+        --badge-unlocked-bottom-glow: rgba(252, 232, 196, 0.28);
+        --badge-unlocked-bg-start: #fffdf8;
+        --badge-unlocked-bg-mid: #fbefdf;
+        --badge-unlocked-bg-end: #f1dcbc;
+        --badge-unlocked-icon-start: #fff1dd;
+        --badge-unlocked-icon-mid: #f4ca92;
+        --badge-unlocked-icon-end: #dca55d;
+        --badge-unlocked-icon-color: #745026;
+        --badge-unlocked-title: #6f4b21;
+        --badge-unlocked-body: #806345;
+        --badge-unlocked-state: #8c6128;
+    }
+
+    .badge-tone-shield {
+        --badge-unlocked-glow: rgba(214, 172, 88, 0.44);
+        --badge-unlocked-shadow: rgba(171, 123, 33, 0.13);
+        --badge-unlocked-top-glow: rgba(255, 214, 124, 0.36);
+        --badge-unlocked-bottom-glow: rgba(255, 233, 172, 0.3);
+        --badge-unlocked-bg-start: #fffdf5;
+        --badge-unlocked-bg-mid: #fff1d0;
+        --badge-unlocked-bg-end: #f7dd9f;
+        --badge-unlocked-icon-start: #fff1c3;
+        --badge-unlocked-icon-mid: #ffd762;
+        --badge-unlocked-icon-end: #efb41f;
+        --badge-unlocked-icon-color: #7e5100;
+        --badge-unlocked-title: #764b00;
+        --badge-unlocked-body: #84612b;
+        --badge-unlocked-state: #956000;
     }
 
     .knowledge-panel {
