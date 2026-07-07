@@ -1,6 +1,6 @@
 import pdfplumber
 import re
-from extractChapters import modules
+from scripts.extractChapters import modules
 import firebase_admin
 from firebase_admin import credentials, firestore
 
