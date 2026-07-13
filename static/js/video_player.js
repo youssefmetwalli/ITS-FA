@@ -8,6 +8,8 @@
     const chatForm = document.getElementById("video-chat-form");
     const chatInput = document.getElementById("video-chat-input");
     const summaryContent = document.getElementById("video-summary-content");
+    const playerHost = document.getElementById("video-player");
+    const playerFallbackNote = document.getElementById("video-player-fallback-note");
 
     const checkpointModal = document.getElementById("checkpoint-modal");
     const checkpointTitle = document.getElementById("checkpoint-title");
@@ -23,6 +25,8 @@
     let activeCheckpoint = null;
     let lastProgressSyncSecond = 0;
     let summaryRequested = Boolean(progress.summary_shown || (summaryContent && summaryContent.querySelector(".summary-grid")));
+    let playerReady = false;
+    let playerBootTimeout = null;
 
     function escapeHtml(value) {
         return String(value || "")
@@ -74,6 +78,13 @@
                 ${takeaways ? `<div><strong>Important Takeaways</strong><ul class="summary-list">${takeaways}</ul></div>` : ""}
             </div>
         `;
+    }
+
+    function showFallbackNote() {
+        if (!playerFallbackNote) {
+            return;
+        }
+        playerFallbackNote.hidden = false;
     }
 
     function postProgress(extraPayload) {
@@ -304,25 +315,42 @@
     }
 
     window.onYouTubeIframeAPIReady = function () {
-        if (!config.youtubeVideoId || !window.YT || !document.getElementById("video-player")) {
+        if (!config.youtubeVideoId || !window.YT || !playerHost) {
             return;
         }
-        player = new window.YT.Player("video-player", {
-            videoId: config.youtubeVideoId,
-            playerVars: { rel: 0, modestbranding: 1 },
-            events: {
-                onReady: function () {
-                    startProgressMonitor();
+        try {
+            player = new window.YT.Player("video-player", {
+                events: {
+                    onReady: function () {
+                        playerReady = true;
+                        if (playerBootTimeout) {
+                            window.clearTimeout(playerBootTimeout);
+                        }
+                        startProgressMonitor();
+                    },
+                    onStateChange: function (event) {
+                        if (event.data === window.YT.PlayerState.ENDED) {
+                            postProgress({ completed: true });
+                            requestSummary();
+                        }
+                    },
+                    onError: function () {
+                        showFallbackNote();
+                    },
                 },
-                onStateChange: function (event) {
-                    if (event.data === window.YT.PlayerState.ENDED) {
-                        postProgress({ completed: true });
-                        requestSummary();
-                    }
-                },
-            },
-        });
+            });
+        } catch (error) {
+            showFallbackNote();
+        }
     };
+
+    if (playerHost && config.youtubeVideoId) {
+        playerBootTimeout = window.setTimeout(function () {
+            if (!playerReady) {
+                showFallbackNote();
+            }
+        }, 4500);
+    }
 
     setupCheckpointHandlers();
     setupVideoChat();
