@@ -18,10 +18,19 @@ import random
 import traceback
 import google.generativeai as genai
 from services.chat_state_service import ChatStateService
+from services.concept_graph import (
+    get_concepts_for_chapter,
+    infer_concepts_for_quiz_question,
+    infer_concepts_from_text,
+)
 from services.gamification_service import (
     GamificationService,
     RewardEvent,
     default_gamification_state,
+)
+from services.knowledge_tracing_service import (
+    KnowledgeTracingService,
+    default_knowledge_tracing_state,
 )
 from services.adaptive_flashcard_service import (
     LEVELS,
@@ -54,6 +63,15 @@ SECTION_CONFIGS = [
 ]
 SECTION_LOOKUP = {config["key"]: config for config in SECTION_CONFIGS}
 SECTION_LEVEL_CARD_COUNT = 10
+SECTION_CONCEPT_HINTS = {
+    "introduction": ["alphabet", "strings", "languages"],
+    "fsm_regular": ["finite_automata", "dfa", "nfa", "regular_expressions"],
+    "cfl_pda": ["context_free_grammar", "pushdown_automata"],
+    "tm_undecidability": ["turing_machine", "decidability"],
+    "complexity": ["complexity_basics"],
+    "logic_proofs": ["pumping_lemma", "closure_properties"],
+    "applications": ["languages", "finite_automata", "turing_machine"],
+}
 
 load_dotenv()
 
@@ -105,6 +123,7 @@ video_retrieval_service = VideoRetrievalService()
 video_summary_service = VideoSummaryService()
 chat_state_service = ChatStateService()
 gamification_service = GamificationService(db)
+knowledge_tracing_service = KnowledgeTracingService(db)
 explainer_agent = ExplainerAgent(retrieval_service)
 examiner_agent = ExaminerAgent()
 diagnoser_agent = DiagnoserAgent(retrieval_service)
@@ -175,6 +194,77 @@ def _current_user_dashboard_payload() -> dict:
     user_data = user_doc.to_dict() if user_doc.exists else {}
     return gamification_service.build_dashboard_payload(user_data)
 
+
+def _current_user_knowledge_dashboard_payload() -> dict:
+    user_id = session.get("user_id")
+    if not user_id:
+        return knowledge_tracing_service.build_dashboard_payload_from_state(
+            default_knowledge_tracing_state(),
+            [],
+        )
+    try:
+        return knowledge_tracing_service.build_knowledge_dashboard_payload(user_id)
+    except Exception as exc:
+        logging.error("Knowledge dashboard payload failed for user=%s: %s", user_id, exc)
+        return knowledge_tracing_service.build_dashboard_payload_from_state(
+            default_knowledge_tracing_state(),
+            [],
+        )
+
+
+def _safe_update_knowledge_event(user_id: str | None, event: dict) -> dict | None:
+    if not user_id:
+        return None
+    try:
+        return knowledge_tracing_service.update_mastery_for_event(user_id, event)
+    except Exception as exc:
+        logging.error(
+            "Knowledge tracing update failed for user=%s event=%s: %s",
+            user_id,
+            event.get("event_type"),
+            exc,
+        )
+        return None
+
+
+def _safe_update_knowledge_events(user_id: str | None, events: list[dict]) -> dict | None:
+    if not user_id or not events:
+        return None
+    try:
+        return knowledge_tracing_service.update_mastery_for_events(user_id, events)
+    except Exception as exc:
+        logging.error("Knowledge tracing batch update failed for user=%s: %s", user_id, exc)
+        return None
+
+
+def _coerce_concept_list(raw_value) -> list[str]:
+    if isinstance(raw_value, list):
+        return [str(item).strip() for item in raw_value if str(item).strip()]
+    if isinstance(raw_value, str) and raw_value.strip():
+        return [raw_value.strip()]
+    return []
+
+
+def _infer_video_concepts(video_record: dict | None) -> list[str]:
+    if not isinstance(video_record, dict):
+        return []
+
+    explicit_tags = _coerce_concept_list(video_record.get("concept_tags"))
+    if explicit_tags:
+        return explicit_tags
+
+    text_parts = [
+        str(video_record.get("title", "")).strip(),
+        str(video_record.get("description", "")).strip(),
+        str(video_record.get("section_key", "")).strip().replace("_", " "),
+    ]
+    inferred = infer_concepts_from_text(" ".join(part for part in text_parts if part))
+    if inferred:
+        return inferred
+
+    section_key = str(video_record.get("section_key", "")).strip()
+    return SECTION_CONCEPT_HINTS.get(section_key, [])
+
 # Routes
 @app.route("/")
 def index():
@@ -188,6 +278,7 @@ def index():
     quizzes_attempted = user_data.get("quizzes_attempted", 0)
     quizzes_completed = user_data.get("quizzes_completed", 0)
     dashboard = gamification_service.build_dashboard_payload(user_data)
+    knowledge_dashboard = _current_user_knowledge_dashboard_payload()
 
     return render_template(
         "home.html",
@@ -195,6 +286,7 @@ def index():
         quizzes_attempted=quizzes_attempted,
         quizzes_completed=quizzes_completed,
         dashboard=dashboard,
+        knowledge_dashboard=knowledge_dashboard,
     )
 
 @app.route("/login", methods=["GET", "POST"])
@@ -234,6 +326,7 @@ def login():
                     "quizzes_completed": 0,
                     "answers": {},
                     "gamification": default_gamification_state(),
+                    "knowledge_tracing": default_knowledge_tracing_state(),
                 })
             
             return redirect(url_for("index"))
@@ -410,6 +503,7 @@ def increment_chapter_read(chapter_id):
                 'chapters_read': 1,
                 'read_chapters': [chapter_id],
                 'gamification': default_gamification_state(),
+                'knowledge_tracing': default_knowledge_tracing_state(),
             }, merge=True)
             reward_result = gamification_service.award_event_xp(
                 user_id,
@@ -417,6 +511,23 @@ def increment_chapter_read(chapter_id):
                 f"chapter:{chapter_id}:completed",
                 {"chapter_id": chapter_id},
             )
+
+        _safe_update_knowledge_event(
+            user_id,
+            {
+                "event_type": "chapter_read",
+                "concepts": get_concepts_for_chapter(chapter_id),
+                "correct": True,
+                "confidence_signal": 0.7,
+                "difficulty": "easy",
+                "source": "chapter",
+                "chapter_id": str(chapter_id),
+                "subchapter_id": None,
+                "metadata": {
+                    "title": f"Chapter {chapter_id}",
+                },
+            },
+        )
 
         return jsonify(
             {
@@ -725,8 +836,11 @@ def video_summary_api(video_id):
 def video_progress_api(video_id):
     request_data = request.get_json(silent=True) or {}
     current_progress = _get_video_progress(video_id)
+    video_record = get_video_by_id(db, video_id) or {"id": video_id, "title": video_id}
+    video_concepts = _infer_video_concepts(video_record)
 
     checkpoint_id = str(request_data.get("answered_checkpoint_id", "")).strip()
+    checkpoint_correct = request_data.get("checkpoint_correct")
     answered_checkpoint_ids = current_progress["answered_checkpoint_ids"]
     if checkpoint_id and checkpoint_id not in answered_checkpoint_ids:
         answered_checkpoint_ids.append(checkpoint_id)
@@ -768,7 +882,6 @@ def video_progress_api(video_id):
         )
     completed_now = bool(updated_progress.get("completed")) or updated_progress.get("watched_percentage", 0.0) >= 85.0
     if completed_now:
-        video_record = get_video_by_id(db, video_id) or {"id": video_id, "title": video_id}
         reward_events.append(
             RewardEvent(
                 "video_completed",
@@ -780,6 +893,44 @@ def video_progress_api(video_id):
             )
         )
     reward_result = gamification_service.apply_events(session["user_id"], reward_events) if reward_events else None
+
+    knowledge_events: list[dict] = []
+    if checkpoint_id:
+        knowledge_events.append(
+            {
+                "event_type": "video_checkpoint_answer",
+                "concepts": video_concepts,
+                "correct": bool(checkpoint_correct) if checkpoint_correct is not None else True,
+                "confidence_signal": 0.8,
+                "difficulty": "medium",
+                "source": "video",
+                "chapter_id": None,
+                "subchapter_id": video_record.get("section_key"),
+                "metadata": {
+                    "title": video_record.get("title", video_id),
+                    "checkpoint_id": checkpoint_id,
+                },
+            }
+        )
+    if completed_now:
+        knowledge_events.append(
+            {
+                "event_type": "video_completed",
+                "concepts": video_concepts,
+                "correct": True,
+                "confidence_signal": 0.7,
+                "difficulty": "easy",
+                "source": "video",
+                "chapter_id": None,
+                "subchapter_id": video_record.get("section_key"),
+                "metadata": {
+                    "title": video_record.get("title", video_id),
+                    "video_id": video_id,
+                },
+            }
+        )
+    _safe_update_knowledge_events(session.get("user_id"), knowledge_events)
+
     return jsonify(
         {
             "progress": updated_progress,
@@ -844,6 +995,8 @@ def quiz_result():
         )
 
         recommended_videos = []
+        chapter_data = {}
+        knowledge_events: list[dict] = []
         normalized_chapter_id = None
         if chapter_id is not None:
             try:
@@ -851,10 +1004,45 @@ def quiz_result():
             except (TypeError, ValueError):
                 logging.warning("Quiz result received invalid chapter_id=%s", chapter_id)
 
-        if normalized_chapter_id is not None and score < total:
+        if normalized_chapter_id is not None:
             chapter_ref = db.collection("chapters").document(str(normalized_chapter_id))
             chapter_doc = chapter_ref.get()
             chapter_data = chapter_doc.to_dict() if chapter_doc.exists else {}
+
+            questions = list(chapter_data.get("questions", []))
+            question_concepts = list(chapter_data.get("question_concepts", []))
+            wrong_indices = {
+                int(item.get("question_index"))
+                for item in (wrong_questions if isinstance(wrong_questions, list) else [])
+                if str(item.get("question_index", "")).strip().isdigit()
+            }
+
+            for question_index, question_text in enumerate(questions):
+                explicit_concepts = _coerce_concept_list(
+                    question_concepts[question_index] if len(question_concepts) > question_index else []
+                )
+                inferred_concepts = explicit_concepts or infer_concepts_for_quiz_question(
+                    str(question_text),
+                    normalized_chapter_id,
+                )
+                knowledge_events.append(
+                    {
+                        "event_type": "quiz_answer",
+                        "concepts": inferred_concepts,
+                        "correct": question_index not in wrong_indices,
+                        "confidence_signal": 0.85,
+                        "difficulty": "medium",
+                        "source": "quiz",
+                        "chapter_id": str(normalized_chapter_id),
+                        "subchapter_id": None,
+                        "metadata": {
+                            "question_text": str(question_text),
+                            "question_index": question_index,
+                        },
+                    }
+                )
+
+        if normalized_chapter_id is not None and score < total:
             recommended_videos = get_recommended_videos(
                 chapter_data=chapter_data or {},
                 chapter_id=normalized_chapter_id,
@@ -895,6 +1083,7 @@ def quiz_result():
                 user_ref.update({'quizzes_completed': current_completed + 1})
 
             reward_result = gamification_service.apply_events(user_id, reward_events) if reward_events else None
+            _safe_update_knowledge_events(user_id, knowledge_events)
 
             return jsonify(
                 {
@@ -916,9 +1105,11 @@ def quiz_result():
                 'quizzes_attempted': 1, 
                 'quizzes_completed': 1 if score == total else 0,
                 'gamification': default_gamification_state(),
+                'knowledge_tracing': default_knowledge_tracing_state(),
             }
             user_ref.set(new_data, merge=True)
             reward_result = gamification_service.apply_events(user_id, reward_events) if reward_events else None
+            _safe_update_knowledge_events(user_id, knowledge_events)
             return jsonify(
                 {
                     "message": "User doc created and quiz result recorded",
@@ -1198,6 +1389,7 @@ def adaptive_flashcards_answer(chapter_id):
     user_doc = user_ref.get()
     user_data = user_doc.to_dict() if user_doc.exists else {}
     user_ref.set(build_progress_update_payload(user_data, chapter_id, updated_progress), merge=True)
+    flashcard_concepts = _coerce_concept_list((answered_flashcard or {}).get("concept")) or get_concepts_for_chapter(chapter_id)
 
     reward_events: list[RewardEvent] = []
     if answer_result.is_correct:
@@ -1234,6 +1426,40 @@ def adaptive_flashcards_answer(chapter_id):
             )
         )
     reward_result = gamification_service.apply_events(session["user_id"], reward_events) if reward_events else None
+    knowledge_events = [
+        {
+            "event_type": "flashcard_answer",
+            "concepts": flashcard_concepts,
+            "correct": answer_result.is_correct,
+            "confidence_signal": 0.9,
+            "difficulty": answered_level,
+            "source": "flashcards",
+            "chapter_id": str(chapter_id),
+            "subchapter_id": None,
+            "metadata": {
+                "question_text": (answered_flashcard or {}).get("question", ""),
+                "card_id": flashcard_id,
+            },
+        }
+    ]
+    if answer_result.level_completed:
+        knowledge_events.append(
+            {
+                "event_type": "flashcard_level_completed",
+                "concepts": flashcard_concepts,
+                "correct": True,
+                "confidence_signal": 1.0,
+                "difficulty": answered_level,
+                "source": "flashcards",
+                "chapter_id": str(chapter_id),
+                "subchapter_id": None,
+                "metadata": {
+                    "card_id": flashcard_id,
+                    "level": answered_level,
+                },
+            }
+        )
+    _safe_update_knowledge_events(session.get("user_id"), knowledge_events)
 
     current_level = updated_progress["current_level"]
     next_flashcard = choose_next_flashcard(flashcards_by_level, updated_progress)
@@ -1302,6 +1528,7 @@ def adaptive_flashcards_section_answer(section_key):
     adaptive_section_progress = user_data.get("adaptive_flashcard_section_progress", {})
     adaptive_section_progress[section_key] = updated_progress
     user_ref.set({"adaptive_flashcard_section_progress": adaptive_section_progress}, merge=True)
+    flashcard_concepts = _coerce_concept_list((answered_flashcard or {}).get("concept")) or SECTION_CONCEPT_HINTS.get(section_key, [])
 
     reward_events: list[RewardEvent] = []
     if answer_result.is_correct:
@@ -1338,6 +1565,42 @@ def adaptive_flashcards_section_answer(section_key):
             )
         )
     reward_result = gamification_service.apply_events(session["user_id"], reward_events) if reward_events else None
+    knowledge_events = [
+        {
+            "event_type": "flashcard_answer",
+            "concepts": flashcard_concepts,
+            "correct": answer_result.is_correct,
+            "confidence_signal": 0.9,
+            "difficulty": answered_level,
+            "source": "flashcards",
+            "chapter_id": None,
+            "subchapter_id": section_key,
+            "metadata": {
+                "question_text": (answered_flashcard or {}).get("question", ""),
+                "card_id": flashcard_id,
+                "section_key": section_key,
+            },
+        }
+    ]
+    if answer_result.level_completed:
+        knowledge_events.append(
+            {
+                "event_type": "flashcard_level_completed",
+                "concepts": flashcard_concepts,
+                "correct": True,
+                "confidence_signal": 1.0,
+                "difficulty": answered_level,
+                "source": "flashcards",
+                "chapter_id": None,
+                "subchapter_id": section_key,
+                "metadata": {
+                    "card_id": flashcard_id,
+                    "level": answered_level,
+                    "section_key": section_key,
+                },
+            }
+        )
+    _safe_update_knowledge_events(session.get("user_id"), knowledge_events)
 
     current_level = updated_progress["current_level"]
     next_flashcard = choose_next_flashcard(flashcards_by_level, updated_progress)
@@ -1424,6 +1687,11 @@ def chat_api():
         reward_result = None
         if payload.get("agent_used") == "diagnoser" and had_active_question and active_question_before is not None:
             topic = ", ".join(active_question_before.concept_tags) or active_question_before.prompt
+            raw_score_signal = (payload.get("agent_payload") or {}).get("score", 0.7)
+            try:
+                score_signal = float(raw_score_signal or 0.7)
+            except (TypeError, ValueError):
+                score_signal = 0.7
             reward_result = gamification_service.award_event_xp(
                 session["user_id"],
                 "chat_question_answered",
@@ -1431,6 +1699,23 @@ def chat_api():
                 {
                     "question_id": active_question_before.question_id,
                     "topic": topic[:120],
+                },
+            )
+            _safe_update_knowledge_event(
+                session.get("user_id"),
+                {
+                    "event_type": "chat_practice_answer",
+                    "concepts": list(active_question_before.concept_tags),
+                    "correct": bool((payload.get("agent_payload") or {}).get("is_correct", False)),
+                    "confidence_signal": score_signal,
+                    "difficulty": "medium",
+                    "source": "chat",
+                    "chapter_id": None,
+                    "subchapter_id": None,
+                    "metadata": {
+                        "prompt": active_question_before.prompt,
+                        "question_id": active_question_before.question_id,
+                    },
                 },
             )
 
@@ -1812,6 +2097,23 @@ Your task is to determine if a given regular expression correctly describes the 
                 gamification_service.challenge_key("regex", challenge_payload),
                 {"challenge_type": "fsm_to_regex"},
             )
+        _safe_update_knowledge_event(
+            session.get("user_id"),
+            {
+                "event_type": "regex_practice_answer",
+                "concepts": ["regular_expressions", "finite_automata", "dfa", "nfa", "regex_to_nfa"],
+                "correct": first_line == "correct",
+                "confidence_signal": 0.95,
+                "difficulty": "hard",
+                "source": "practice",
+                "chapter_id": None,
+                "subchapter_id": None,
+                "metadata": {
+                    "text": student_regex,
+                    "challenge_type": "fsm_to_regex",
+                },
+            },
+        )
         return jsonify(
             {
                 "result": response_text,
@@ -1870,6 +2172,23 @@ Your task is to determine if the student's FSM accepts exactly the same language
                 gamification_service.challenge_key("fsm", str(regex)),
                 {"challenge_type": "regex_to_fsm", "regex": regex},
             )
+        _safe_update_knowledge_event(
+            session.get("user_id"),
+            {
+                "event_type": "fsm_practice_answer",
+                "concepts": ["finite_automata", "dfa", "nfa", "regular_expressions", "regex_to_nfa"],
+                "correct": first_line == "correct",
+                "confidence_signal": 0.95,
+                "difficulty": "hard",
+                "source": "practice",
+                "chapter_id": None,
+                "subchapter_id": None,
+                "metadata": {
+                    "text": regex,
+                    "challenge_type": "regex_to_fsm",
+                },
+            },
+        )
         return jsonify(
             {
                 "result": response_text,
@@ -1883,6 +2202,42 @@ Your task is to determine if the student's FSM accepts exactly the same language
     except Exception as e:
         logging.error(f"Error calling Gemini API for FSM check: {e}")
         return jsonify({"error": "Failed to get analysis from the AI model."}), 500
+
+
+@app.route("/api/knowledge_profile")
+def knowledge_profile_api():
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    try:
+        state = knowledge_tracing_service.get_or_initialize_knowledge_state(user_id)
+        dashboard_payload = knowledge_tracing_service.build_knowledge_dashboard_payload(user_id)
+        personalization_context = knowledge_tracing_service.get_personalization_context(user_id)
+        return jsonify(
+            {
+                "knowledge_tracing": state,
+                "dashboard": dashboard_payload,
+                "personalization": personalization_context,
+            }
+        )
+    except Exception as exc:
+        logging.error("Knowledge profile API failed for user=%s: %s", user_id, exc)
+        return jsonify({"error": "Knowledge profile unavailable"}), 500
+
+
+@app.route("/api/knowledge_recommendations")
+def knowledge_recommendations_api():
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    try:
+        context = knowledge_tracing_service.get_personalization_context(user_id)
+        return jsonify({"recommendations": context.get("recommended_next_concepts", [])})
+    except Exception as exc:
+        logging.error("Knowledge recommendations API failed for user=%s: %s", user_id, exc)
+        return jsonify({"error": "Knowledge recommendations unavailable"}), 500
 
 
 if __name__ == "__main__":
