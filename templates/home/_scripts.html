@@ -29,6 +29,37 @@
             });
         });
 
+        (function setupKnowledgeModal() {
+            const modal = document.querySelector('[data-knowledge-modal]');
+            const openButton = document.querySelector('[data-knowledge-open]');
+            const closeButtons = document.querySelectorAll('[data-knowledge-close]');
+            if (!modal || !openButton) {
+                return;
+            }
+
+            function openModal() {
+                modal.classList.add('is-open');
+                modal.setAttribute('aria-hidden', 'false');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeModal() {
+                modal.classList.remove('is-open');
+                modal.setAttribute('aria-hidden', 'true');
+                document.body.style.overflow = '';
+            }
+
+            openButton.addEventListener('click', openModal);
+            closeButtons.forEach(function (button) {
+                button.addEventListener('click', closeModal);
+            });
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape' && modal.classList.contains('is-open')) {
+                    closeModal();
+                }
+            });
+        })();
+
         document.querySelectorAll('[data-momentum-escalator]').forEach(function (escalator) {
             const source = Array.from(escalator.querySelectorAll('[data-momentum-source]')).map(function (node) {
                 return {
