@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Automata Chatbot</title>
     <link rel="stylesheet" href="/static/css/styles.css" />
+    <script src="{{ url_for('static', filename='js/gamification.js') }}"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
 
@@ -440,6 +441,8 @@
         <a class="button" href="{{ url_for('index') }}">Home</a>
         <a class="button" href="{{ url_for('course_page') }}">Course</a>
         <a class="button" href="/drawer">Practice</a>
+        <span class="button" style="pointer-events:none;">Level {{ dashboard.header_summary.level }}</span>
+        <span class="button" style="pointer-events:none;">{{ dashboard.header_summary.xp_total }} XP</span>
     </div>
 
         <div class="chat-container">
@@ -774,6 +777,9 @@
                             if (response.agent_used === 'diagnoser') {
                                 updateQuestionCardWithDiagnosis(response);
                             }
+                        }
+                        if (response.gamification_feedback) {
+                            window.showGamificationFeedback(response.gamification_feedback);
                         }
                         messages.push({ role: 'bot', content: response.response_text || response.message });
 
