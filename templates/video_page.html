@@ -187,6 +187,24 @@
             width: 100%;
             aspect-ratio: 16 / 9;
             min-height: 440px;
+            display: block;
+            border: 0;
+            background: #0f2236;
+        }
+
+        .video-fallback-note {
+            margin: 12px 0 0 0;
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: rgba(236, 245, 255, 0.88);
+            border: 1px solid rgba(157, 198, 225, 0.4);
+            color: #2d4e69;
+            font-size: 0.94rem;
+            line-height: 1.55;
+        }
+
+        .video-fallback-note[hidden] {
+            display: none;
         }
 
         .video-placeholder {
@@ -521,7 +539,18 @@
                         <div>
                             <div class="video-frame-shell">
                                 {% if youtube_video_id %}
-                                <div id="video-player"></div>
+                                <iframe
+                                    id="video-player"
+                                    src="https://www.youtube.com/embed/{{ youtube_video_id }}?enablejsapi=1&playsinline=1&rel=0&modestbranding=1"
+                                    title="{{ video.title }}"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                    referrerpolicy="strict-origin-when-cross-origin"
+                                    allowfullscreen
+                                    loading="eager"></iframe>
+                                <div id="video-player-fallback-note" class="video-fallback-note" hidden>
+                                    The video is running in fallback mode. If checkpoint prompts do not appear on this display,
+                                    playback should still work normally.
+                                </div>
                                 {% else %}
                                 <div class="video-placeholder">
                                     <div>
